@@ -1,21 +1,21 @@
 /****************************************************************************
- *		mcintegrator.h: A basic abstract integrator for MC sampling
- *		This is part of the yafray package
- *		Copyright (C) 2010  Rodrigo Placencia (DarkTide)
+ *              mcintegrator.h: A basic abstract integrator for MC sampling
+ *              This is part of the yafray package
+ *              Copyright (C) 2010  Rodrigo Placencia (DarkTide)
  *
- *		This library is free software; you can redistribute it and/or
- *		modify it under the terms of the GNU Lesser General Public
- *		License as published by the Free Software Foundation; either
- *		version 2.1 of the License, or (at your option) any later version.
+ *              This library is free software; you can redistribute it and/or
+ *              modify it under the terms of the GNU Lesser General Public
+ *              License as published by the Free Software Foundation; either
+ *              version 2.1 of the License, or (at your option) any later version.
  *
- *		This library is distributed in the hope that it will be useful,
- *		but WITHOUT ANY WARRANTY; without even the implied warranty of
- *		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *		Lesser General Public License for more details.
+ *              This library is distributed in the hope that it will be useful,
+ *              but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *              MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *              Lesser General Public License for more details.
  *
- *		You should have received a copy of the GNU Lesser General Public
- *		License along with this library; if not, write to the Free Software
- *		Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *              You should have received a copy of the GNU Lesser General Public
+ *              License along with this library; if not, write to the Free Software
+ *              Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
 #include <core_api/mcintegrator.h>
@@ -154,7 +154,8 @@ inline color_t mcIntegrator_t::doLightEstimation(renderState_t &state, light_t *
 			for(int i=0; i<n; ++i)
 			{
 				ray_t bRay;
-				bRay.tmin = MIN_RAYDIST; bRay.from = sp.P;
+				bRay.tmin = MIN_RAYDIST;
+				bRay.from = sp.P;
 
 				float s1 = hal2.getNext();
 				float s2 = hal3.getNext();
@@ -190,7 +191,7 @@ bool mcIntegrator_t::createCausticMap()
 	ray_t ray;
 	std::vector<light_t *> causLights;
 
-	for(unsigned int i=0;i<lights.size();++i)
+	for(unsigned int i=0; i<lights.size(); ++i)
 	{
 		if(lights[i]->shootsCausticP())
 		{
@@ -209,13 +210,13 @@ bool mcIntegrator_t::createCausticMap()
 		float lightNumPdf, lightPdf, s1, s2, s3, s4, s5, s6, s7, sL;
 		float fNumLights = (float)numLights;
 		float *energies = new float[numLights];
-		for(int i=0;i<numLights;++i) energies[i] = causLights[i]->totalEnergy().energy();
+		for(int i=0; i<numLights; ++i) energies[i] = causLights[i]->totalEnergy().energy();
 		pdf1D_t *lightPowerD = new pdf1D_t(energies, numLights);
 
 		Y_INFO << integratorName << ": Light(s) photon color testing for caustics map:" << yendl;
 		color_t pcol(0.f);
 
-		for(int i=0;i<numLights;++i)
+		for(int i=0; i<numLights; ++i)
 		{
 			pcol = causLights[i]->emitPhoton(.5, .5, .5, .5, ray, lightPdf);
 			lightNumPdf = lightPowerD->func[i] * lightPowerD->invIntegral;
@@ -323,7 +324,7 @@ bool mcIntegrator_t::createCausticMap()
 				pcol = sample.color;
 				// hm...dispersive is not really a scattering qualifier like specular/glossy/diffuse or the special case filter...
 				causticPhoton = ((sample.sampledFlags & (BSDF_GLOSSY | BSDF_SPECULAR | BSDF_DISPERSIVE)) && directPhoton) ||
-								((sample.sampledFlags & (BSDF_GLOSSY | BSDF_SPECULAR | BSDF_FILTER | BSDF_DISPERSIVE)) && causticPhoton);
+				                ((sample.sampledFlags & (BSDF_GLOSSY | BSDF_SPECULAR | BSDF_FILTER | BSDF_DISPERSIVE)) && causticPhoton);
 				// light through transparent materials can be calculated by direct lighting, so still consider them direct!
 				directPhoton = (sample.sampledFlags & BSDF_FILTER) && directPhoton;
 				// caustic-only calculation can be stopped if:
@@ -414,7 +415,7 @@ inline void mcIntegrator_t::recursiveRaytrace(renderState_t &state, diffRay_t &r
 	const material_t *material = sp.material;
 	spDifferentials_t spDiff(sp, ray);
 
-    state.raylevel++;
+	state.raylevel++;
 
 	if(state.raylevel <= rDepth)
 	{
@@ -509,66 +510,66 @@ inline void mcIntegrator_t::recursiveRaytrace(renderState_t &state, diffRay_t &r
 
 				if(material->getFlags() & BSDF_GLOSSY)
 				{
-                    color_t mcol = 0.f;
-                    colorA_t integ = 0.f;
-                    if((material->getFlags() & BSDF_REFLECT) && !(material->getFlags() & BSDF_TRANSMIT))
-                    {
-                        float W = 0.f;
+					color_t mcol = 0.f;
+					colorA_t integ = 0.f;
+					if((material->getFlags() & BSDF_REFLECT) && !(material->getFlags() & BSDF_TRANSMIT))
+					{
+						float W = 0.f;
 
-                        sample_t s(s1, s2, BSDF_GLOSSY | BSDF_REFLECT);
-                        color_t mcol = material->sample(state, sp, wo, wi, s, W);
-                        colorA_t integ = 0.f;
-                        refRay = diffRay_t(sp.P, wi, MIN_RAYDIST);
-                        if(s.sampledFlags & BSDF_REFLECT) spDiff.reflectedRay(ray, refRay);
-                        else if(s.sampledFlags & BSDF_TRANSMIT) spDiff.refractedRay(ray, refRay, material->getMatIOR());
-                        integ = (color_t)integrate(state, refRay);
+						sample_t s(s1, s2, BSDF_GLOSSY | BSDF_REFLECT);
+						color_t mcol = material->sample(state, sp, wo, wi, s, W);
+						colorA_t integ = 0.f;
+						refRay = diffRay_t(sp.P, wi, MIN_RAYDIST);
+						if(s.sampledFlags & BSDF_REFLECT) spDiff.reflectedRay(ray, refRay);
+						else if(s.sampledFlags & BSDF_TRANSMIT) spDiff.refractedRay(ray, refRay, material->getMatIOR());
+						integ = (color_t)integrate(state, refRay);
 
-                        if((bsdfs&BSDF_VOLUMETRIC) && (vol=material->getVolumeHandler(sp.Ng * refRay.dir < 0)))
-                        {
-                            if(vol->transmittance(state, refRay, vcol)) integ *= vcol;
-                        }
-                        gcol += (color_t)integ * mcol * W;
-                    }
-                    else if((material->getFlags() & BSDF_REFLECT) && (material->getFlags() & BSDF_TRANSMIT))
-                    {
-                        sample_t s(s1, s2, BSDF_GLOSSY | BSDF_ALL_GLOSSY);
-                        color_t mcol[2];
-                        float W[2];
-                        vector3d_t dir[2];
+						if((bsdfs&BSDF_VOLUMETRIC) && (vol=material->getVolumeHandler(sp.Ng * refRay.dir < 0)))
+						{
+							if(vol->transmittance(state, refRay, vcol)) integ *= vcol;
+						}
+						gcol += (color_t)integ * mcol * W;
+					}
+					else if((material->getFlags() & BSDF_REFLECT) && (material->getFlags() & BSDF_TRANSMIT))
+					{
+						sample_t s(s1, s2, BSDF_GLOSSY | BSDF_ALL_GLOSSY);
+						color_t mcol[2];
+						float W[2];
+						vector3d_t dir[2];
 
-                        mcol[0] = material->sample(state, sp, wo, dir, mcol[1], s, W);
-                        colorA_t integ = 0.f;
+						mcol[0] = material->sample(state, sp, wo, dir, mcol[1], s, W);
+						colorA_t integ = 0.f;
 
-                        if(s.sampledFlags & BSDF_REFLECT)
-                        {
-                            refRay = diffRay_t(sp.P, dir[0], MIN_RAYDIST);
-                            spDiff.reflectedRay(ray, refRay);
-                            integ = integrate(state, refRay);
-                            if((bsdfs&BSDF_VOLUMETRIC) && (vol=material->getVolumeHandler(sp.Ng * refRay.dir < 0)))
-                            {
-                                if(vol->transmittance(state, refRay, vcol)) integ *= vcol;
-                            }
-                            gcol += (color_t)integ * mcol[0] * W[0];
-                        }
+						if(s.sampledFlags & BSDF_REFLECT)
+						{
+							refRay = diffRay_t(sp.P, dir[0], MIN_RAYDIST);
+							spDiff.reflectedRay(ray, refRay);
+							integ = integrate(state, refRay);
+							if((bsdfs&BSDF_VOLUMETRIC) && (vol=material->getVolumeHandler(sp.Ng * refRay.dir < 0)))
+							{
+								if(vol->transmittance(state, refRay, vcol)) integ *= vcol;
+							}
+							gcol += (color_t)integ * mcol[0] * W[0];
+						}
 
-                        if(s.sampledFlags & BSDF_TRANSMIT)
-                        {
-                            refRay = diffRay_t(sp.P, dir[1], MIN_RAYDIST);
-                            spDiff.refractedRay(ray, refRay, material->getMatIOR());
-                            integ = integrate(state, refRay);
-                            if((bsdfs&BSDF_VOLUMETRIC) && (vol=material->getVolumeHandler(sp.Ng * refRay.dir < 0)))
-                            {
-                                if(vol->transmittance(state, refRay, vcol)) integ *= vcol;
-                            }
-                            gcol += (color_t)integ * mcol[1] * W[1];
-                            alpha = integ.A;
-                        }
-                    }
+						if(s.sampledFlags & BSDF_TRANSMIT)
+						{
+							refRay = diffRay_t(sp.P, dir[1], MIN_RAYDIST);
+							spDiff.refractedRay(ray, refRay, material->getMatIOR());
+							integ = integrate(state, refRay);
+							if((bsdfs&BSDF_VOLUMETRIC) && (vol=material->getVolumeHandler(sp.Ng * refRay.dir < 0)))
+							{
+								if(vol->transmittance(state, refRay, vcol)) integ *= vcol;
+							}
+							gcol += (color_t)integ * mcol[1] * W[1];
+							alpha = integ.A;
+						}
+					}
 				}
 			}
 
 			col += gcol * d_1;
-            //if(col.maximum() > 1.f) Y_WARNING << col << " | " << d_1 << yendl;
+			//if(col.maximum() > 1.f) Y_WARNING << col << " | " << d_1 << yendl;
 			state.rayDivision = oldDivision;
 			state.rayOffset = oldOffset;
 			state.dc1 = old_dc1;
@@ -673,4 +674,108 @@ color_t mcIntegrator_t::sampleAmbientOcclusion(renderState_t &state, const surfa
 	return col / (float)n;
 }
 
+
+void mcIntegrator_t::setICRecord(renderState_t &state, diffRay_t &ray, icRec_t *record) const
+{
+	if (!ray.hasDifferentials)
+	{
+		Y_INFO << "ERROR: ray from mcIntegrator_t::createNewICRecord() should have differentials" << std::endl;
+	}
+
+	#ifdef _MSC_VER
+	    std::vector<float> oldRayLength(record->getM());
+	    std::vector<color_t> oldRad(record->getM());
+	#else
+	    float oldRayLength[record->getM()];
+	    color_t oldRad[record->getM()];
+	#endif
+	// we set the projected pixel area on the surface point
+	record->setPixelArea(ray);
+	ray_t sRay; // ray from hitpoint to hemisphere sample direction
+	sRay.from = record->P;
+	color_t innerRotValues;
+	color_t innerTransValuesU;
+	color_t innerTransValuesV;
+	color_t radiance;
+	unsigned int offs = 8 * state.pixelSample /*+ state.samplingOffs*/;
+	record->stratHemi->randomize();
+	for (int k=0; k<record->getN(); k++)
+	{
+		innerRotValues.black();
+		innerTransValuesU.black();
+		innerTransValuesV.black();
+		for (int j=0; j<record->getM(); j++)
+		{
+			// Calculate each incoming radiance of hemisphere at point icRecord
+			sRay.dir = record->getSampleHemisphere(j, k, offs);
+			radiance = getRadiance(state, sRay);
+			// note: oldRad[j] and oldRayLength[j] means L_j,k-1 and r_j,k-1 respectively
+			//       oldRad[j-1] and oldRayLength[j-1] means L_j-1,k and r_j-1,k respectively
+			if (k>0)
+			{
+				if (j>0)
+				{
+					// cos2(theta_j-)sin(theta_j-) * (L_j,k - L_j-1,k) / min(r_j,k , r_j-1,k)
+					float cosThetaMin = record->stratHemi->getCosThetaMinus(j);
+					innerTransValuesU +=
+					    ( (cosThetaMin*cosThetaMin) * (radiance - oldRad[j-1]) )/
+                        (std::min(sRay.tmax, oldRayLength[j-1])) ;
+					// cos(theta_j)[cos(theta_j-) - cos(theta_j+)] * (L_j,k - L_j,k-1) / [sin(theta_j,k) * min(r_j,k , r_j-1,k)]
+					innerTransValuesV +=
+					    ( record->stratHemi->getCosTheta(j) * (cosThetaMin - record->stratHemi->getCosThetaPlus(j)) *
+					      (radiance - oldRad[j]) ) /
+                          (record->stratHemi->getSinTheta(j) * std::min(sRay.tmax, oldRayLength[j]));
+				}
+			}
+			record->irr += radiance;
+			record->changeSampleRadius(sRay.tmax);
+			// copy new rays and irradiance values over old ones
+			oldRad[j] = radiance;
+			oldRayLength[j] = sRay.tmax;
+			innerRotValues -= record->stratHemi->getTanTheta(j) * radiance;
+		}
+		vector3d_t vk(record->stratHemi->getVk(k));
+		record->rotGrad[0] += vk * innerRotValues.R;
+		record->rotGrad[1] += vk * innerRotValues.G;
+		record->rotGrad[2] += vk * innerRotValues.B;
+		vector3d_t uk(record->stratHemi->getUk(k));
+		vector3d_t vkm(record->stratHemi->getVkMinus(k));
+		record->transGrad[0] +=
+		    ( (innerTransValuesU.R * M_2PI / (float)record->getN() ) * uk ) +
+		    ( innerTransValuesV.R * vkm );
+		record->transGrad[1] +=
+		    ( (innerTransValuesU.G * M_2PI / (float)record->getN() ) * uk ) +
+		    ( innerTransValuesV.G * vkm );
+		record->transGrad[2] +=
+		    ( (innerTransValuesU.B * M_2PI / (float)record->getN() ) * uk ) +
+		    ( innerTransValuesV.B * vkm );
+	}
+	float k = M_PI / ((float)record->getM() * (float)record->getN());
+	record->irr = record->irr * k;
+	for (int i=0; i<3; i++)
+	{
+		record->rotGrad[i] = changeBasis(
+		                         record->rotGrad[i] * k,
+		                         record->NU,
+		                         record->NV,
+		                         record->getNup());
+		record->transGrad[i] = changeBasis(
+		                           record->transGrad[i],
+		                           record->NU,
+		                           record->NV,
+		                           record->getNup());
+	}
+	// HEURISTICS
+	record->clampRbyGradient();
+	if (ray.hasDifferentials)
+		record->clampRbyScreenSpace();
+	record->clampGradient();
+}
+
+
+void mcIntegrator_t::cleanup()
+{
+	// do nothing, if IC implemented, may call the xml dump saving function
+}
+//#endif
 __END_YAFRAY
