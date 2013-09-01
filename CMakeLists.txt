@@ -22,6 +22,9 @@ option(DEBUG_BUILD "Enable debug build mode" OFF)
 option(EMBED_FONT_QT "Embed font for QT GUI (usefull for some buggy QT installations)" OFF)
 option(FAST_MATH "Enable mathematic approximations to make code faster" ON)
 option(FAST_TRIG "Enable trigonometric approximations to make code faster" ON)
+# povman: add IrrCache flags
+option(WITH_IRR_CACHE "Enable the use of IrradianceCache integrators" ON)
+# end
 
 ###### Packages and Definitions #########
 
@@ -165,6 +168,14 @@ if(WITH_YAF_RUBY_BINDINGS)
 else(WITH_YAF_RUBY_BINDINGS)
 	message("Building Ruby bindings: no")
 endif(WITH_YAF_RUBY_BINDINGS)
+
+# povman
+ if(WITH_IRR_CACHE)
+	message("Building Irradiance Cache modes: Yes")
+	add_definitions(-DWITH_IRR_CACHE)
+else(WITH_IRR_CACHE)
+	message ("Building Irradiance Cache modes: No")
+endif(WITH_IRR_CACHE)
 
 if(DEBUG_BUILD)
 	set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build mode" FORCE)
