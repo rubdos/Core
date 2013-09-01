@@ -42,7 +42,8 @@ public:
 		recursiveLookup(&root, treeBound, p, process);
 		lock.unlock();
 	}
-private:
+//private:
+protected:
 	void recursiveAdd(octNode_t<NodeData> *node, const bound_t &nodeBound,
 		const NodeData &dataItem, const bound_t &dataBound, float diag2,
 		int depth = 0);
@@ -50,10 +51,11 @@ private:
 	void recursiveLookup(octNode_t<NodeData> *node, const bound_t &nodeBound, const point3d_t &P,
 			LookupProc &process);
 	// octree_t Private Data
+private:
 	int maxDepth;
 	bound_t treeBound;
 	octNode_t<NodeData> root;
-	rwlock_t lock;
+	yafthreads::rwlock_t lock;
 };
 
 // octree_t Method Definitions
