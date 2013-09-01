@@ -32,6 +32,16 @@ target_link_libraries(SkyIntegrator yafaraycore)
 add_library(sppm SHARED sppm.cc)
 target_link_libraries(sppm yafaraycore)
 
+IF(WITH_IRR_CACHE) # povman: irrcache modes
+	add_library(directic SHARED directic.cc)
+	target_link_libraries(directic yafaraycore)
+	
+	add_library(photonic SHARED photonic.cc)
+	target_link_libraries(photonic yafaraycore)
+	
+	install (TARGETS directic photonic ${YAF_TARGET_TYPE} DESTINATION ${YAF_PLUGIN_DIR})
+ENDIF(WITH_IRR_CACHE)
+
 install (TARGETS directlight photonmap pathtrace bidirpath sppm
 		EmissionIntegrator SingleScatterIntegrator EmptyVolumeIntegrator DebugIntegrator SkyIntegrator
 		${YAF_TARGET_TYPE} DESTINATION ${YAF_PLUGIN_DIR})
