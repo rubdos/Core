@@ -24,6 +24,10 @@
 #include <core_api/tiledintegrator.h>
 #include <yafraycore/photon.h>
 
+#ifdef WITH_IRR_CACHE
+    #include <yafraycore/irradianceCache.h>
+#endif
+
 __BEGIN_YAFRAY
 
 class YAFRAYCORE_EXPORT mcIntegrator_t: public tiledIntegrator_t
@@ -43,7 +47,29 @@ class YAFRAYCORE_EXPORT mcIntegrator_t: public tiledIntegrator_t
 		virtual color_t estimateCausticPhotons(renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo) const;
 		/*! Samples ambient occlusion for a given surface point */
 		virtual color_t sampleAmbientOcclusion(renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo) const;
-		
+
+#ifdef WITH_IRR_CACHE // povman: add irrcache data
+
+		 /*! Samples radiance for a given surface point
+		  \param state current state of scene rendering
+		  \param ray indicates the place of the sample and incoming radiance's direction. In ray.tmax we return the lenght of the ray
+		  \return Value of radiance
+		  */
+		virtual color_t getRadiance(renderState_t &state, ray_t &ray) const {
+			color_t color;
+			return color;
+		}
+		/*! Creates a new irradiance cache's record for a given point
+		  \param state current state of scene rendering
+		  \param ray ray that hits the surface where the icRecord will be created
+		  \param record the record that it is going to be used to save the irradiance, needs to be initialized with ray's intersect position
+		  */
+
+		virtual void setICRecord(renderState_t &state, diffRay_t &ray, icRec_t *record) const;
+		virtual void cleanup();
+
+#endif // WITH_IRR_CACHE
+
 		int rDepth; //! Ray depth
 		bool trShad; //! Use transparent shadows
 		int sDepth; //! Shadow depth for transparent shadows
@@ -55,19 +81,29 @@ class YAFRAYCORE_EXPORT mcIntegrator_t: public tiledIntegrator_t
 		int causDepth; //! Caustic photons max path depth
 		photonMap_t causticMap; //! Container for the caustic photon map
 		pdf1D_t *lightPowerD;
-		
+
 		bool useAmbientOcclusion; //! Use ambient occlusion
 		int aoSamples; //! Ambient occlusion samples
 		float aoDist; //! Ambient occlusion distance
 		color_t aoCol; //! Ambient occlusion color
-		
-		
+
+
 		background_t *background; //! Background shader
 		int nPaths; //! Number of samples for mc raytracing
 		int maxBounces; //! Max. path depth for mc raytracing
 		std::vector<light_t*> lights; //! An array containing all the scene lights
 		bool transpBackground; //! Render background as transparent
 		bool transpRefractedBackground; //! Render refractions of background as transparent
+
+#ifdef WITH_IRR_CACHE
+
+		bool useIrradianceCache;    //! Use irradiance cache
+		icTree_t *icTree;           //! contains a pointer to an Irradiance Cache's tree
+		int icMDivs;                //! number of subdivision on stratified hemisphere along theta
+		float icKappa;              //! controls the overall density of IC records
+		bool icDumpXML;             //! true if you want to have a file with the IC tree information (it may be big)
+
+#endif // WITH_IRR_CACHE
 };
 
 __END_YAFRAY
