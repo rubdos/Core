@@ -21,6 +21,11 @@
 
 __BEGIN_YAFRAY
 
+// povman: fix for use MSVC++ 2008. Copy from gcc 'stdint.h' header
+#ifdef _MSC_VER
+    typedef long long int64_t;
+#endif
+
 typedef struct _HitPoint // actually are per-pixel variable, use to record the sppm's shared statistics
 {
 	float radius2; // square search-radius, shrink during the passes
