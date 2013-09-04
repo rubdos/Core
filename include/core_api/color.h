@@ -26,6 +26,16 @@
 
 #include <iostream>
 #include <utilities/mathOptimizations.h>
+/* povman: copy code from vector3d.h for working with MSVC compilers
+ * Add 'using' to  force used 'isinf' from cmath with gcc compilers */
+#ifdef _MSC_VER
+    #include <float.h>
+    #define isnan _isnan
+#else
+    using std::isnan; // from cmath
+    using std::isinf; // from cmath
+#endif
+// end
 
 #define COLOR_SIZE 3
 
