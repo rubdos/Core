@@ -42,7 +42,7 @@ public:
 		recursiveLookup(&root, treeBound, p, process);
 		lock.unlock();
 	}
-//private:
+
 protected:
 	void recursiveAdd(octNode_t<NodeData> *node, const bound_t &nodeBound,
 		const NodeData &dataItem, const bound_t &dataBound, float diag2,
@@ -51,7 +51,6 @@ protected:
 	void recursiveLookup(octNode_t<NodeData> *node, const bound_t &nodeBound, const point3d_t &P,
 			LookupProc &process);
 	// octree_t Private Data
-private:
 	int maxDepth;
 	bound_t treeBound;
 	octNode_t<NodeData> root;
@@ -81,7 +80,7 @@ void octree_t<NodeData>::recursiveAdd(
 	if(dataBound.g.y <= center.y) over[0] = over[1] = over[4] = over[5] = false;
 	if(dataBound.a.z > center.z)  over[4] = over[5] = over[6] = over[7] = false;
 	if(dataBound.g.z <= center.z) over[0] = over[1] = over[2] = over[3] = false;
-	
+
 	for (int child = 0; child < 8; ++child)
 	{
 		if (!over[child]) continue;
@@ -110,7 +109,7 @@ void octree_t<NodeData>::recursiveLookup(
 	// Determine which octree child node _p_ is inside
 	point3d_t center = nodeBound.center();
 	int child = (p.x > center.x ? 0 : 1) +
-				(p.y > center.y ? 0 : 2) + 
+				(p.y > center.y ? 0 : 2) +
 				(p.z > center.z ? 0 : 4);
 	if (node->children[child])
 	{
