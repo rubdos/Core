@@ -2,7 +2,7 @@
  *      photonintegr.cc: integrator for photon mapping and final gather
  *      This is part of the yafaray package
  *      Copyright (C) 2006  Mathias Wein (Lynx)
- *		Copyright (C) 2009  Rodrigo Placencia (DarkTide)
+ *      Copyright (C) 2009  Rodrigo Placencia (DarkTide)
  *
  *      This library is free software; you can redistribute it and/or
  *      modify it under the terms of the GNU Lesser General Public
@@ -44,14 +44,14 @@ struct preGatherData_t
 //-
 class preGatherWorker_t: public yafthreads::thread_t
 {
-	public:
-		preGatherWorker_t(preGatherData_t *dat, float dsRad, int search):
-			gdata(dat), dsRadius_2(dsRad*dsRad), nSearch(search) {};
-		virtual void body();
-	protected:
-		preGatherData_t *gdata;
-		float dsRadius_2;
-		int nSearch;
+public:
+	preGatherWorker_t(preGatherData_t *dat, float dsRad, int search):
+		gdata(dat), dsRadius_2(dsRad*dsRad), nSearch(search) {};
+	virtual void body();
+protected:
+	preGatherData_t *gdata;
+	float dsRadius_2;
+	int nSearch;
 };
 
 //-
@@ -171,7 +171,7 @@ bool photonIC_t::preprocess()
 
 	tmplights.clear();
 
-	for(int i=0;i<(int)lights.size();++i)
+	for(int i=0; i<(int)lights.size(); ++i)
 	{
 		if(lights[i]->shootsDiffuseP())
 		{
@@ -183,12 +183,12 @@ bool photonIC_t::preprocess()
 	fNumLights = (float)numDLights;
 	energies = new float[numDLights];
 
-	for(int i=0;i<numDLights;++i) energies[i] = tmplights[i]->totalEnergy().energy();
+	for(int i=0; i<numDLights; ++i) energies[i] = tmplights[i]->totalEnergy().energy();
 
 	lightPowerD = new pdf1D_t(energies, numDLights);
 
 	Y_INFO << integratorName << ": Light(s) photon color testing for diffuse map:" << yendl;
-	for(int i=0;i<numDLights;++i)
+	for(int i=0; i<numDLights; ++i)
 	{
 		pcol = tmplights[i]->emitPhoton(.5, .5, .5, .5, ray, lightPdf);
 		lightNumPdf = lightPowerD->func[i] * lightPowerD->invIntegral;
@@ -225,7 +225,12 @@ bool photonIC_t::preprocess()
 
 	while(!done)
 	{
-		if(scene->getSignals() & Y_SIG_ABORT) {  pb->done(); if(!intpb) delete pb; return false; }
+		if(scene->getSignals() & Y_SIG_ABORT)
+		{
+			pb->done();
+			if(!intpb) delete pb;
+			return false;
+		}
 
 		s1 = RI_vdC(curr);
 		s2 = scrHalton(2, curr);
@@ -320,7 +325,7 @@ bool photonIC_t::preprocess()
 			pcol = sample.color;
 
 			causticPhoton = ((sample.sampledFlags & (BSDF_GLOSSY | BSDF_SPECULAR | BSDF_DISPERSIVE)) && directPhoton) ||
-							((sample.sampledFlags & (BSDF_GLOSSY | BSDF_SPECULAR | BSDF_FILTER | BSDF_DISPERSIVE)) && causticPhoton);
+			                ((sample.sampledFlags & (BSDF_GLOSSY | BSDF_SPECULAR | BSDF_FILTER | BSDF_DISPERSIVE)) && causticPhoton);
 			directPhoton = (sample.sampledFlags & BSDF_FILTER) && directPhoton;
 
 			ray.from = sp.P;
@@ -342,7 +347,7 @@ bool photonIC_t::preprocess()
 
 	tmplights.clear();
 
-	for(int i=0;i<(int)lights.size();++i)
+	for(int i=0; i<(int)lights.size(); ++i)
 	{
 		if(lights[i]->shootsCausticP())
 		{
@@ -360,12 +365,12 @@ bool photonIC_t::preprocess()
 		fNumLights = (float)numCLights;
 		energies = new float[numCLights];
 
-		for(int i=0;i<numCLights;++i) energies[i] = tmplights[i]->totalEnergy().energy();
+		for(int i=0; i<numCLights; ++i) energies[i] = tmplights[i]->totalEnergy().energy();
 
 		lightPowerD = new pdf1D_t(energies, numCLights);
 
 		Y_INFO << integratorName << ": Light(s) photon color testing for caustics map:" << yendl;
-		for(int i=0;i<numCLights;++i)
+		for(int i=0; i<numCLights; ++i)
 		{
 			pcol = tmplights[i]->emitPhoton(.5, .5, .5, .5, ray, lightPdf);
 			lightNumPdf = lightPowerD->func[i] * lightPowerD->invIntegral;
@@ -385,7 +390,12 @@ bool photonIC_t::preprocess()
 
 		while(!done)
 		{
-			if(scene->getSignals() & Y_SIG_ABORT) { pb->done(); if(!intpb) delete pb; return false; }
+			if(scene->getSignals() & Y_SIG_ABORT)
+			{
+				pb->done();
+				if(!intpb) delete pb;
+				return false;
+			}
 			state.chromatic = true;
 			state.wavelength = scrHalton(5,curr);
 
@@ -444,8 +454,8 @@ bool photonIC_t::preprocess()
 				vector3d_t wi = -ray.dir, wo;
 				material = sp.material;
 				material->initBSDF(state, sp, bsdfs);
-                // povman: in photonintgr.cc is only BSDF_DIFFUSE
-                // TODO: review.. and make test
+				// povman: in photonintgr.cc is only BSDF_DIFFUSE
+				// TODO: review.. and make test
 				if(bsdfs & (BSDF_DIFFUSE | BSDF_GLOSSY))
 				{
 					if(causticPhoton)
@@ -473,7 +483,7 @@ bool photonIC_t::preprocess()
 				pcol = sample.color;
 
 				causticPhoton = ((sample.sampledFlags & (BSDF_GLOSSY | BSDF_SPECULAR | BSDF_DISPERSIVE)) && directPhoton) ||
-								((sample.sampledFlags & (BSDF_GLOSSY | BSDF_SPECULAR | BSDF_FILTER | BSDF_DISPERSIVE)) && causticPhoton);
+				                ((sample.sampledFlags & (BSDF_GLOSSY | BSDF_SPECULAR | BSDF_FILTER | BSDF_DISPERSIVE)) && causticPhoton);
 				directPhoton = (sample.sampledFlags & BSDF_FILTER) && directPhoton;
 
 				if(state.chromatic && (sample.sampledFlags & BSDF_DISPERSIVE))
@@ -563,9 +573,9 @@ bool photonIC_t::preprocess()
 		std::vector<preGatherWorker_t *> workers;
 		for(int i=0; i<nThreads; ++i) workers.push_back(new preGatherWorker_t(&pgdat, dsRadius, nDiffuseSearch));
 
-		for(int i=0;i<nThreads;++i) workers[i]->run();
-		for(int i=0;i<nThreads;++i)	workers[i]->wait();
-		for(int i=0;i<nThreads;++i)	delete workers[i];
+		for(int i=0; i<nThreads; ++i) workers[i]->run();
+		for(int i=0; i<nThreads; ++i) workers[i]->wait();
+		for(int i=0; i<nThreads; ++i) delete workers[i];
 
 		radianceMap.swapVector(pgdat.radianceVec);
 		pgdat.pbar->done();
@@ -625,7 +635,7 @@ bool photonIC_t::preprocess()
 
 	gTimer.stop("prepass");
 	Y_INFO << integratorName << ": Photonmap building time: " << gTimer.getTime("prepass") << yendl;
-    /** povman : find all povman's for  read notes */
+	/** povman : find all povman's for  read notes */
 	// setup cache tree
 	if(useIrradianceCache)
 	{
@@ -640,12 +650,12 @@ bool photonIC_t::preprocess()
 // precondition: initBSDF of current spot has been called!
 color_t photonIC_t::finalGathering(renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo) const
 {
-    // povman: Atm, esta parte no influye en IC, pues solo se usa si no activamos IC.
-    // Forma parte de PhotonIntegrator.
-    // La idea es: podemos usar los dos 'metodos' juntos? PM + FG, ya es una buena solucion a la ecuacion de render.
-    // La pregunta es PM + FG + IC  (..o PM + IC + FG) es factible? Es util?
-    // Posible planteamiento: Usamos PM y luego decidimos.. FG o IC dependiendo del resultado buscado o del tipo de escena.
-    color_t pathCol(0.0);
+	// povman: Atm, esta parte no influye en IC, pues solo se usa si no activamos IC.
+	// Forma parte de PhotonIntegrator.
+	// La idea es: podemos usar los dos 'metodos' juntos? PM + FG, ya es una buena solucion a la ecuacion de render.
+	// La pregunta es PM + FG + IC  (..o PM + IC + FG) es factible? Es util?
+	// Posible planteamiento: Usamos PM y luego decidimos.. FG o IC dependiendo del resultado buscado o del tipo de escena.
+	color_t pathCol(0.0);
 	void *first_udat = state.userdata;
 	unsigned char userdata[USER_DATA_SIZE+7];
 	void *n_udat = (void *)( &userdata[7] - ( ((size_t)&userdata[7])&7 ) ); // pad userdata to 8 bytes
@@ -678,8 +688,8 @@ color_t photonIC_t::finalGathering(renderState_t &state, const surfacePoint_t &s
 		sample_t s(s1, s2, BSDF_DIFFUSE|BSDF_REFLECT|BSDF_TRANSMIT); // glossy/dispersion/specular done via recursive raytracing
 		scol = p_mat->sample(state, hit, pwo, pRay.dir, s, W);
 
-        // povman: this part is different in photonintgr.cc.
-        // deprecated method??
+		// povman: this part is different in photonintgr.cc.
+		// deprecated method??
 		if(s.pdf <= 1.0e-6f) continue; // this check not exist
 		scol *= (std::fabs(pRay.dir*sp.N)/s.pdf); // and this is:  scol *=W;
 
@@ -760,11 +770,11 @@ color_t photonIC_t::finalGathering(renderState_t &state, const surfacePoint_t &s
 
 			if(!did_hit) //hit background
 			{
-				 if(caustic && background)
-				 {
+				if(caustic && background)
+				{
 					pathCol += throughput * (*background)(pRay, state);
-				 }
-				 break;
+				}
+				break;
 			}
 
 			p_mat = hit.material;
@@ -805,7 +815,7 @@ color_t photonIC_t::getRadiance(renderState_t &state, ray_t &ray) const
 	ray.tmin = MIN_RAYDIST;
 	ray.tmax = -1.0;
 	if (scene->intersect(ray, hit))
-    {
+	{
 		p_mat = hit.material;
 		state.userdata = n_udat;
 		matBSDFs = p_mat->getFlags();
@@ -817,8 +827,8 @@ color_t photonIC_t::getRadiance(renderState_t &state, ray_t &ray) const
 			if(nearest) lcol = nearest->color();
 		}
 	}
-    else
-    {
+	else
+	{
 		ray.tmax = std::numeric_limits<float>::max();
 	}
 	state.userdata = first_udat;
@@ -838,15 +848,15 @@ colorA_t photonIC_t::integrate(renderState_t &state, diffRay_t &ray) const
 	void *o_udat = state.userdata;
 	bool oldIncludeLights = state.includeLights;
 
-    // povman: Add new options for transparent backgroung from photonintegr.cc
-    // Btw.. is right??. TODO: need more test..
-    //if(transpBackground) alpha=0.0;
+	// povman: Add new options for transparent backgroung from photonintegr.cc
+	// Btw.. is right??. TODO: need more test..
+	//if(transpBackground) alpha=0.0;
 	//else alpha=1.0;
 
-    if(!transpBackground) alpha=1.0;
-    // end
-    // povman: Auto-notes. Comprobamos que el 'rayo' emitido intersecte con algun objeto de la escena. Si no lo hace
-    // computamos el color del background.. si hay.
+	if(!transpBackground) alpha=1.0;
+	// end
+	// povman: Auto-notes. Comprobamos que el 'rayo' emitido intersecte con algun objeto de la escena. Si no lo hace
+	// computamos el color del background.. si hay.
 	if(scene->intersect(ray, sp))
 	{
 		unsigned char userdata[USER_DATA_SIZE+7];
@@ -882,19 +892,19 @@ colorA_t photonIC_t::integrate(renderState_t &state, diffRay_t &ray) const
 
 				/*if(bsdfs & BSDF_DIFFUSE)
 				{
-					col += estimateAllDirectLight(state, sp, wo);
-					col += finalIC(state, sp, wo);
+				    col += estimateAllDirectLight(state, sp, wo);
+				    col += finalIC(state, sp, wo);
 				}*/
 				if(bsdfs & BSDF_DIFFUSE) // if material is diffuse.. TODO: if is specular??
 				{
 					// CREAR DIFERENCIAL SI NO TIENE! DARKTIDE STILE! (povman: original comment)
 					col += estimateAllDirectLight(state, sp, wo);
-                    // si activamos IC.. esto presupone que  Irradiance Cache y FinalGathering deben
-                    // activarse juntos?. Es el orden correcto?
+					// si activamos IC.. esto presupone que  Irradiance Cache y FinalGathering deben
+					// activarse juntos?. Es el orden correcto?
 					if (useIrradianceCache)
-                    {
+					{
 						if (!ray.hasDifferentials) // creamos diferencial si no lo hay ? TODO: para que?
-                        {
+						{
 							float dx = RI_vdC(state.pixelSample, state.samplingOffs);
 							float dy = RI_S(state.pixelSample, state.samplingOffs);
 							vector3d_t dU(0.f), dV(0.f);
@@ -902,7 +912,7 @@ colorA_t photonIC_t::integrate(renderState_t &state, diffRay_t &ray) const
 							ray.xdir = (dx+1.f)*dU + dy*dV +ray.dir;
 							// povman: double asignament to ray.xdir... is correct? maybe is ray.ydir?
 							// possible cause of 'fireflies'?
-							//ray.xdir = dx*dU + (dy+1.f)*dV + ray.dir;
+							// ray.xdir = dx*dU + (dy+1.f)*dV + ray.dir;
 							ray.ydir = dx*dU + (dy+1.f)*dV + ray.dir;  // go to try...
 							ray.hasDifferentials = true;
 						}
@@ -910,19 +920,19 @@ colorA_t photonIC_t::integrate(renderState_t &state, diffRay_t &ray) const
 						icRec_t *icRecord = new icRec_t(icKappa, sp, &(icTree->stratHemi) ); // M, Kappa
 						icRecord->setNup(wo);
 						icRecord->setPixelArea(ray);
-                        if (!icTree->getIrradiance(icRecord))
-                        {
+						if (!icTree->getIrradiance(icRecord))
+						{
 							setICRecord(state, ray, icRecord);
 							icTree->neighborClamp(icRecord);
 							icTree->add(icRecord);
 						}
 						col += icRecord->irr * M_1_PI *
-							   icRecord->material->eval(state, *icRecord, wo, icRecord->getNup(), BSDF_DIFFUSE);
-                        // povman: test for fix memmory leak.
-                        delete icRecord;
+						       icRecord->material->eval(state, *icRecord, wo, icRecord->getNup(), BSDF_DIFFUSE);
+						// povman: test for fix memmory leak.
+						delete icRecord;
 					}
-                    else  // if not use Irradiance Cache, compute Final Gathering
-                    {
+					else  // if not use Irradiance Cache, compute Final Gathering
+					{
 						col += finalGathering(state, sp, wo);
 					}
 				}
@@ -930,7 +940,7 @@ colorA_t photonIC_t::integrate(renderState_t &state, diffRay_t &ray) const
 		}
 		else
 		{
-		    if(showMap)
+			if(showMap)
 			{
 				vector3d_t N = FACE_FORWARD(sp.Ng, sp.N, wo);
 				const photon_t *nearest = diffuseMap.findNearest(sp.P, N, dsRadius);
@@ -971,10 +981,10 @@ colorA_t photonIC_t::integrate(renderState_t &state, diffRay_t &ray) const
 		if(bsdfs & BSDF_DIFFUSE) col += estimateCausticPhotons(state, sp, wo);
 
 		recursiveRaytrace(state, ray, bsdfs, sp, wo, col, alpha);
-        /**
-         * povman: This part is related only with Blender 'work flow' or is general??
-         */
-        if(transpRefractedBackground)
+		/**
+		 * povman: This part is related only with Blender 'work flow' or is general??
+		 */
+		if(transpRefractedBackground)
 		{
 			CFLOAT m_alpha = material->getAlpha(state, sp, wo);
 			alpha = m_alpha + (1.f-m_alpha)*alpha;
@@ -1012,8 +1022,8 @@ integrator_t* photonIC_t::factory(paraMap_t &params, renderEnvironment_t &render
 	float dsRad=0.1;
 	float cRad=0.01;
 	float gatherDist=0.2;
-    // background
-    bool bg_transp = true;
+	// background
+	bool bg_transp = true;
 	bool bg_transp_refract = true;
 	// IC
 	bool do_IC=false;
@@ -1038,8 +1048,8 @@ integrator_t* photonIC_t::factory(paraMap_t &params, renderEnvironment_t &render
 	gatherDist = dsRad;
 	params.getParam("fg_min_pathlen", gatherDist);
 	params.getParam("show_map", show_map);
-    // povman: is only related with Blender workflow ?
-    params.getParam("bg_transp", bg_transp);
+	// povman: is only related with Blender workflow ?
+	params.getParam("bg_transp", bg_transp);
 	params.getParam("bg_transp_refract", bg_transp_refract);
 
 	// IC params
@@ -1059,7 +1069,7 @@ integrator_t* photonIC_t::factory(paraMap_t &params, renderEnvironment_t &render
 	ite->gatherBounces = fgBounces;
 	ite->showMap = show_map;
 	ite->gatherDist = gatherDist;
-    // Background settings
+	// Background settings
 	ite->transpBackground = bg_transp;
 	ite->transpRefractedBackground = bg_transp_refract;
 	// IC settings
@@ -1074,7 +1084,7 @@ integrator_t* photonIC_t::factory(paraMap_t &params, renderEnvironment_t &render
 void photonIC_t::cleanup()
 {
 	if (useIrradianceCache)
-    {
+	{
 #ifndef _MSC_VER
 		if (icDumpXML)  icTree->saveToXml("dump.xml");
 #endif
@@ -1093,7 +1103,7 @@ void photonIC_t::cleanup()
 color_t photonIC_t::finalIC(renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo) const
 {
 	/*
-    color_t pathCol(0.0);
+	color_t pathCol(0.0);
 	void *first_udat = state.userdata;
 	unsigned char userdata[USER_DATA_SIZE+7];
 	void *n_udat = (void *)( &userdata[7] - ( ((size_t)&userdata[7])&7 ) ); // pad userdata to 8 bytes
@@ -1105,169 +1115,169 @@ color_t photonIC_t::finalIC(renderState_t &state, const surfacePoint_t &sp, cons
 	int nSampl = std::max(1, nPaths/state.rayDivision);
 	for(int i=0; i<nSampl; ++i)
 	{
-		color_t throughput( 1.0 );
-		PFLOAT length=0;
-		surfacePoint_t hit=sp;
-		vector3d_t pwo = wo;
-		diffRay_t pRay;
-		BSDF_t matBSDFs;
-		bool did_hit;
-		const material_t *p_mat = sp.material;
-		unsigned int offs = nPaths * state.pixelSample + state.samplingOffs + i; // some redundancy here...
-		color_t lcol, scol;
-		// "zero'th" FG bounce:
-		float s1 = RI_vdC(offs);
-		float s2 = scrHalton(2, offs);
-		if(state.rayDivision > 1)
-		{
-			s1 = addMod1(s1, state.dc1);
-			s2 = addMod1(s2, state.dc2);
-		}
+	    color_t throughput( 1.0 );
+	    PFLOAT length=0;
+	    surfacePoint_t hit=sp;
+	    vector3d_t pwo = wo;
+	    diffRay_t pRay;
+	    BSDF_t matBSDFs;
+	    bool did_hit;
+	    const material_t *p_mat = sp.material;
+	    unsigned int offs = nPaths * state.pixelSample + state.samplingOffs + i; // some redundancy here...
+	    color_t lcol, scol;
+	    // "zero'th" FG bounce:
+	    float s1 = RI_vdC(offs);
+	    float s2 = scrHalton(2, offs);
+	    if(state.rayDivision > 1)
+	    {
+	        s1 = addMod1(s1, state.dc1);
+	        s2 = addMod1(s2, state.dc2);
+	    }
 
-		sample_t s(s1, s2, BSDF_DIFFUSE|BSDF_REFLECT|BSDF_TRANSMIT); // glossy/dispersion/specular done via recursive raytracing
-		scol = p_mat->sample(state, hit, pwo, pRay.dir, s);
+	    sample_t s(s1, s2, BSDF_DIFFUSE|BSDF_REFLECT|BSDF_TRANSMIT); // glossy/dispersion/specular done via recursive raytracing
+	    scol = p_mat->sample(state, hit, pwo, pRay.dir, s);
 
-		if(s.pdf <= 1.0e-6f) continue;
-		scol *= (std::fabs(pRay.dir*sp.N)/s.pdf);
-		if(scol.isBlack()) continue;
+	    if(s.pdf <= 1.0e-6f) continue;
+	    scol *= (std::fabs(pRay.dir*sp.N)/s.pdf);
+	    if(scol.isBlack()) continue;
 
-		pRay.tmin = MIN_RAYDIST;
-		pRay.tmax = -1.0;
-		pRay.from = hit.P;
-		pRay.xfrom = hit.P;
-		pRay.yfrom = hit.P;
-		vector3d_t dU(0.f), dV(0.f);
-		createCS(pRay.dir, dU, dV);
-		pRay.xdir = (dx+1.f)*dU + dy*dV + pRay.dir;
-		pRay.xdir = dx*dU + (dy+1.f)*dV + pRay.dir;
-		pRay.hasDifferentials = true;
-		throughput = scol;
+	    pRay.tmin = MIN_RAYDIST;
+	    pRay.tmax = -1.0;
+	    pRay.from = hit.P;
+	    pRay.xfrom = hit.P;
+	    pRay.yfrom = hit.P;
+	    vector3d_t dU(0.f), dV(0.f);
+	    createCS(pRay.dir, dU, dV);
+	    pRay.xdir = (dx+1.f)*dU + dy*dV + pRay.dir;
+	    pRay.xdir = dx*dU + (dy+1.f)*dV + pRay.dir;
+	    pRay.hasDifferentials = true;
+	    throughput = scol;
 
-		if( !(did_hit = scene->intersect(pRay, hit)) ) continue; //hit background
+	    if( !(did_hit = scene->intersect(pRay, hit)) ) continue; //hit background
 
-		p_mat = hit.material;
-		length = pRay.tmax;
-		state.userdata = n_udat;
-		matBSDFs = p_mat->getFlags();
-		bool has_spec = matBSDFs & BSDF_SPECULAR;
-		bool caustic = false;
-		bool close = length < gatherDist;
-		bool do_bounce = close || has_spec;
+	    p_mat = hit.material;
+	    length = pRay.tmax;
+	    state.userdata = n_udat;
+	    matBSDFs = p_mat->getFlags();
+	    bool has_spec = matBSDFs & BSDF_SPECULAR;
+	    bool caustic = false;
+	    bool close = length < gatherDist;
+	    bool do_bounce = close || has_spec;
 
-		spDifferentials_t spDiff(hit, pRay);
+	    spDifferentials_t spDiff(hit, pRay);
 
-		// further bounces construct a path just as with path tracing:
-		for(int depth=0; depth<gatherBounces && do_bounce; ++depth)
-		{
-			int d4 = 4*depth;
-			pwo = -pRay.dir;
-			p_mat->initBSDF(state, hit, matBSDFs);
+	    // further bounces construct a path just as with path tracing:
+	    for(int depth=0; depth<gatherBounces && do_bounce; ++depth)
+	    {
+	        int d4 = 4*depth;
+	        pwo = -pRay.dir;
+	        p_mat->initBSDF(state, hit, matBSDFs);
 
-			if((matBSDFs & BSDF_VOLUMETRIC) && (vol=p_mat->getVolumeHandler(hit.N * pwo < 0)))
-			{
-				if(vol->transmittance(state, pRay, vcol)) throughput *= vcol;
-			}
+	        if((matBSDFs & BSDF_VOLUMETRIC) && (vol=p_mat->getVolumeHandler(hit.N * pwo < 0)))
+	        {
+	            if(vol->transmittance(state, pRay, vcol)) throughput *= vcol;
+	        }
 
-			if(matBSDFs & (BSDF_DIFFUSE))
-			{
-				if(close)
-				{
-					lcol = estimateOneDirectLight(state, hit, pwo, offs);
-				}
-				else if(caustic)
-				{
-					if (pRay.hasDifferentials)
-					{
-						icRec_t icRecord(icKappa, hit, &(icTree->stratHemi) ); // M, Kappa
-						icRecord.setNup(pwo);
-						icRecord.setPixelArea(pRay);
-						if (!icTree->getIrradiance(icRecord))
-						{
-							setICRecord(state, pRay, icRecord);
-							icTree->neighborClamp(icRecord);
-							icTree->add(icRecord);
-						}
-						lcol = icRecord.irr * M_1_PI * icRecord.material->eval(state, icRecord, pwo, icRecord.getNup(), BSDF_DIFFUSE);
-					}
-					else Y_INFO << "NO DIFFERENTIALS!!!" << std::endl;
-				}
+	        if(matBSDFs & (BSDF_DIFFUSE))
+	        {
+	            if(close)
+	            {
+	                lcol = estimateOneDirectLight(state, hit, pwo, offs);
+	            }
+	            else if(caustic)
+	            {
+	                if (pRay.hasDifferentials)
+	                {
+	                    icRec_t icRecord(icKappa, hit, &(icTree->stratHemi) ); // M, Kappa
+	                    icRecord.setNup(pwo);
+	                    icRecord.setPixelArea(pRay);
+	                    if (!icTree->getIrradiance(icRecord))
+	                    {
+	                        setICRecord(state, pRay, icRecord);
+	                        icTree->neighborClamp(icRecord);
+	                        icTree->add(icRecord);
+	                    }
+	                    lcol = icRecord.irr * M_1_PI * icRecord.material->eval(state, icRecord, pwo, icRecord.getNup(), BSDF_DIFFUSE);
+	                }
+	                else Y_INFO << "NO DIFFERENTIALS!!!" << std::endl;
+	            }
 
-				if(close || caustic)
-				{
-					if(matBSDFs & BSDF_EMIT) lcol += p_mat->emit(state, hit, pwo);
-					pathCol += lcol*throughput;
-				}
-			}
+	            if(close || caustic)
+	            {
+	                if(matBSDFs & BSDF_EMIT) lcol += p_mat->emit(state, hit, pwo);
+	                pathCol += lcol*throughput;
+	            }
+	        }
 
-			s1 = scrHalton(d4+3, offs);
-			s2 = scrHalton(d4+4, offs);
+	        s1 = scrHalton(d4+3, offs);
+	        s2 = scrHalton(d4+4, offs);
 
-			if(state.rayDivision > 1)
-			{
-				s1 = addMod1(s1, state.dc1);
-				s2 = addMod1(s2, state.dc2);
-			}
+	        if(state.rayDivision > 1)
+	        {
+	            s1 = addMod1(s1, state.dc1);
+	            s2 = addMod1(s2, state.dc2);
+	        }
 
-			sample_t sb(s1, s2, (close) ? BSDF_ALL : BSDF_ALL_SPECULAR | BSDF_FILTER);
-			scol = p_mat->sample(state, hit, pwo, pRay.dir, sb);
+	        sample_t sb(s1, s2, (close) ? BSDF_ALL : BSDF_ALL_SPECULAR | BSDF_FILTER);
+	        scol = p_mat->sample(state, hit, pwo, pRay.dir, sb);
 
-			if( sb.pdf <= 1.0e-6f)
-			{
-				did_hit=false;
-				break;
-			}
+	        if( sb.pdf <= 1.0e-6f)
+	        {
+	            did_hit=false;
+	            break;
+	        }
 
-			scol *= (std::fabs(pRay.dir*hit.N)/sb.pdf);
+	        scol *= (std::fabs(pRay.dir*hit.N)/sb.pdf);
 
-			pRay.tmin = MIN_RAYDIST;
-			pRay.tmax = -1.0;
-			pRay.from = hit.P;
-			throughput *= scol;
-			did_hit = scene->intersect(pRay, hit);
+	        pRay.tmin = MIN_RAYDIST;
+	        pRay.tmax = -1.0;
+	        pRay.from = hit.P;
+	        throughput *= scol;
+	        did_hit = scene->intersect(pRay, hit);
 
-			if(!did_hit) //hit background
-			{
-				if(caustic && background)
-				{
-					pathCol += throughput * (*background)(pRay, state);
-				}
-				break;
-			}
+	        if(!did_hit) //hit background
+	        {
+	            if(caustic && background)
+	            {
+	                pathCol += throughput * (*background)(pRay, state);
+	            }
+	            break;
+	        }
 
-			p_mat = hit.material;
-			length += pRay.tmax;
-			caustic = (caustic || !depth) && (sb.sampledFlags & (BSDF_SPECULAR | BSDF_FILTER));
-			close = length < gatherDist;
-			do_bounce = caustic || close;
-		}
+	        p_mat = hit.material;
+	        length += pRay.tmax;
+	        caustic = (caustic || !depth) && (sb.sampledFlags & (BSDF_SPECULAR | BSDF_FILTER));
+	        close = length < gatherDist;
+	        do_bounce = caustic || close;
+	    }
 
-		if(did_hit)
-		{
-			p_mat->initBSDF(state, hit, matBSDFs);
-			if(matBSDFs & (BSDF_DIFFUSE | BSDF_GLOSSY))
-			{
-				if (pRay.hasDifferentials)
-				{
-					pRay.dir = -pRay.dir;
-					icRec_t icRecord(icKappa, hit, &(icTree->stratHemi) ); // M, Kappa
-					icRecord.setNup(pRay.dir);
-					icRecord.setPixelArea(pRay);
-					if (!icTree->getIrradiance(icRecord))
-					{
-						setICRecord(state, pRay, icRecord);
-						icTree->neighborClamp(icRecord);
-						icTree->add(icRecord);
-					}
-					lcol = icRecord.irr * M_1_PI * icRecord.material->eval(state, icRecord, pRay.dir, icRecord.getNup(), BSDF_DIFFUSE);
-				}
-				else Y_INFO << "NO DIFFERENTIALS!!!" << std::endl;
+	    if(did_hit)
+	    {
+	        p_mat->initBSDF(state, hit, matBSDFs);
+	        if(matBSDFs & (BSDF_DIFFUSE | BSDF_GLOSSY))
+	        {
+	            if (pRay.hasDifferentials)
+	            {
+	                pRay.dir = -pRay.dir;
+	                icRec_t icRecord(icKappa, hit, &(icTree->stratHemi) ); // M, Kappa
+	                icRecord.setNup(pRay.dir);
+	                icRecord.setPixelArea(pRay);
+	                if (!icTree->getIrradiance(icRecord))
+	                {
+	                    setICRecord(state, pRay, icRecord);
+	                    icTree->neighborClamp(icRecord);
+	                    icTree->add(icRecord);
+	                }
+	                lcol = icRecord.irr * M_1_PI * icRecord.material->eval(state, icRecord, pRay.dir, icRecord.getNup(), BSDF_DIFFUSE);
+	            }
+	            else Y_INFO << "NO DIFFERENTIALS!!!" << std::endl;
 
-				if(matBSDFs & BSDF_EMIT) lcol += p_mat->emit(state, hit, -pRay.dir);
+	            if(matBSDFs & BSDF_EMIT) lcol += p_mat->emit(state, hit, -pRay.dir);
 
-				pathCol += lcol * throughput;
-			}
-		}
-		state.userdata = first_udat;
+	            pathCol += lcol * throughput;
+	        }
+	    }
+	    state.userdata = first_udat;
 	}
 	return pathCol / (float)nSampl;*/
 	color_t color;

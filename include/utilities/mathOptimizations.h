@@ -55,7 +55,13 @@
 
 // povman: add for irrcache
 // Auto-note: is the better way?
-#define M_SQRT3         1.73205080756887729353
+//#ifdef WITH_IRR_CACHE
+    #define M_SQRT3         1.73205080756887729353
+//#endif
+// add fot yafxsi
+# define M_PI		3.14159265358979323846	/* pi */
+# define M_PI_2		1.57079632679489661923	/* pi/2 */
+
 //end
 
 __BEGIN_YAFRAY

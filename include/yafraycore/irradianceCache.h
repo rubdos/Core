@@ -147,7 +147,7 @@ private:
 	float			rClamp; //!< radius clamped by projected pixel area and gradients
 	vector3d_t		Nup;    //!< normal vector on the side of the hitting ray
 	float			pArea;  //!< projected pixel area over the sample
-	float			kappa;  //!< overall changing accuaracy constant
+	float			kappa;  //!< overall changing accuracy constant
 };
 
 

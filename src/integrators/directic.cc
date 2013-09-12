@@ -1,10 +1,10 @@
 /****************************************************************************
- *		directlight.cc: an integrator for direct lighting only
- *		This is part of the yafaray package
- *		Copyright (C) 2006  Mathias Wein (Lynx)
- *		Copyright (C) 2009  Rodrigo Placencia (DarkTide)
+ *      directlight.cc: an integrator for direct lighting only
+ *      This is part of the yafaray package
+ *      Copyright (C) 2006  Mathias Wein (Lynx)
+ *      Copyright (C) 2009  Rodrigo Placencia (DarkTide)
  *
- *		This library is free software; you can redistribute it and/or
+ *      This library is free software; you can redistribute it and/or
  *      modify it under the terms of the GNU Lesser General Public
  *      License as published by the Free Software Foundation; either
  *      version 2.1 of the License, or (at your option) any later version.
@@ -61,7 +61,7 @@ directIC_t::directIC_t(bool transpShad, int shadowDepth, int rayDepth)
 
 directIC_t::~directIC_t()
 {
-    // povman: add empty destructor
+	// povman: add empty destructor
 }
 
 bool directIC_t::preprocess()
@@ -117,23 +117,23 @@ color_t directIC_t::getRadiance(renderState_t &state, ray_t &ray) const
 	ray.tmax = -1.0;
 	surfacePoint_t hitpoint;
 	if (scene->intersect(ray, hitpoint))
-    {
+	{
 		BSDF_t matBSDF;
 		hitpoint.material->initBSDF(state, hitpoint, matBSDF);
 		vector3d_t wo = -ray.dir;
 		if (! (matBSDF & BSDF_EMIT) )
-        {
+		{
 			if ( matBSDF & (BSDF_DIFFUSE | BSDF_GLOSSY) )
-            {
+			{
 				// Totally diffusive! not taking into account any glossyness
 				result = estimateAllDirectLight(state, hitpoint, wo);
 			}
 		}
 	}
-    else
-    {
+	else
+	{
 		if (background)
-        {
+		{
 			result = (*background)(ray, state, false);
 		}
 		ray.tmax = std::numeric_limits<float>::max();
@@ -146,7 +146,7 @@ colorA_t directIC_t::integrate(renderState_t &state, diffRay_t &ray) const
 	color_t col(0.0);
 	float alpha = 0.0;
 	surfacePoint_t sp;
-    void *o_udat = state.userdata;
+	void *o_udat = state.userdata;
 	bool oldIncludeLights = state.includeLights;
 
 	// povman: Add from directlight.cc
@@ -180,14 +180,14 @@ colorA_t directIC_t::integrate(renderState_t &state, diffRay_t &ray) const
 
 			// check for an interpolated result
 			if (useIrradianceCache)
-            {
+			{
 				if (ray.hasDifferentials)
-                {
+				{
 					icRec_t *icRecord = new icRec_t(icKappa, sp, &(icTree->stratHemi) ); // M, Kappa
 					icRecord->setNup(wo);
 					icRecord->setPixelArea(ray);
 					if (!icTree->getIrradiance(icRecord))
-                    {
+					{
 						setICRecord(state, ray, icRecord);
 						icTree->neighborClamp(icRecord);
 						icTree->add(icRecord);
@@ -197,16 +197,16 @@ colorA_t directIC_t::integrate(renderState_t &state, diffRay_t &ray) const
 					delete icRecord;
 				}
 				else
-                {
-                    Y_INFO << "NO DIFFERENTIALS!!!" << std::endl;
-                }
+				{
+					Y_INFO << "NO DIFFERENTIALS!!!" << std::endl;
+				}
 			}
 		}
 		// Reflective?, Refractive?
 		recursiveRaytrace(state, ray, bsdfs, sp, wo, col, alpha);
 
-        // povman: place here 'transparent background' changes
-        if(transpRefractedBackground)
+		// povman: place here 'transparent background' changes
+		if(transpRefractedBackground)
 		{
 			CFLOAT m_alpha = material->getAlpha(state, sp, wo);
 			alpha = m_alpha + (1.f-m_alpha)*alpha;
@@ -237,10 +237,10 @@ integrator_t* directIC_t::factory(paraMap_t &params, renderEnvironment_t &render
 	double cRad = 0.25;
 	double AO_dist = 1.0;
 	color_t AO_col(1.f);
-    // background
-    bool bg_transp = true;
+	// background
+	bool bg_transp = true;
 	bool bg_transp_refract = true;
-    // IC
+	// IC
 	bool do_IC=false;
 	int IC_M=10;
 	double IC_K=2.5;
@@ -260,7 +260,7 @@ integrator_t* directIC_t::factory(paraMap_t &params, renderEnvironment_t &render
 	params.getParam("AO_color", AO_col);
 
 	// povman: is only related with Blender workflow ?
-    params.getParam("bg_transp", bg_transp);
+	params.getParam("bg_transp", bg_transp);
 	params.getParam("bg_transp_refract", bg_transp_refract);
 	// IC
 	params.getParam("do_IC", do_IC);
@@ -294,8 +294,8 @@ integrator_t* directIC_t::factory(paraMap_t &params, renderEnvironment_t &render
 
 void directIC_t::cleanup()
 {
-    if (useIrradianceCache)
-    {
+	if (useIrradianceCache)
+	{
 #ifndef _MSC_VER
 		if (icDumpXML)  icTree->saveToXml("dump.xml");
 #endif
