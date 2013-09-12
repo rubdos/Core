@@ -60,13 +60,13 @@ stratifiedHemisphere::stratifiedHemisphere(int nm):M(nm), N(M_PI * M), hal(2) {
 stratifiedHemisphere::stratifiedHemisphere(const stratifiedHemisphere &strat): hal(2)
 {
 	hal.setStart(time(0));
-	if (this != &strat) 
+	if (this != &strat)
     {
-		if (&strat == NULL) 
+		if (&strat == NULL)
         {
 			M = N = 0;
-		} 
-        else 
+		}
+        else
         {
 			M = strat.getM();
 			N = strat.getN();
@@ -92,7 +92,7 @@ stratifiedHemisphere::stratifiedHemisphere(const stratifiedHemisphere &strat): h
 	}
 }
 
-stratifiedHemisphere::~stratifiedHemisphere() 
+stratifiedHemisphere::~stratifiedHemisphere()
 {
 	delete[] vk;
 	delete[] vkMinus;
@@ -105,12 +105,12 @@ stratifiedHemisphere::~stratifiedHemisphere()
 	delete[] cosThetaPlus;
 }
 
-stratifiedHemisphere & stratifiedHemisphere::operator=(const stratifiedHemisphere &strat) 
+stratifiedHemisphere & stratifiedHemisphere::operator=(const stratifiedHemisphere &strat)
 {
 	hal.setStart(time(0));
-	if (&strat != NULL && this != &strat) 
+	if (&strat != NULL && this != &strat)
     {
-		if (M != strat.getM()) 
+		if (M != strat.getM())
         {
 			M = strat.getM();
 			delete tanTheta;
@@ -132,7 +132,7 @@ stratifiedHemisphere & stratifiedHemisphere::operator=(const stratifiedHemispher
 			calcCosThetaMinuses();
 			calcCosThetaPluses();
 		}
-		if (N != strat.getN()) 
+		if (N != strat.getN())
         {
 			N = strat.getN();
 			delete vk;
@@ -149,7 +149,7 @@ stratifiedHemisphere & stratifiedHemisphere::operator=(const stratifiedHemispher
 	return *this;
 }
 
-vector3d_t stratifiedHemisphere::getDirection(int j, int k, unsigned int r) 
+vector3d_t stratifiedHemisphere::getDirection(int j, int k, unsigned int r)
 {
 	if (j<0 || j>M || k<0 || k>N)
     {
@@ -163,7 +163,7 @@ vector3d_t stratifiedHemisphere::getDirection(int j, int k, unsigned int r)
 	return vector3d_t(sinTheta * fCos(phi), sinTheta * fSin(phi), fSqrt(1 - tmp));
 }
 
-vector3d_t stratifiedHemisphere::getDirection(int j, int k, float s1, float s2) 
+vector3d_t stratifiedHemisphere::getDirection(int j, int k, float s1, float s2)
 {
 	if (j<0 || j>M || k<0 || k>N)
     {
@@ -177,7 +177,7 @@ vector3d_t stratifiedHemisphere::getDirection(int j, int k, float s1, float s2)
 
 void stratifiedHemisphere::calcUks()
 {
-	for (int k=0; k<N; k++) 
+	for (int k=0; k<N; k++)
     {
 		float phi = M_2PI * ((float)k + 0.5f) / (float)N;
 		uk[k] = vector3d_t(fCos(phi), fSin(phi), 0.f);
@@ -248,7 +248,7 @@ void stratifiedHemisphere::calcCosThetaPluses()
 	}
 }
 
-/********************************************** 
+/**********************************************
  *  icREC_t METHODS
  *********************************************/
 
@@ -266,30 +266,30 @@ icRec_t::icRec_t(float kappa, const surfacePoint_t &sp, stratifiedHemisphere *st
 	r = std::numeric_limits<float>::max();
 }
 
-vector3d_t icRec_t::getSampleHemisphere(int j, int k, unsigned int r) 
+vector3d_t icRec_t::getSampleHemisphere(int j, int k, unsigned int r)
 {
 	return changeBasis( stratHemi->getDirection(j, k, r), NU, NV, Nup );
 }
 
-vector3d_t icRec_t::getSampleHemisphere(int j, int k, float s1, float s2) 
+vector3d_t icRec_t::getSampleHemisphere(int j, int k, float s1, float s2)
 {
 	return changeBasis( stratHemi->getDirection(j, k, s1, s2), NU, NV, Nup );
 }
 
-void icRec_t::changeSampleRadius(float newr) 
+void icRec_t::changeSampleRadius(float newr)
 {
 	// we use minimal distance radius (without clamping for now)
-	if (newr < r) 
+	if (newr < r)
     {
 		r = newr;
 	}
 }
 
-float icRec_t::getWeight(const icRec_t &record) const 
+float icRec_t::getWeight(const icRec_t &record) const
 {
 	float dot = Nup * record.getNup();
 	// if record is pointing to the other side, better not to count his contribution
-	if (dot<0.f) 
+	if (dot<0.f)
     {
 		return 0.f;
 	}
@@ -299,12 +299,12 @@ float icRec_t::getWeight(const icRec_t &record) const
 	return weight;
 }
 
-bound_t icRec_t::getBound() const 
+bound_t icRec_t::getBound() const
 {
 	return bound_t(P - rClamp, P + rClamp);
 }
 
-void icRec_t::setPixelArea(const diffRay_t &ray) 
+void icRec_t::setPixelArea(const diffRay_t &ray)
 {
 	spDifferentials_t diff(*this, ray);
 	pArea = fSqrt(diff.projectedPixelArea());
@@ -312,12 +312,12 @@ void icRec_t::setPixelArea(const diffRay_t &ray)
 	rMax = 20.f * pArea;
 }
 
-void icRec_t::setNup(const vector3d_t &wo) 
+void icRec_t::setNup(const vector3d_t &wo)
 {
 	Nup = FACE_FORWARD(Ng, N, wo);
 }
 //-
-bool icRec_t::inFront(const icRec_t &record) const 
+bool icRec_t::inFront(const icRec_t &record) const
 {
     float di = (P - record.P) * ((Nup + record.getNup() )/2.0f);
     if (di < -0.01f) {// small negative value, ¿it works?
@@ -326,25 +326,25 @@ bool icRec_t::inFront(const icRec_t &record) const
 	return false;
 }
 //-
-void icRec_t::clampRbyGradient() 
+void icRec_t::clampRbyGradient()
 {
 	rClamp = std::min(r, std::min(irr.R/transGrad[0].length(),
 								  std::min( irr.G/transGrad[1].length(), irr.B/transGrad[2].length())) );
 }
 
-void icRec_t::clampRbyScreenSpace() 
+void icRec_t::clampRbyScreenSpace()
 {
 	rClamp = std::min(std::max(rClamp, rMin), rMax);
 }
 
-void icRec_t::clampRbyNeighbor() 
+void icRec_t::clampRbyNeighbor()
 {
 	rClamp = std::min(rClamp, rNeighbor);
 }
 
 void icRec_t::clampGradient()
 {
-	for (int i=0; i<3; i++) 
+	for (int i=0; i<3; i++)
     {
 		transGrad[i] =	transGrad[i] * std::min(1.f, r/rMin);
 	}
@@ -358,7 +358,7 @@ void icRec_t::setRNeighbor(float r)
 //
 // ***********************************************************************
 
-void icTree_t::add(icRec_t *rec) 
+void icTree_t::add(icRec_t *rec)
 {
 	lock.writeLock();
 	const bound_t &bound = rec->getBound();
@@ -368,22 +368,37 @@ void icTree_t::add(icRec_t *rec)
 	totalRecords++;
 }
 
-bool icTree_t::icLookup_t::operator()(const point3d_t &p, const icRec_t *sample) { // point p isn't used
-	if (!record->inFront(*sample)) {
+bool icTree_t::icLookup_t::operator()(const point3d_t &p, const icRec_t *sample)  // point p isn't used
+{
+	if (!record->inFront(*sample))
+    {
 		float weight = sample->getWeight(*record);
-		if (weight > 0.f) { //- TODO: see if weight > 0 is correct or should be a small number
+        //-
+		if (weight > 0.f)  //- TODO: see if weight > 0 is correct or should be a small number
+        {
 			// get weighted irradiance sample = E_i(p) * w_i(p)
 			// E_i(p) = E_i + (n_i x n) * drotE_i
+
 			color_t rotGradResult, transGradResult;
+
 			vector3d_t NCross = record->getNup() ^ sample->getNup(); // should be normalized already
+
 			rotGradResult.R = NCross * sample->rotGrad[0];
+
 			rotGradResult.G = NCross * sample->rotGrad[1];
+
 			rotGradResult.B = NCross * sample->rotGrad[2];
+
 			vector3d_t posDif = record->P - sample->P;
+
 			transGradResult.R = posDif * sample->transGrad[0];
+
 			transGradResult.G = posDif * sample->transGrad[1];
+
 			transGradResult.B = posDif * sample->transGrad[2];
+
 			radSamples.push_back( (sample->irr + rotGradResult + transGradResult) * weight );
+
 			totalWeight += weight;
 		}
 	} else {
@@ -392,9 +407,9 @@ bool icTree_t::icLookup_t::operator()(const point3d_t &p, const icRec_t *sample)
 	return true; // when could it be false? example?
 }
 
-void icTree_t::recursiveFindNear(octNode_t<icRec_t *> *node, bound_t &nodeBound,
-								 const icRec_t *record, std::vector<icRec_t *> &nearRecs,
-								 float &minR) {
+void icTree_t::recursiveFindNear(octNode_t<icRec_t *> *node, bound_t &nodeBound, const icRec_t *record,
+                                 std::vector<icRec_t *> &nearRecs, float &minR)
+{
 	for (unsigned int i = 0; i < node->data.size(); ++i)
     {
 		// pass the "in front" test
@@ -442,7 +457,7 @@ void icTree_t::recursiveFindNear(octNode_t<icRec_t *> *node, bound_t &nodeBound,
 	}
 }
 
-void icTree_t::neighborClamp(icRec_t *record) 
+void icTree_t::neighborClamp(icRec_t *record)
 {
 	// perform lock in tree, so we can't add other records at the same time
 	lock.readLock();
@@ -473,18 +488,18 @@ void icTree_t::neighborClamp(icRec_t *record)
 	lock.unlock();
 }
 
-bool icTree_t::getIrradiance(icRec_t *record) 
+bool icTree_t::getIrradiance(icRec_t *record)
 {
 	icLookup_t lookupProc(record);
 	lookup(record->P, lookupProc); // ads weighted radiance values to vector
 
 	// if there is no good irradiance sample return false
-	if (lookupProc.radSamples.size() == 0) 
+	if (lookupProc.radSamples.size() == 0)
     {
 		return false;
 	}
 	// calculate Sum(E_i(p) * w_i(p))
-	for (unsigned int i=0; i<lookupProc.radSamples.size(); i++) 
+	for (unsigned int i=0; i<lookupProc.radSamples.size(); i++)
     {
 		record->irr += lookupProc.radSamples[i];
 	}
@@ -494,17 +509,19 @@ bool icTree_t::getIrradiance(icRec_t *record)
 
 /**
 * Atm, saveToXml() is unused for Photon IC and
-* not work fine in Direct IC 
-* Btw.. not compile in MSVC++ 2008 
+* not work fine in Direct IC
+* Btw.. not compile in MSVC++ 2008
 */
 #ifndef _MSC_VER
 
-void icTree_t::saveToXml(const std::string &fileName) {
+void icTree_t::saveToXml(const std::string &fileName)
+{
 	int rc;
 	xmlTextWriterPtr writer;
 	// Create a new XmlWriter for uri
 	writer = xmlNewTextWriterFilename(fileName.c_str(), 1);
-	if (writer == NULL) {
+	if (writer == NULL)
+    {
 		Y_INFO << "testXmlwriterFilename: Error creating the xml writer" << std::endl;
 		return;
 	}
@@ -525,38 +542,46 @@ void icTree_t::saveToXml(const std::string &fileName) {
 	sibling[1] = 0;
 
 	// search for the next valid node
-	do {
+	do
+	{
 		//  go down one level
 		level++;
 		nodes[level] = nodes[level-1]->children[sibling[level]];
 		sibling[level+1] = 0;
 		// if not a valid node
-		if (!nodes[level]) {
+		if (!nodes[level])
+		{
 			bool invalid = true;
 			// go up until can move to next sibling
-			do {
+			do
+			{
 				sibling[level]++;
 				level--;
 				// The first one is for invalid nodes.
-				if (invalid) {
+				if (invalid)
+				{
 					invalid = false;
-				} else {
+				}
+				else
+                {
 					// Close ICNode node
 					rc = xmlTextWriterEndElement(writer);
-					if (rc < 0) {
+					if (rc < 0)
+					{
 						Y_INFO << "testXmlwriterFilename: Error at closing ICNode \n" << std::endl;
 						return;
 					}
 				}
-
-			} while (sibling[level+1]==8);
+			}
+			while (sibling[level+1]==8);
 		}
 		else // find a valid one
 		{
 			// PROCESS DATA
 			int size = nodes[level]->data.size();
-			for (int i=0; i<size; i++) {
-				icRec_t *record = nodes[level]->data[i];
+			for (int i=0; i<size; i++)
+            {
+                icRec_t *record = nodes[level]->data[i];
 				// Create Record node
 				xmlTextWriterStartElement(writer, BAD_CAST "ICRecord");
 				// Save members
@@ -583,14 +608,16 @@ void icTree_t::saveToXml(const std::string &fileName) {
 			}
 			// Create ICNode node
 			rc = xmlTextWriterStartElement(writer, BAD_CAST "ICNode");
-			if (rc < 0) {
+			if (rc < 0)
+            {
 				Y_INFO << "testXmlwriterFilename: Error at xmlTextWriterStartElement\n" << std::endl;
 				return;
 			}
 			xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "dataSize", "%d", size );
 			xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "childId", "%d", sibling[level] );
 		}
-	} while (level>=0);
+	}
+	while (level>=0);
 	// We already close ICtree element in the last loop
 	xmlTextWriterEndDocument(writer);
 	xmlFreeTextWriter(writer);
