@@ -197,7 +197,6 @@ bool mcIntegrator_t::createCausticMap()
 		{
 			causLights.push_back(lights[i]);
 		}
-
 	}
 
 	int numLights = causLights.size();
@@ -292,7 +291,6 @@ bool mcIntegrator_t::createCausticMap()
 						vol->transmittance(state, ray, vcol);
 						transm = vcol;
 					}
-
 				}
 				std::swap(hit, hit2);
 				vector3d_t wi = -ray.dir, wo;
@@ -674,7 +672,7 @@ color_t mcIntegrator_t::sampleAmbientOcclusion(renderState_t &state, const surfa
 	return col / (float)n;
 }
 
-
+#ifdef WITH_IRR_CACHE
 void mcIntegrator_t::setICRecord(renderState_t &state, diffRay_t &ray, icRec_t *record) const
 {
 	if (!ray.hasDifferentials)
@@ -718,13 +716,11 @@ void mcIntegrator_t::setICRecord(renderState_t &state, diffRay_t &ray, icRec_t *
 					// cos2(theta_j-)sin(theta_j-) * (L_j,k - L_j-1,k) / min(r_j,k , r_j-1,k)
 					float cosThetaMin = record->stratHemi->getCosThetaMinus(j);
 					innerTransValuesU +=
-					    ( (cosThetaMin*cosThetaMin) * (radiance - oldRad[j-1]) )/
-                        (std::min(sRay.tmax, oldRayLength[j-1])) ;
+					    ( (cosThetaMin*cosThetaMin) * (radiance - oldRad[j-1]) )/(std::min(sRay.tmax, oldRayLength[j-1]));
 					// cos(theta_j)[cos(theta_j-) - cos(theta_j+)] * (L_j,k - L_j,k-1) / [sin(theta_j,k) * min(r_j,k , r_j-1,k)]
 					innerTransValuesV +=
 					    ( record->stratHemi->getCosTheta(j) * (cosThetaMin - record->stratHemi->getCosThetaPlus(j)) *
-					      (radiance - oldRad[j]) ) /
-                          (record->stratHemi->getSinTheta(j) * std::min(sRay.tmax, oldRayLength[j]));
+					      (radiance - oldRad[j]) )/(record->stratHemi->getSinTheta(j) * std::min(sRay.tmax, oldRayLength[j]));
 				}
 			}
 			record->irr += radiance;
@@ -768,7 +764,9 @@ void mcIntegrator_t::setICRecord(renderState_t &state, diffRay_t &ray, icRec_t *
 	// HEURISTICS
 	record->clampRbyGradient();
 	if (ray.hasDifferentials)
+    {
 		record->clampRbyScreenSpace();
+    }
 	record->clampGradient();
 }
 
@@ -777,5 +775,5 @@ void mcIntegrator_t::cleanup()
 {
 	// do nothing, if IC implemented, may call the xml dump saving function
 }
-//#endif
+#endif
 __END_YAFRAY

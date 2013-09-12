@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * 		irradianceCache.cc: icTree, icRecord and hemisphere types and
+ *      irradianceCache.cc: icTree, icRecord and hemisphere types and
  *      operators implementation.
  *      This is part of the yafaray package
  *      Copyright (C) 2010  George Laskowsky Ziguilinsky
@@ -34,7 +34,8 @@ __BEGIN_YAFRAY
 
 // stratifiedHemisphere METHODS
 // ***********************************************************************
-stratifiedHemisphere::stratifiedHemisphere(int nm):M(nm), N(M_PI * M), hal(2) {
+stratifiedHemisphere::stratifiedHemisphere(int nm):M(nm), N(M_PI * M), hal(2)
+{
 	hal.setStart(time(0));
 	vk = new vector3d_t[N];
 	vkMinus = new vector3d_t[N];
@@ -61,13 +62,13 @@ stratifiedHemisphere::stratifiedHemisphere(const stratifiedHemisphere &strat): h
 {
 	hal.setStart(time(0));
 	if (this != &strat)
-    {
+	{
 		if (&strat == NULL)
-        {
+		{
 			M = N = 0;
 		}
-        else
-        {
+		else
+		{
 			M = strat.getM();
 			N = strat.getN();
 			vk = new vector3d_t[N];
@@ -109,9 +110,9 @@ stratifiedHemisphere & stratifiedHemisphere::operator=(const stratifiedHemispher
 {
 	hal.setStart(time(0));
 	if (&strat != NULL && this != &strat)
-    {
+	{
 		if (M != strat.getM())
-        {
+		{
 			M = strat.getM();
 			delete tanTheta;
 			delete sinTheta;
@@ -133,7 +134,7 @@ stratifiedHemisphere & stratifiedHemisphere::operator=(const stratifiedHemispher
 			calcCosThetaPluses();
 		}
 		if (N != strat.getN())
-        {
+		{
 			N = strat.getN();
 			delete vk;
 			delete vkMinus;
@@ -152,9 +153,9 @@ stratifiedHemisphere & stratifiedHemisphere::operator=(const stratifiedHemispher
 vector3d_t stratifiedHemisphere::getDirection(int j, int k, unsigned int r)
 {
 	if (j<0 || j>M || k<0 || k>N)
-    {
+	{
 		Y_INFO << "ERROR(stratifiedHemisphere.getDirection): j, k out of bound" << std::endl;
-    }
+	}
 	float s1 = RI_vdC(j+k+r);
 	float s2 = hal.getNext();
 	float tmp = ((float)j+s1)/(float)M;
@@ -166,9 +167,9 @@ vector3d_t stratifiedHemisphere::getDirection(int j, int k, unsigned int r)
 vector3d_t stratifiedHemisphere::getDirection(int j, int k, float s1, float s2)
 {
 	if (j<0 || j>M || k<0 || k>N)
-    {
+	{
 		Y_INFO << "ERROR(stratifiedHemisphere.getDirection): j, k out of bound" << std::endl;
-    }
+	}
 	float tmp = ((float)j+s1)/(float)M;
 	float sinTheta = fSqrt(tmp);
 	float phi = M_2PI*(k+s2)/N;
@@ -178,7 +179,7 @@ vector3d_t stratifiedHemisphere::getDirection(int j, int k, float s1, float s2)
 void stratifiedHemisphere::calcUks()
 {
 	for (int k=0; k<N; k++)
-    {
+	{
 		float phi = M_2PI * ((float)k + 0.5f) / (float)N;
 		uk[k] = vector3d_t(fCos(phi), fSin(phi), 0.f);
 	}
@@ -187,7 +188,7 @@ void stratifiedHemisphere::calcUks()
 void stratifiedHemisphere::calcVks()
 {
 	for (int k=0; k<N; k++)
-    {
+	{
 		float phi = M_2PI * ((float)k + 0.5f) / (float)N;
 		vk[k] = vector3d_t(-fSin(phi), fCos(phi), 0.f);
 	}
@@ -196,14 +197,16 @@ void stratifiedHemisphere::calcVks()
 void stratifiedHemisphere::calcVkMinuses()
 {
 	for (int k=0; k<N; k++)
-    {
+	{
 		float phi = M_2PI * (float)k / (float)N;
 		vkMinus[k] = vector3d_t(-fSin(phi), fCos(phi), 0.f);
 	}
 }
 
-void stratifiedHemisphere::calcTanThetas() {
-	for (int j=0; j<M; j++) {
+void stratifiedHemisphere::calcTanThetas()
+{
+	for (int j=0; j<M; j++)
+	{
 		//tanTheta[j] = fTan(fAsin( fSqrt( ((float)j+0.5f) / (float) M ) ));
 		tanTheta[j] = fSqrt( ((float)j+0.5f) / ((float)M - (float)j - 0.5) );
 	}
@@ -212,14 +215,14 @@ void stratifiedHemisphere::calcTanThetas() {
 void stratifiedHemisphere::calcSinThetas()
 {
 	for (int j=0; j<M; j++)
-    {
+	{
 		sinTheta[j] = fSqrt( ((float)j + 0.5f) / (float)M );
 	}
 }
 void stratifiedHemisphere::calcSinThetaMinuses()
 {
 	for (int j=0; j<M; j++)
-    {
+	{
 		sinThetaMinus[j] = fSqrt( (float)j / (float)M );
 	}
 }
@@ -227,7 +230,7 @@ void stratifiedHemisphere::calcSinThetaMinuses()
 void stratifiedHemisphere::calcCosThetas()
 {
 	for (int j=0; j<M; j++)
-    {
+	{
 		cosTheta[j] = fSqrt( 1.0f - ((float)j + 0.5f) / (float)M );
 	}
 }
@@ -235,7 +238,7 @@ void stratifiedHemisphere::calcCosThetas()
 void stratifiedHemisphere::calcCosThetaMinuses()
 {
 	for (int j=0; j<M; j++)
-    {
+	{
 		cosThetaMinus[j] = fSqrt( 1.0f - (float)j / (float)M );
 	}
 }
@@ -243,7 +246,7 @@ void stratifiedHemisphere::calcCosThetaMinuses()
 void stratifiedHemisphere::calcCosThetaPluses()
 {
 	for (int j=0; j<M; j++)
-    {
+	{
 		cosThetaPlus[j] = fSqrt( 1.0f - ((float)j + 1.0f) / (float)M );
 	}
 }
@@ -256,13 +259,14 @@ const float icRec_t::NORMALIZATION_TERM = 8.113140441;
 
 
 //! number of total sections are nSamples = pi*m^2
-icRec_t::icRec_t(float kappa, stratifiedHemisphere *strat):	stratHemi(strat), kappa(kappa)
+icRec_t::icRec_t(float kappa, stratifiedHemisphere *strat): stratHemi(strat), kappa(kappa)
 {
-    r = std::numeric_limits<float>::max();
+	r = std::numeric_limits<float>::max();
 }
 
 icRec_t::icRec_t(float kappa, const surfacePoint_t &sp, stratifiedHemisphere *strat):
-		surfacePoint_t(sp), stratHemi(strat), kappa(kappa) {
+	surfacePoint_t(sp), stratHemi(strat), kappa(kappa)
+{
 	r = std::numeric_limits<float>::max();
 }
 
@@ -280,7 +284,7 @@ void icRec_t::changeSampleRadius(float newr)
 {
 	// we use minimal distance radius (without clamping for now)
 	if (newr < r)
-    {
+	{
 		r = newr;
 	}
 }
@@ -290,7 +294,7 @@ float icRec_t::getWeight(const icRec_t &record) const
 	float dot = Nup * record.getNup();
 	// if record is pointing to the other side, better not to count his contribution
 	if (dot<0.f)
-    {
+	{
 		return 0.f;
 	}
 	float epNor = fSqrt(1.f - dot) * NORMALIZATION_TERM;
@@ -319,17 +323,18 @@ void icRec_t::setNup(const vector3d_t &wo)
 //-
 bool icRec_t::inFront(const icRec_t &record) const
 {
-    float di = (P - record.P) * ((Nup + record.getNup() )/2.0f);
-    if (di < -0.01f) {// small negative value, ¿it works?
+	float di = (P - record.P) * ((Nup + record.getNup() )/2.0f);
+	if (di < -0.01f)  // small negative value, ¿it works?
+	{
 		return true;
-    }
+	}
 	return false;
 }
 //-
 void icRec_t::clampRbyGradient()
 {
 	rClamp = std::min(r, std::min(irr.R/transGrad[0].length(),
-								  std::min( irr.G/transGrad[1].length(), irr.B/transGrad[2].length())) );
+	                              std::min( irr.G/transGrad[1].length(), irr.B/transGrad[2].length())) );
 }
 
 void icRec_t::clampRbyScreenSpace()
@@ -345,8 +350,8 @@ void icRec_t::clampRbyNeighbor()
 void icRec_t::clampGradient()
 {
 	for (int i=0; i<3; i++)
-    {
-		transGrad[i] =	transGrad[i] * std::min(1.f, r/rMin);
+	{
+		transGrad[i] =  transGrad[i] * std::min(1.f, r/rMin);
 	}
 }
 
@@ -363,7 +368,7 @@ void icTree_t::add(icRec_t *rec)
 	lock.writeLock();
 	const bound_t &bound = rec->getBound();
 	recursiveAdd(&root, treeBound, rec, bound,
-				 2*rec->getRadius()*M_SQRT3 ); // 2*r*sqrt(3) = (bound.a - bound.g).length
+	             2*rec->getRadius()*M_SQRT3 ); // 2*r*sqrt(3) = (bound.a - bound.g).length
 	lock.unlock();
 	totalRecords++;
 }
@@ -371,11 +376,11 @@ void icTree_t::add(icRec_t *rec)
 bool icTree_t::icLookup_t::operator()(const point3d_t &p, const icRec_t *sample)  // point p isn't used
 {
 	if (!record->inFront(*sample))
-    {
+	{
 		float weight = sample->getWeight(*record);
-        //-
+		//-
 		if (weight > 0.f)  //- TODO: see if weight > 0 is correct or should be a small number
-        {
+		{
 			// get weighted irradiance sample = E_i(p) * w_i(p)
 			// E_i(p) = E_i + (n_i x n) * drotE_i
 
@@ -401,8 +406,10 @@ bool icTree_t::icLookup_t::operator()(const point3d_t &p, const icRec_t *sample)
 
 			totalWeight += weight;
 		}
-	} else {
-	//	Y_INFO << "In front!" << std::endl;
+	}
+	else
+	{
+		//  Y_INFO << "In front!" << std::endl;
 	}
 	return true; // when could it be false? example?
 }
@@ -411,18 +418,18 @@ void icTree_t::recursiveFindNear(octNode_t<icRec_t *> *node, bound_t &nodeBound,
                                  std::vector<icRec_t *> &nearRecs, float &minR)
 {
 	for (unsigned int i = 0; i < node->data.size(); ++i)
-    {
+	{
 		// pass the "in front" test
 		if (!record->inFront( *(node->data[i]) ) )
-        {
+		{
 			float distance = (record->P - (node->data[i])->P).length();
 			// if both radius overlaps
 			if ( distance <= (record->r + (node->data[i])->r) )
-            {
+			{
 				float rSum = (node->data[i])->r + distance;
 				// checks for triangule inequality
 				if ( rSum < record->r )
-                {
+				{
 					minR = std::min( minR, rSum );
 					// add pointer to record to nearRecs
 					nearRecs.push_back(node->data[i]);
@@ -480,7 +487,7 @@ void icTree_t::neighborClamp(icRec_t *record)
 
 	// perform neighbor clamp to neighbors
 	for (unsigned int i=0; i<nearRecs.size(); i++)
-    {
+	{
 		nearRecs[i]->setRNeighbor(minR + (nearRecs[i]->P - record->P).length());
 		nearRecs[i]->clampRbyNeighbor();
 	}
@@ -495,12 +502,12 @@ bool icTree_t::getIrradiance(icRec_t *record)
 
 	// if there is no good irradiance sample return false
 	if (lookupProc.radSamples.size() == 0)
-    {
+	{
 		return false;
 	}
 	// calculate Sum(E_i(p) * w_i(p))
 	for (unsigned int i=0; i<lookupProc.radSamples.size(); i++)
-    {
+	{
 		record->irr += lookupProc.radSamples[i];
 	}
 	record->irr = record->irr / lookupProc.totalWeight; // E(p) = Sum(E_i(p) * w_i(p)) / Sum(w_i(p))
@@ -521,7 +528,7 @@ void icTree_t::saveToXml(const std::string &fileName)
 	// Create a new XmlWriter for uri
 	writer = xmlNewTextWriterFilename(fileName.c_str(), 1);
 	if (writer == NULL)
-    {
+	{
 		Y_INFO << "testXmlwriterFilename: Error creating the xml writer" << std::endl;
 		return;
 	}
@@ -530,12 +537,12 @@ void icTree_t::saveToXml(const std::string &fileName)
 	// Create root element named ICtree
 	xmlTextWriterStartElement(writer, BAD_CAST "ICtree");
 	xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "boundMin",
-										   "%f,%f,%f", treeBound.a.x, treeBound.a.y, treeBound.a.z );
+	                                  "%f,%f,%f", treeBound.a.x, treeBound.a.y, treeBound.a.z );
 	xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "boundMax",
-										   "%f,%f,%f", treeBound.g.x, treeBound.g.y, treeBound.g.z );
-    //-
-    octNode_t<icRec_t *> *nodes[maxDepth+1];
-    int sibling[maxDepth+1];
+	                                  "%f,%f,%f", treeBound.g.x, treeBound.g.y, treeBound.g.z );
+	//-
+	octNode_t<icRec_t *> *nodes[maxDepth+1];
+	int sibling[maxDepth+1];
 	int level = 0;
 	nodes[0] = &root;
 	sibling[0] = 8; // end condition
@@ -563,7 +570,7 @@ void icTree_t::saveToXml(const std::string &fileName)
 					invalid = false;
 				}
 				else
-                {
+				{
 					// Close ICNode node
 					rc = xmlTextWriterEndElement(writer);
 					if (rc < 0)
@@ -580,8 +587,8 @@ void icTree_t::saveToXml(const std::string &fileName)
 			// PROCESS DATA
 			int size = nodes[level]->data.size();
 			for (int i=0; i<size; i++)
-            {
-                icRec_t *record = nodes[level]->data[i];
+			{
+				icRec_t *record = nodes[level]->data[i];
 				// Create Record node
 				xmlTextWriterStartElement(writer, BAD_CAST "ICRecord");
 				// Save members
@@ -609,7 +616,7 @@ void icTree_t::saveToXml(const std::string &fileName)
 			// Create ICNode node
 			rc = xmlTextWriterStartElement(writer, BAD_CAST "ICNode");
 			if (rc < 0)
-            {
+			{
 				Y_INFO << "testXmlwriterFilename: Error at xmlTextWriterStartElement\n" << std::endl;
 				return;
 			}
