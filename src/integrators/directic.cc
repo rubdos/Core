@@ -35,10 +35,12 @@ class YAFRAYPLUGIN_EXPORT directIC_t : public mcIntegrator_t
 public:
 	directIC_t(bool transpShad=false, int shadowDepth=4, int rayDepth=6);
 	virtual bool preprocess();
-	virtual color_t getRadiance(renderState_t &state, ray_t &ray) const;
 	virtual colorA_t integrate(renderState_t &state, diffRay_t &ray) const;
-	virtual void cleanup();
 	static integrator_t* factory(paraMap_t &params, renderEnvironment_t &render);
+	virtual color_t getRadiance(renderState_t &state, ray_t &ray) const;
+	virtual void cleanup();
+	/** povman: create a empty destructor for test */
+	~directIC_t();
 };
 
 directIC_t::directIC_t(bool transpShad, int shadowDepth, int rayDepth)
@@ -55,6 +57,11 @@ directIC_t::directIC_t(bool transpShad, int shadowDepth, int rayDepth)
 	intpb = 0;
 	integratorName = "DirectIC";
 	integratorShortName = "DIC";
+}
+
+directIC_t::~directIC_t()
+{
+    // povman: add empty destructor
 }
 
 bool directIC_t::preprocess()
@@ -109,18 +116,24 @@ color_t directIC_t::getRadiance(renderState_t &state, ray_t &ray) const
 	ray.tmin = MIN_RAYDIST;
 	ray.tmax = -1.0;
 	surfacePoint_t hitpoint;
-	if (scene->intersect(ray, hitpoint)) {
+	if (scene->intersect(ray, hitpoint))
+    {
 		BSDF_t matBSDF;
 		hitpoint.material->initBSDF(state, hitpoint, matBSDF);
 		vector3d_t wo = -ray.dir;
-		if (! (matBSDF & BSDF_EMIT) ) {
-			if ( matBSDF & (BSDF_DIFFUSE | BSDF_GLOSSY) ) {
+		if (! (matBSDF & BSDF_EMIT) )
+        {
+			if ( matBSDF & (BSDF_DIFFUSE | BSDF_GLOSSY) )
+            {
 				// Totally diffusive! not taking into account any glossyness
 				result = estimateAllDirectLight(state, hitpoint, wo);
 			}
 		}
-	} else {
-		if (background) {
+	}
+    else
+    {
+		if (background)
+        {
 			result = (*background)(ray, state, false);
 		}
 		ray.tmax = std::numeric_limits<float>::max();
@@ -136,18 +149,24 @@ colorA_t directIC_t::integrate(renderState_t &state, diffRay_t &ray) const
     void *o_udat = state.userdata;
 	bool oldIncludeLights = state.includeLights;
 
+	// povman: Add from directlight.cc
+	if(!transpBackground) alpha=1.0;
+	//else alpha=1.0;
+	// end
+
 	// Shoot ray into scene
 	if(scene->intersect(ray, sp)) // If it hits
 	{
 		// create new memory on stack for material setup
 		unsigned char *newUserData[USER_DATA_SIZE];
-		state.userdata = (void *)newUserData;
 		const material_t *material = sp.material;
 		BSDF_t bsdfs;
-		material->initBSDF(state, sp, bsdfs);
 
+		state.userdata = (void *)newUserData;
 		vector3d_t wo = -ray.dir;
 		if(state.raylevel == 0) state.includeLights = true;
+
+		material->initBSDF(state, sp, bsdfs);
 
 		// obtain material self emitance
 		if(bsdfs & BSDF_EMIT) col += material->emit(state, sp, wo);
@@ -156,31 +175,46 @@ colorA_t directIC_t::integrate(renderState_t &state, diffRay_t &ray) const
 		{
 			// obtain direct illumination
 			col += estimateAllDirectLight(state, sp, wo);
-			col += estimateCausticPhotons(state, sp, wo);
+			if (usePhotonCaustics) col += estimateCausticPhotons(state, sp, wo);
 			if(useAmbientOcclusion) col += sampleAmbientOcclusion(state, sp, wo);
 
 			// check for an interpolated result
-			if (useIrradianceCache) {
-				if (ray.hasDifferentials) {
+			if (useIrradianceCache)
+            {
+				if (ray.hasDifferentials)
+                {
 					icRec_t *icRecord = new icRec_t(icKappa, sp, &(icTree->stratHemi) ); // M, Kappa
 					icRecord->setNup(wo);
 					icRecord->setPixelArea(ray);
-					if (!icTree->getIrradiance(icRecord)) {
+					if (!icTree->getIrradiance(icRecord))
+                    {
 						setICRecord(state, ray, icRecord);
 						icTree->neighborClamp(icRecord);
 						icTree->add(icRecord);
 					}
 					col += icRecord->irr * icRecord->material->eval(state, *icRecord, wo, icRecord->getNup(), BSDF_DIFFUSE) * M_1_PI;
-				} else
-					Y_INFO << "NO DIFFERENTIALS!!!" << std::endl;
+					// povman: test for fix memory leak
+					delete icRecord;
+				}
+				else
+                {
+                    Y_INFO << "NO DIFFERENTIALS!!!" << std::endl;
+                }
 			}
 		}
 		// Reflective?, Refractive?
 		recursiveRaytrace(state, ray, bsdfs, sp, wo, col, alpha);
 
-        /** povman TODO: place here 'transparent background' changes */
-		float m_alpha = material->getAlpha(state, sp, wo);
-		alpha = m_alpha + (1.f - m_alpha) * alpha;
+        // povman: place here 'transparent background' changes
+        if(transpRefractedBackground)
+		{
+			CFLOAT m_alpha = material->getAlpha(state, sp, wo);
+			alpha = m_alpha + (1.f-m_alpha)*alpha;
+		}
+		else alpha = 1.0;
+
+		//float m_alpha = material->getAlpha(state, sp, wo);
+		//alpha = m_alpha + (1.f - m_alpha) * alpha;
 	}
 	else // Nothing hit, return background if any
 	{
@@ -203,10 +237,15 @@ integrator_t* directIC_t::factory(paraMap_t &params, renderEnvironment_t &render
 	double cRad = 0.25;
 	double AO_dist = 1.0;
 	color_t AO_col(1.f);
+    // background
+    bool bg_transp = true;
+	bool bg_transp_refract = true;
+    // IC
 	bool do_IC=false;
 	int IC_M=10;
 	double IC_K=2.5;
-	
+	bool IC_dump=false;
+
 	params.getParam("raydepth", raydepth);
 	params.getParam("transpShad", transpShad);
 	params.getParam("shadowDepth", shadowDepth);
@@ -219,9 +258,15 @@ integrator_t* directIC_t::factory(paraMap_t &params, renderEnvironment_t &render
 	params.getParam("AO_samples", AO_samples);
 	params.getParam("AO_distance", AO_dist);
 	params.getParam("AO_color", AO_col);
+
+	// povman: is only related with Blender workflow ?
+    params.getParam("bg_transp", bg_transp);
+	params.getParam("bg_transp_refract", bg_transp_refract);
+	// IC
 	params.getParam("do_IC", do_IC);
 	params.getParam("IC_M_Divs", IC_M);
 	params.getParam("IC_Kappa", IC_K);
+	params.getParam("IC_DumpXML", IC_dump);
 
 	directIC_t *inte = new directIC_t(transpShad, shadowDepth, raydepth);
 	// caustic settings
@@ -235,28 +280,36 @@ integrator_t* directIC_t::factory(paraMap_t &params, renderEnvironment_t &render
 	inte->aoSamples = AO_samples;
 	inte->aoDist = (PFLOAT)AO_dist;
 	inte->aoCol = AO_col;
+	// Background settings
+	inte->transpBackground = bg_transp;
+	inte->transpRefractedBackground = bg_transp_refract;
 	// IC settings
 	inte->useIrradianceCache = do_IC;
 	inte->icMDivs = IC_M;
 	inte->icKappa = IC_K;
+	inte->icDumpXML = IC_dump;
 
 	return inte;
 }
 
 void directIC_t::cleanup()
 {
-    //icTree->saveToXml("dump.xml");
-    delete icTree; // for test
+    if (useIrradianceCache)
+    {
+#ifndef _MSC_VER
+		if (icDumpXML)  icTree->saveToXml("dump.xml");
+#endif
+		Y_INFO << "Total Records: " << icTree->getTotalRecords() << std::endl;
+		delete icTree;
+	}
 }
 
 extern "C"
 {
-
 	YAFRAYPLUGIN_EXPORT void registerPlugin(renderEnvironment_t &render)
 	{
 		render.registerFactory("directIC",directIC_t::factory);
 	}
-
 }
 
 __END_YAFRAY
