@@ -515,9 +515,7 @@ bool icTree_t::getIrradiance(icRec_t *record)
 }
 
 /**
-* Atm, saveToXml() is unused for Photon IC and
-* not work fine in Direct IC
-* Btw.. not compile in MSVC++ 2008
+* Atm, not compile in MSVC++ 2008
 */
 #ifndef _MSC_VER
 
