@@ -54,7 +54,7 @@ directIC_t::directIC_t(bool transpShad, int shadowDepth, int rayDepth)
 	usePhotonCaustics = false;
 	sDepth = shadowDepth;
 	rDepth = rayDepth;
-	intpb = 0;
+	//intpb = 0;
 	integratorName = "DirectIC";
 	integratorShortName = "DIC";
 }
@@ -94,8 +94,6 @@ bool directIC_t::preprocess()
 	}
 
 	settings = set.str();
-
-	//((qtFilm_t *)imageFilm)->drawTriangle(10, 10, 3);
 
 	// setup cache tree
 	if(useIrradianceCache)
@@ -144,18 +142,16 @@ color_t directIC_t::getRadiance(renderState_t &state, ray_t &ray) const
 colorA_t directIC_t::integrate(renderState_t &state, diffRay_t &ray) const
 {
 	color_t col(0.0);
-	float alpha = 0.0;
+	float alpha;
 	surfacePoint_t sp;
 	void *o_udat = state.userdata;
 	bool oldIncludeLights = state.includeLights;
 
-	// povman: Add from directlight.cc
-	if(!transpBackground) alpha=1.0;
-	//else alpha=1.0;
-	// end
+	if (transpBackground) alpha=0.0;
+	else alpha=1.0;
 
 	// Shoot ray into scene
-	if(scene->intersect(ray, sp)) // If it hits
+	if (scene->intersect(ray, sp)) // If it hits
 	{
 		// create new memory on stack for material setup
 		unsigned char *newUserData[USER_DATA_SIZE];
@@ -169,13 +165,13 @@ colorA_t directIC_t::integrate(renderState_t &state, diffRay_t &ray) const
 		material->initBSDF(state, sp, bsdfs);
 
 		// obtain material self emitance
-		if(bsdfs & BSDF_EMIT) col += material->emit(state, sp, wo);
+		if (bsdfs & BSDF_EMIT) col += material->emit(state, sp, wo);
 
-		if(bsdfs & BSDF_DIFFUSE)
+		if (bsdfs & BSDF_DIFFUSE)
 		{
 			// obtain direct illumination
 			col += estimateAllDirectLight(state, sp, wo);
-			if (usePhotonCaustics) col += estimateCausticPhotons(state, sp, wo);
+			if(usePhotonCaustics) col += estimateCausticPhotons(state, sp, wo);
 			if(useAmbientOcclusion) col += sampleAmbientOcclusion(state, sp, wo);
 
 			// check for an interpolated result
@@ -189,7 +185,7 @@ colorA_t directIC_t::integrate(renderState_t &state, diffRay_t &ray) const
 					if (!icTree->getIrradiance(icRecord))
 					{
 						setICRecord(state, ray, icRecord);
-						icTree->neighborClamp(icRecord);
+						if (useNeighbord) icTree->neighborClamp(icRecord);
 						icTree->add(icRecord);
 					}
 					col += icRecord->irr * icRecord->material->eval(state, *icRecord, wo, icRecord->getNup(), BSDF_DIFFUSE) * M_1_PI;
@@ -205,16 +201,12 @@ colorA_t directIC_t::integrate(renderState_t &state, diffRay_t &ray) const
 		// Reflective?, Refractive?
 		recursiveRaytrace(state, ray, bsdfs, sp, wo, col, alpha);
 
-		// povman: place here 'transparent background' changes
 		if(transpRefractedBackground)
 		{
 			CFLOAT m_alpha = material->getAlpha(state, sp, wo);
 			alpha = m_alpha + (1.f-m_alpha)*alpha;
 		}
 		else alpha = 1.0;
-
-		//float m_alpha = material->getAlpha(state, sp, wo);
-		//alpha = m_alpha + (1.f - m_alpha) * alpha;
 	}
 	else // Nothing hit, return background if any
 	{
@@ -245,6 +237,7 @@ integrator_t* directIC_t::factory(paraMap_t &params, renderEnvironment_t &render
 	int IC_M=10;
 	double IC_K=2.5;
 	bool IC_dump=false;
+	bool IC_Clamp= false;
 
 	params.getParam("raydepth", raydepth);
 	params.getParam("transpShad", transpShad);
@@ -267,6 +260,7 @@ integrator_t* directIC_t::factory(paraMap_t &params, renderEnvironment_t &render
 	params.getParam("IC_M_Divs", IC_M);
 	params.getParam("IC_Kappa", IC_K);
 	params.getParam("IC_DumpXML", IC_dump);
+	params.getParam("IC_Clamp",IC_Clamp);
 
 	directIC_t *inte = new directIC_t(transpShad, shadowDepth, raydepth);
 	// caustic settings
@@ -288,6 +282,7 @@ integrator_t* directIC_t::factory(paraMap_t &params, renderEnvironment_t &render
 	inte->icMDivs = IC_M;
 	inte->icKappa = IC_K;
 	inte->icDumpXML = IC_dump;
+	inte->useNeighbord= IC_Clamp;
 
 	return inte;
 }
@@ -299,7 +294,7 @@ void directIC_t::cleanup()
 #ifndef _MSC_VER
 		if (icDumpXML)  icTree->saveToXml("dump.xml");
 #endif
-		Y_INFO << "Total Records: " << icTree->getTotalRecords() << std::endl;
+		Y_INFO << "Total Irradiance Records: " << icTree->getTotalRecords() << std::endl;
 		delete icTree;
 	}
 }

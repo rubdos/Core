@@ -118,7 +118,7 @@ photonIC_t::photonIC_t(unsigned int dPhotons, unsigned int cPhotons, bool transp
 	causRadius = cRad;
 	rDepth = 6;
 	maxBounces = 5;
-	intpb = 0;
+	//intpb = 0;
 	integratorName = "PhotonIC";
 	integratorShortName = "PMIC";
 }
@@ -384,8 +384,8 @@ bool photonIC_t::preprocess()
 		pb->init(128);
 		pbStep = std::max(1U, nCausPhotons / 128);
 		pb->setTag("Building caustics photon map...");
-		//Pregather caustic photons
 
+		//Pregather caustic photons
 		float invCaustPhotons = 1.f / (float)nCausPhotons;
 
 		while(!done)
@@ -456,7 +456,7 @@ bool photonIC_t::preprocess()
 				material->initBSDF(state, sp, bsdfs);
 				// povman: in photonintgr.cc is only BSDF_DIFFUSE
 				// TODO: review.. and make test
-				if(bsdfs & (BSDF_DIFFUSE | BSDF_GLOSSY))
+				if(bsdfs & (BSDF_DIFFUSE )) //| BSDF_GLOSSY))
 				{
 					if(causticPhoton)
 					{
@@ -635,8 +635,8 @@ bool photonIC_t::preprocess()
 
 	gTimer.stop("prepass");
 	Y_INFO << integratorName << ": Photonmap building time: " << gTimer.getTime("prepass") << yendl;
-	/** povman : find all povman's for  read notes */
-	// setup cache tree
+
+	// povman: IC, setup cache tree
 	if(useIrradianceCache)
 	{
 		icTree = new icTree_t(scene->getSceneBound(), 18, icMDivs);
@@ -650,11 +650,6 @@ bool photonIC_t::preprocess()
 // precondition: initBSDF of current spot has been called!
 color_t photonIC_t::finalGathering(renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo) const
 {
-	// povman: Atm, esta parte no influye en IC, pues solo se usa si no activamos IC.
-	// Forma parte de PhotonIntegrator.
-	// La idea es: podemos usar los dos 'metodos' juntos? PM + FG, ya es una buena solucion a la ecuacion de render.
-	// La pregunta es PM + FG + IC  (..o PM + IC + FG) es factible? Es util?
-	// Posible planteamiento: Usamos PM y luego decidimos.. FG o IC dependiendo del resultado buscado o del tipo de escena.
 	color_t pathCol(0.0);
 	void *first_udat = state.userdata;
 	unsigned char userdata[USER_DATA_SIZE+7];
@@ -688,10 +683,11 @@ color_t photonIC_t::finalGathering(renderState_t &state, const surfacePoint_t &s
 		sample_t s(s1, s2, BSDF_DIFFUSE|BSDF_REFLECT|BSDF_TRANSMIT); // glossy/dispersion/specular done via recursive raytracing
 		scol = p_mat->sample(state, hit, pwo, pRay.dir, s, W);
 
-		// povman: this part is different in photonintgr.cc.
-		// deprecated method??
-		if(s.pdf <= 1.0e-6f) continue; // this check not exist
-		scol *= (std::fabs(pRay.dir*sp.N)/s.pdf); // and this is:  scol *=W;
+		// povman: this part is different in photonintgr.cc. Deprecated method?? TODO: investigate...
+		//
+		//if(s.pdf <= 1.0e-6f) continue;            // this check not exist
+		//scol *= (std::fabs(pRay.dir*sp.N)/s.pdf); // and this is:  scol *=W;
+		scol *=W;
 
 		if(scol.isBlack()) continue;
 
@@ -760,7 +756,8 @@ color_t photonIC_t::finalGathering(renderState_t &state, const surfacePoint_t &s
 				break;
 			}
 			// povman: this part is.. scol *= W; (TODO: review)
-			scol *= (std::fabs(pRay.dir*hit.N)/sb.pdf);
+			//scol *= (std::fabs(pRay.dir*hit.N)/sb.pdf);
+			scol *= W; // try..
 
 			pRay.tmin = MIN_RAYDIST;
 			pRay.tmax = -1.0;
@@ -801,8 +798,7 @@ color_t photonIC_t::finalGathering(renderState_t &state, const surfacePoint_t &s
 	return pathCol / (float)nSampl;
 }
 
-// povman: Metodo exclusivo para Irradiance Cache.
-// Computamos Radiance dependiendo del tipo de Integrador. Para PhotonMap es diferente que para DirectLight.
+// povman: Function called for mcIntegrator_t::setICRecord()
 color_t photonIC_t::getRadiance(renderState_t &state, ray_t &ray) const
 {
 	void *first_udat = state.userdata;
@@ -842,21 +838,15 @@ colorA_t photonIC_t::integrate(renderState_t &state, diffRay_t &ray) const
 	static int calls=0;
 	++calls;
 	color_t col(0.0);
-	CFLOAT alpha=0.0;
+	CFLOAT alpha;
 	surfacePoint_t sp;
 
 	void *o_udat = state.userdata;
 	bool oldIncludeLights = state.includeLights;
 
-	// povman: Add new options for transparent backgroung from photonintegr.cc
-	// Btw.. is right??. TODO: need more test..
-	//if(transpBackground) alpha=0.0;
-	//else alpha=1.0;
+	if(transpBackground) alpha=0.0;
+	else alpha=1.0;
 
-	if(!transpBackground) alpha=1.0;
-	// end
-	// povman: Auto-notes. Comprobamos que el 'rayo' emitido intersecte con algun objeto de la escena. Si no lo hace
-	// computamos el color del background.. si hay.
 	if(scene->intersect(ray, sp))
 	{
 		unsigned char userdata[USER_DATA_SIZE+7];
@@ -875,47 +865,38 @@ colorA_t photonIC_t::integrate(renderState_t &state, diffRay_t &ray) const
 		state.includeLights = false;
 		spDifferentials_t spDiff(sp, ray);
 
-		// IC depende de FG? esto no parece logico..
+		//
 		if(finalGather)
 		{
-			// calibrate and show radiance map
 			if(showMap)
 			{
 				vector3d_t N = FACE_FORWARD(sp.Ng, sp.N, wo);
 				const photon_t *nearest = radianceMap.findNearest(sp.P, N, lookupRad);
 				if(nearest) col += nearest->color();
 			}
-			else // if is calibrated...
+			else
 			{
 				// contribution of light emitting surfaces
 				if(bsdfs & BSDF_EMIT) col += material->emit(state, sp, wo);
 
-				/*if(bsdfs & BSDF_DIFFUSE)
+				if(bsdfs & BSDF_DIFFUSE)
 				{
-				    col += estimateAllDirectLight(state, sp, wo);
-				    col += finalIC(state, sp, wo);
-				}*/
-				if(bsdfs & BSDF_DIFFUSE) // if material is diffuse.. TODO: if is specular??
-				{
-					// CREAR DIFERENCIAL SI NO TIENE! DARKTIDE STILE! (povman: original comment)
+					// CREAR DIFERENCIAL SI NO TIENE! DARKTIDE STILE!
 					col += estimateAllDirectLight(state, sp, wo);
-					// si activamos IC.. esto presupone que  Irradiance Cache y FinalGathering deben
-					// activarse juntos?. Es el orden correcto?
-					if (useIrradianceCache)
+					//-
+					if(useIrradianceCache)
 					{
-						if (!ray.hasDifferentials) // creamos diferencial si no lo hay ? TODO: para que?
+						if (!ray.hasDifferentials)
 						{
 							float dx = RI_vdC(state.pixelSample, state.samplingOffs);
 							float dy = RI_S(state.pixelSample, state.samplingOffs);
 							vector3d_t dU(0.f), dV(0.f);
 							createCS(ray.dir, dU, dV);
 							ray.xdir = (dx+1.f)*dU + dy*dV +ray.dir;
-							// povman: double asignament to ray.xdir... is correct? maybe is ray.ydir?
-							// possible cause of 'fireflies'?
-							// ray.xdir = dx*dU + (dy+1.f)*dV + ray.dir;
-							ray.ydir = dx*dU + (dy+1.f)*dV + ray.dir;  // go to try...
+							ray.ydir = dx*dU + (dy+1.f)*dV + ray.dir;  //povman change: from ray.xdir to ray.ydir
 							ray.hasDifferentials = true;
 						}
+
 						//povman: in C++, all 'new'(reserve memory) need 'delete' ( release memory..)
 						icRec_t *icRecord = new icRec_t(icKappa, sp, &(icTree->stratHemi) ); // M, Kappa
 						icRecord->setNup(wo);
@@ -923,15 +904,17 @@ colorA_t photonIC_t::integrate(renderState_t &state, diffRay_t &ray) const
 						if (!icTree->getIrradiance(icRecord))
 						{
 							setICRecord(state, ray, icRecord);
-							icTree->neighborClamp(icRecord);
+							// povman: add optional clamping neighbord. TODO: a lots of test!
+							if (useNeighbord) icTree->neighborClamp(icRecord);
 							icTree->add(icRecord);
 						}
 						col += icRecord->irr * M_1_PI *
 						       icRecord->material->eval(state, *icRecord, wo, icRecord->getNup(), BSDF_DIFFUSE);
-						// povman: test for fix memmory leak.
+
+						// povman test: add 'delete' for fix memmory leak.
 						delete icRecord;
 					}
-					else  // if not use Irradiance Cache, compute Final Gathering
+					else
 					{
 						col += finalGathering(state, sp, wo);
 					}
@@ -940,6 +923,7 @@ colorA_t photonIC_t::integrate(renderState_t &state, diffRay_t &ray) const
 		}
 		else
 		{
+			// povman: option not available in UI
 			if(showMap)
 			{
 				vector3d_t N = FACE_FORWARD(sp.Ng, sp.N, wo);
@@ -948,8 +932,7 @@ colorA_t photonIC_t::integrate(renderState_t &state, diffRay_t &ray) const
 			}
 			else
 			{
-				// add emit..
-				if(bsdfs & BSDF_EMIT) col += material->emit(state, sp, wo);
+				if(bsdfs & BSDF_EMIT) col += material->emit(state, sp, wo); // add emit..
 
 				if(bsdfs & BSDF_DIFFUSE) // ..and diffuse contribution.
 				{
@@ -976,25 +959,21 @@ colorA_t photonIC_t::integrate(renderState_t &state, diffRay_t &ray) const
 				}
 			}
 		}
-
-		// add caustics
+		// add caustics..
 		if(bsdfs & BSDF_DIFFUSE) col += estimateCausticPhotons(state, sp, wo);
 
+		//
 		recursiveRaytrace(state, ray, bsdfs, sp, wo, col, alpha);
-		/**
-		 * povman: This part is related only with Blender 'work flow' or is general??
-		 */
+
+		//
 		if(transpRefractedBackground)
 		{
 			CFLOAT m_alpha = material->getAlpha(state, sp, wo);
 			alpha = m_alpha + (1.f-m_alpha)*alpha;
 		}
 		else alpha = 1.0;
-
-		//CFLOAT m_alpha = material->getAlpha(state, sp, wo);
-		//alpha = m_alpha + (1.f-m_alpha)*alpha;
 	}
-	else //nothing hit, return background
+	else //not ray hit, return background, if exist.
 	{
 		if(background) col += (*background)(ray, state, false);
 	}
@@ -1030,6 +1009,7 @@ integrator_t* photonIC_t::factory(paraMap_t &params, renderEnvironment_t &render
 	int IC_M=10;
 	double IC_K=2.5;
 	bool IC_dump=false;
+	bool IC_Clamp= false;
 
 	params.getParam("transpShad", transpShad);
 	params.getParam("shadowDepth", shadowDepth);
@@ -1057,6 +1037,7 @@ integrator_t* photonIC_t::factory(paraMap_t &params, renderEnvironment_t &render
 	params.getParam("IC_M_Divs", IC_M);
 	params.getParam("IC_Kappa", IC_K);
 	params.getParam("IC_DumpXML", IC_dump);
+	params.getParam("IC_Clamp",IC_Clamp);
 
 	photonIC_t* ite = new photonIC_t(numPhotons, numCPhotons, transpShad, shadowDepth, dsRad, cRad);
 	ite->rDepth = raydepth;
@@ -1076,10 +1057,10 @@ integrator_t* photonIC_t::factory(paraMap_t &params, renderEnvironment_t &render
 	ite->useIrradianceCache = do_IC;
 	ite->icMDivs = IC_M;
 	ite->icKappa = IC_K;
-	ite->icDumpXML = IC_dump; //TODO: lack create option in GUI
+	ite->icDumpXML = IC_dump;
+	ite->useNeighbord= IC_Clamp;
 	return ite;
 }
-
 //-
 void photonIC_t::cleanup()
 {
@@ -1093,13 +1074,12 @@ void photonIC_t::cleanup()
 	}
 }
 
-/**
- * povman: This part of code is the same of 'finalGathering() in photonintegr.cc.
- * with parts of IC code.. seems the 'good' part.
- * Is commented for your author:'glaskows' (GSOC 2010).
- * I'm investigate inside 'papers' for review this part (..or delete).
- * A.t.m. is unused.
- */
+/* povman: This part of code is the same of 'finalGathering() in photonintegr.cc.
+* with parts of IC code.. seems the 'good' part. Or maybe is obsolete code ?
+* Is commented for your author:'glaskows' (GSOC 2010).
+* I'm investigate inside 'papers' for review this part (..or delete).
+* A.t.m. is unused.
+*/
 color_t photonIC_t::finalIC(renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo) const
 {
 	/*
@@ -1279,7 +1259,8 @@ color_t photonIC_t::finalIC(renderState_t &state, const surfacePoint_t &sp, cons
 	    }
 	    state.userdata = first_udat;
 	}
-	return pathCol / (float)nSampl;*/
+	return pathCol / (float)nSampl;
+	*/
 	color_t color;
 	return color;
 }

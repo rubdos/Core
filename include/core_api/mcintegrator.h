@@ -102,6 +102,8 @@ class YAFRAYCORE_EXPORT mcIntegrator_t: public tiledIntegrator_t
 		int icMDivs;                //! number of subdivision on stratified hemisphere along theta
 		float icKappa;              //! controls the overall density of IC records
 		bool icDumpXML;             //! true if you want to have a file with the IC tree information (it may be big)
+		//povman
+		bool useNeighbord;          //! use neighbor clamping
 
 #endif // WITH_IRR_CACHE
 };
