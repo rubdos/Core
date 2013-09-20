@@ -196,11 +196,12 @@ bool photonIntegrator_t::preprocess()
 	bool done=false;
 	unsigned int curr=0;
 
-	// SSS
-	unsigned int scatteCount=0, inCount=0, absorbCount=0;
-	surfacePoint_t sp1, sp2;
-	surfacePoint_t *hit=&sp1, *hit2=&sp2;
+	// for SSS.. unused?
+	//unsigned int scatteCount=0, inCount=0, absorbCount=0;
+	//surfacePoint_t sp1, sp2;
+	//surfacePoint_t *hit = &sp1, *hit2 = &sp2;
 	// end
+
 	// for radiance map:
 	preGatherData_t pgdat(&diffuseMap);
 
@@ -524,11 +525,12 @@ bool photonIntegrator_t::preprocess()
 	// SSS --------->
 	if (usePhotonSSS)
 	{
-    //Y_INFO << "SSSMap : " << SSSMaps.size() << yendl;
+	    //Y_INFO << "SSSMap : " << SSSMaps.size() << yendl;
 		//createSSSMaps();
 		createSSSMapsByPhotonTracing();
 		std::map<const object3d_t*, photonMap_t*>::iterator it = SSSMaps.begin();
-		while (it!=SSSMaps.end()) {
+		while (it!=SSSMaps.end())
+        {
 			it->second->updateTree();
 			Y_INFO << "SSS:" << it->second->nPhotons() << " photons. " << yendl;
 			it++;
@@ -881,7 +883,13 @@ colorA_t photonIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) con
 
 		// add caustics
 		if(bsdfs & BSDF_DIFFUSE) col += estimateCausticPhotons(state, sp, wo);
-
+        // SSS
+        if(bsdfs & BSDF_TRANSLUCENT)
+		{
+			col += estimateSSSMaps(state,sp,wo);
+			col += estimateSSSSingleSImportantSampling(state,sp,wo);
+		}
+		//-
 		recursiveRaytrace(state, ray, bsdfs, sp, wo, col, alpha);
 
 		if(transpRefractedBackground)

@@ -40,6 +40,7 @@ class YAFRAYPLUGIN_EXPORT pathIntegrator_t: public mcIntegrator_t
 {
 	public:
 		pathIntegrator_t(bool transpShad=false, int shadowDepth=4);
+		~pathIntegrator_t(); // povman: for SSS
 		virtual bool preprocess();
 		virtual colorA_t integrate(renderState_t &state, diffRay_t &ray/*, sampler_t &sam*/) const;
 		static integrator_t* factory(paraMap_t &params, renderEnvironment_t &render);
@@ -65,12 +66,12 @@ pathIntegrator_t::pathIntegrator_t(bool transpShad, int shadowDepth)
 	integratorName = "PathTracer";
 	integratorShortName = "PT";
 }
-/*
+
 pathIntegrator_t::~pathIntegrator_t()
 {
 	destorySSSMaps();
 }
-*/
+
 
 bool pathIntegrator_t::preprocess()
 {
@@ -97,7 +98,8 @@ bool pathIntegrator_t::preprocess()
 		success = createSSSMapsByPhotonTracing();
 		set << "SSS shoot:" << nCausPhotons << " photons. ";
 		std::map<const object3d_t*, photonMap_t*>::iterator it = SSSMaps.begin();
-		while (it!=SSSMaps.end()) {
+		while (it!=SSSMaps.end())
+        {
 			it->second->updateTree();
 			Y_INFO << "SSS:" << it->second->nPhotons() << " photons. " << yendl;
 			it++;
@@ -396,7 +398,6 @@ extern "C"
 	{
 		render.registerFactory("pathtracing",pathIntegrator_t::factory);
 	}
-
 }
 
 __END_YAFRAY
