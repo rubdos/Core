@@ -53,7 +53,8 @@ void photonMap_t::updateTree()
 	if(tree) delete tree;
 	if(photons.size() > 0)
 	{
-		tree = new kdtree::pointKdTree<photon_t>(photons);
+		// povman; change for SSS -> tree = new kdtree::pointKdTree<photon_t>(photons);
+		tree = new kdtree::photonKdTree<photon_t>(photons);
 		updated = true;
 	}
 	else tree=0;
@@ -74,5 +75,27 @@ const photon_t* photonMap_t::findNearest(const point3d_t &P, const vector3d_t &n
 	tree->lookup(P, proc, dist);
 	return proc.nearest;
 }
+// povman: add for SSS
+//const std::vector<const photon_t*>& photonMap_t::getAllPhotons(const point3d_t& woP)
+//{
+//	tree->GetPhotons(woP,sssPhotons,1.0f);
+//	/*sssPhotons.clear();
+//	for (int i=0; i<photons.size(); i++) {
+//		sssPhotons.push_back(&photons[i]);
+//	}*/
+//	return sssPhotons;
+//}
+
+void photonMap_t::getAllPhotons(const point3d_t& woP, std::vector<const photon_t*>& sssPhotons)
+{
+	tree->GetPhotons(woP,sssPhotons, 1.0f);
+}
+
+int photonMap_t::numberOfPhotonInDisc(const point3d_t &p, PFLOAT scale, PFLOAT dist) const
+{
+	return tree->PhotonNumInDisc(p,scale,dist);
+}
+// end
+
 
 __END_YAFRAY
