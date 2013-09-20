@@ -54,7 +54,7 @@ class translucentMat_t: public nodeMaterial_t
 {
 	public:
 		translucentMat_t(color_t diffuseC, color_t specC, color_t glossyC, color_t siga, color_t sigs, float sigs_factor, float ior, float _g, float mT, float mD, float mG, float exp);
-		//virtual ~translucentMat_t();
+		virtual ~translucentMat_t();
 		virtual void initBSDF(const renderState_t &state, surfacePoint_t &sp, unsigned int &bsdfTypes)const;
 		virtual color_t eval(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, const vector3d_t &wl, BSDF_t bsdfs)const;
 		// povman: from material.h
@@ -410,7 +410,7 @@ material_t* translucentMat_t::factory(paraMap_t &params, std::list< paraMap_t > 
 	float _g = 0;
 	float mT=0.9, mG=1.0, mD=0.001f;
 	float expn = 800;
-	const std::string *name=0;
+	//const std::string *name=0;
 	params.getParam("color", col);
 	params.getParam("glossy_color", glossyC);
 	params.getParam("specular_color", specC);
