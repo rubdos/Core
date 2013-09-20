@@ -3,7 +3,9 @@
 #define Y_PHOTONMAP_H
 
 #include <yafray_config.h>
-
+// povman: add for SSS TODO: need review..
+#include "photonkdtree.h"
+// end
 #include "pkdtree.h"
 #include <core_api/color.h>
 
@@ -37,7 +39,7 @@ class dirConverter_t
 			else if(p<0) p+=256;
 			return std::pair<unsigned char,unsigned char>(t,p);
 		}
-		
+
 	protected:
 		PFLOAT cosphi[256];
 		PFLOAT sinphi[256];
@@ -72,7 +74,7 @@ class photon_t
 		const point3d_t & position()const {return pos;};
 		const color_t color()const {return c;};
 		void color(const color_t &col) {c=col;};
-		vector3d_t direction()const 
+		vector3d_t direction()const
 		{
 #ifdef _SMALL_PHOTONS
 			if(theta==255) return vector3d_t(0,0,0);
@@ -95,7 +97,7 @@ class photon_t
 			dir=d;
 #endif
 		}
-	
+
 		point3d_t pos;
 #ifdef _SMALL_PHOTONS
 		rgbe_t c;
@@ -104,6 +106,11 @@ class photon_t
 		color_t c;
 		normal_t dir;
 #endif
+        vector3d_t hitNormal;
+
+		// for photon inner sss object
+		point3d_t sourcePos;
+		float	  sourceDepth;
 };
 
 struct radData_t
@@ -143,12 +150,18 @@ class YAFRAYCORE_EXPORT photonMap_t
 	//	void gather(const point3d_t &P, std::vector< foundPhoton_t > &found, unsigned int K, PFLOAT &sqRadius) const;
 		int gather(const point3d_t &P, foundPhoton_t *found, unsigned int K, PFLOAT &sqRadius) const;
 		const photon_t* findNearest(const point3d_t &P, const vector3d_t &n, PFLOAT dist) const;
+		// SSS
+		void getAllPhotons(const point3d_t& woP, std::vector<const photon_t*>& sssPhotons);
+		int numberOfPhotonInDisc(const point3d_t &p, PFLOAT scale, PFLOAT dist) const;
+		// end
 	protected:
 		std::vector<photon_t> photons;
 		int paths; //!< amount of photon paths that have been traced for generating the map
 		bool updated;
 		PFLOAT searchRadius;
-		kdtree::pointKdTree<photon_t> *tree;
+		//kdtree::pointKdTree<photon_t> *tree;
+		// povman: SSS different
+		kdtree::photonKdTree<photon_t> *tree;
 };
 
 // photon "processes" for lookup
