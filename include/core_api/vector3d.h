@@ -384,6 +384,17 @@ inline vector3d_t RandomSpherical()
 	else v.z = 1.0;
 	return v;
 }
+// povman: add for SSS
+inline GFLOAT dot( const normal_t &a,const normal_t &b)
+{
+	return (a.x*b.x+a.y*b.y+a.z*b.z);
+}
+
+inline GFLOAT dot( const vector3d_t &a,const vector3d_t &b)
+{
+	return (a.x*b.x+a.y*b.y+a.z*b.z);
+}
+// end
 
 YAFRAYCORE_EXPORT vector3d_t randomVectorCone(const vector3d_t &D, const vector3d_t &U, const vector3d_t &V,
 						PFLOAT cosang, PFLOAT z1, PFLOAT z2);
