@@ -28,6 +28,9 @@ target_link_libraries(simple yafaraycore)
 
 add_library(volumetric SHARED beer.cc)
 target_link_libraries(volumetric yafaraycore)
+## sss
+add_library(translucent SHARED translucent.cc)
+target_link_libraries(translucent yafaraycore)
 
 install (TARGETS glass roughglass blend glossy glossy2 shinydiffuse coatedglossy simple volumetric
-		${YAF_TARGET_TYPE} DESTINATION ${YAF_PLUGIN_DIR})
+		translucent ${YAF_TARGET_TYPE} DESTINATION ${YAF_PLUGIN_DIR})
