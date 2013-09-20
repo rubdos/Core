@@ -18,7 +18,7 @@
  *		License along with this library; if not, write to the Free Software
  *		Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
- 
+
 #include <core_api/environment.h>
 #include <core_api/material.h>
 #include <core_api/volume.h>
@@ -65,28 +65,48 @@ pathIntegrator_t::pathIntegrator_t(bool transpShad, int shadowDepth)
 	integratorName = "PathTracer";
 	integratorShortName = "PT";
 }
+/*
+pathIntegrator_t::~pathIntegrator_t()
+{
+	destorySSSMaps();
+}
+*/
 
 bool pathIntegrator_t::preprocess()
 {
 	std::stringstream set;
 	background = scene->getBackground();
 	lights = scene->lights;
-	
-	if(trShad) set << "ShadowDepth: [" << sDepth << "]"; 
+
+	if(trShad) set << "ShadowDepth: [" << sDepth << "]";
 
 	if(!set.str().empty()) set << "+";
 	set << "RayDepth: [" << rDepth << "]";
 
 	bool success = true;
 	traceCaustics = false;
-	
+
 	if(causticType == PHOTON || causticType == BOTH)
 	{
 		success = createCausticMap();
 	}
+	/// SSS
+	if (usePhotonSSS)
+	{
+		//success = createSSSMaps();
+		success = createSSSMapsByPhotonTracing();
+		set << "SSS shoot:" << nCausPhotons << " photons. ";
+		std::map<const object3d_t*, photonMap_t*>::iterator it = SSSMaps.begin();
+		while (it!=SSSMaps.end()) {
+			it->second->updateTree();
+			Y_INFO << "SSS:" << it->second->nPhotons() << " photons. " << yendl;
+			it++;
+		}
+	}
+	// end
 
 	if(causticType == BOTH || causticType == PATH) traceCaustics = true;
-	
+
 	if(causticType == PATH)
 	{
 		if(!set.str().empty()) set << "+";
@@ -102,9 +122,9 @@ bool pathIntegrator_t::preprocess()
 		if(!set.str().empty()) set << "+";
 		set << "Caustics: Path+Photon(" << nCausPhotons << ")";
 	}
-	
+
 	settings = set.str();
-	
+
 	return success;
 }
 
@@ -117,10 +137,10 @@ colorA_t pathIntegrator_t::integrate(renderState_t &state, diffRay_t &ray/*, sam
 	surfacePoint_t sp;
 	void *o_udat = state.userdata;
 	float W = 0.f;
-	
+
 	if(transpBackground) alpha=0.0;
 	else alpha=1.0;
-	
+
 	//shoot ray into scene
 	if(scene->intersect(ray, sp))
 	{
@@ -140,23 +160,28 @@ colorA_t pathIntegrator_t::integrate(renderState_t &state, diffRay_t &ray/*, sam
 		const volumeHandler_t *vol;
 		color_t vcol(0.f);
 
-		// contribution of light emitting surfaces		
+		// contribution of light emitting surfaces
 		if(bsdfs & BSDF_EMIT) col += material->emit(state, sp, wo);
-		
+
 		if(bsdfs & BSDF_DIFFUSE)
 		{
 			col += estimateAllDirectLight(state, sp, wo);
 			if(causticType == PHOTON || causticType == BOTH) col += estimateCausticPhotons(state, sp, wo);
 		}
-				
+		// SSS
+		if (bsdfs & BSDF_TRANSLUCENT) {
+			col += estimateSSSMaps(state,sp,wo);
+			col += estimateSSSSingleSImportantSampling(state,sp,wo);
+		}
+
 		// path tracing:
 		// the first path segment is "unrolled" from the loop because for the spot the camera hit
 		// we do things slightly differently (e.g. may not sample specular, need not to init BSDF anymore,
 		// have more efficient ways to compute samples...)
-		
+
 		bool was_chromatic = state.chromatic;
 		BSDF_t path_flags = no_recursive ? BSDF_ALL : (BSDF_DIFFUSE);
-		
+
 		if(bsdfs & path_flags)
 		{
 			color_t pathCol(0.0), wl_col;
@@ -188,7 +213,7 @@ colorA_t pathIntegrator_t::integrate(renderState_t &state, diffRay_t &ray/*, sam
 				// do proper sampling now...
 				sample_t s(s1, s2, path_flags);
 				scol = material->sample(state, sp, pwo, pRay.dir, s, W);
-				
+
 				scol *= W;
 				throughput = scol;
 				state.includeLights = false;
@@ -196,7 +221,7 @@ colorA_t pathIntegrator_t::integrate(renderState_t &state, diffRay_t &ray/*, sam
 				pRay.tmin = MIN_RAYDIST;
 				pRay.tmax = -1.0;
 				pRay.from = sp.P;
-				
+
 				if(!scene->intersect(pRay, *hit)) continue; //hit background
 
 				state.userdata = n_udat;
@@ -208,9 +233,9 @@ colorA_t pathIntegrator_t::integrate(renderState_t &state, diffRay_t &ray/*, sam
 				if(matBSDFs & BSDF_EMIT) lcol += p_mat->emit(state, *hit, pwo);
 
 				pathCol += lcol*throughput;
-				
+
 				bool caustic = false;
-				
+
 				for(int depth = 1; depth < maxBounces; ++depth)
 				{
 					int d4 = 4*depth;
@@ -224,12 +249,12 @@ colorA_t pathIntegrator_t::integrate(renderState_t &state, diffRay_t &ray/*, sam
 					}
 
 					s.flags = BSDF_ALL;
-					
+
 					scol = p_mat->sample(state, *hit, pwo, pRay.dir, s, W);
 					scol *= W;
-					
+
 					if(scol.isBlack()) break;
-					
+
 					throughput *= scol;
 					caustic = traceCaustics && (s.sampledFlags & (BSDF_SPECULAR | BSDF_GLOSSY | BSDF_FILTER));
 					state.includeLights = caustic;
@@ -246,7 +271,7 @@ colorA_t pathIntegrator_t::integrate(renderState_t &state, diffRay_t &ray/*, sam
 						}
 						break;
 					}
-					
+
 					std::swap(hit, hit2);
 					p_mat = hit->material;
 					p_mat->initBSDF(state, *hit, matBSDFs);
@@ -259,13 +284,13 @@ colorA_t pathIntegrator_t::integrate(renderState_t &state, diffRay_t &ray/*, sam
 					{
 						if(vol->transmittance(state, pRay, vcol)) throughput *= vcol;
 					}
-					
+
 					if (matBSDFs & BSDF_EMIT && caustic) lcol += p_mat->emit(state, *hit, pwo);
-					
+
 					pathCol += lcol*throughput;
 				}
 				state.userdata = first_udat;
-				
+
 			}
 			col += pathCol / nSamples;
 		}
@@ -303,7 +328,12 @@ integrator_t* pathIntegrator_t::factory(paraMap_t &params, renderEnvironment_t &
 	const std::string *cMethod=0;
 	bool bg_transp = true;
 	bool bg_transp_refract = true;
-	
+	// SSS
+	bool useSSS=false;
+	int sssdepth = 10, sssPhotons = 200000;
+	int singleSSamples = 128;
+	float sScale = 40.f;
+
 	params.getParam("raydepth", raydepth);
 	params.getParam("transpShad", transpShad);
 	params.getParam("shadowDepth", shadowDepth);
@@ -312,7 +342,13 @@ integrator_t* pathIntegrator_t::factory(paraMap_t &params, renderEnvironment_t &
 	params.getParam("no_recursive", noRec);
 	params.getParam("bg_transp", bg_transp);
 	params.getParam("bg_transp_refract", bg_transp_refract);
-	
+	// SSS
+	params.getParam("useSSS", useSSS);
+	params.getParam("sssPhotons", sssPhotons);
+	params.getParam("sssDepth", sssdepth);
+	params.getParam("singleScatterSamples", singleSSamples);
+	params.getParam("sssScale", sScale);
+
 	pathIntegrator_t* inte = new pathIntegrator_t(transpShad, shadowDepth);
 	if(params.getParam("caustic_type", cMethod))
 	{
@@ -342,6 +378,14 @@ integrator_t* pathIntegrator_t::factory(paraMap_t &params, renderEnvironment_t &
 	// Background settings
 	inte->transpBackground = bg_transp;
 	inte->transpRefractedBackground = bg_transp_refract;
+	// sss settings
+	inte->usePhotonSSS = useSSS;
+	inte->nSSSPhotons = sssPhotons;
+	inte->nSSSDepth = sssdepth;
+	inte->nSingleScatterSamples = singleSSamples;
+	inte->isDirectLight = false;
+	inte->sssScale = sScale;
+
 	return inte;
 }
 

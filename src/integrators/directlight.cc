@@ -33,6 +33,7 @@ class YAFRAYPLUGIN_EXPORT directLighting_t: public mcIntegrator_t
 {
 	public:
 		directLighting_t(bool transpShad=false, int shadowDepth=4, int rayDepth=6);
+		~directLighting_t(); // povman: for SSS
 		virtual bool preprocess();
 		virtual colorA_t integrate(renderState_t &state, diffRay_t &ray) const;
 		static integrator_t* factory(paraMap_t &params, renderEnvironment_t &render);
@@ -51,6 +52,11 @@ directLighting_t::directLighting_t(bool transpShad, int shadowDepth, int rayDept
 	rDepth = rayDepth;
 	integratorName = "DirectLight";
 	integratorShortName = "DL";
+}
+
+directLighting_t::~directLighting_t() // povman: for SSS
+{
+	destorySSSMaps();
 }
 
 bool directLighting_t::preprocess()
@@ -75,6 +81,22 @@ bool directLighting_t::preprocess()
 		if(!set.str().empty()) set << "+";
 		set << "Caustics:" << nCausPhotons << " photons. ";
 	}
+
+	// povman: for SSS
+	if (usePhotonSSS)
+	{
+		//success = createSSSMaps();
+		success = createSSSMapsByPhotonTracing();
+		set << "SSS shoot:" << nCausPhotons << " photons. ";
+		std::map<const object3d_t*, photonMap_t*>::iterator it = SSSMaps.begin();
+		while (it!=SSSMaps.end())
+        {
+			it->second->updateTree();
+			Y_INFO << "SSS:" << it->second->nPhotons() << " photons. " << yendl;
+			it++;
+		}
+	}
+	// end
 
 	if(useAmbientOcclusion)
 	{
@@ -121,6 +143,15 @@ colorA_t directLighting_t::integrate(renderState_t &state, diffRay_t &ray) const
 			if(useAmbientOcclusion) col += sampleAmbientOcclusion(state, sp, wo);
 		}
 
+		// SSS
+		if (bsdfs & BSDF_TRANSLUCENT) {
+			//col += estimateAllDirectLight(state, sp, wo);
+			col += estimateSSSMaps(state,sp,wo);
+			//col += estimateSSSSingleScattering(state,sp,wo);
+			//col += estimateSSSSingleScatteringPhotons(state,sp,wo);
+			col += estimateSSSSingleSImportantSampling(state,sp,wo);
+		}
+		//--
 		recursiveRaytrace(state, ray, bsdfs, sp, wo, col, alpha);
 
 		if(transpRefractedBackground)
@@ -154,6 +185,11 @@ integrator_t* directLighting_t::factory(paraMap_t &params, renderEnvironment_t &
 	color_t AO_col(1.f);
 	bool bg_transp = true;
 	bool bg_transp_refract = true;
+	// SSS
+	bool useSSS=false;
+	int sssdepth = 10, sssPhotons = 200000;
+	int singleSSamples = 128;
+	float sScale = 40.f;
 
 	params.getParam("raydepth", raydepth);
 	params.getParam("transpShad", transpShad);
@@ -169,6 +205,13 @@ integrator_t* directLighting_t::factory(paraMap_t &params, renderEnvironment_t &
 	params.getParam("AO_color", AO_col);
 	params.getParam("bg_transp", bg_transp);
 	params.getParam("bg_transp_refract", bg_transp_refract);
+	//- SSS
+	params.getParam("useSSS", useSSS);
+	params.getParam("sssPhotons", sssPhotons);
+	params.getParam("sssDepth", sssdepth);
+	params.getParam("singleScatterSamples", singleSSamples);
+	params.getParam("sssScale", sScale);
+	//-
 
 	directLighting_t *inte = new directLighting_t(transpShad, shadowDepth, raydepth);
 	// caustic settings
@@ -185,7 +228,16 @@ integrator_t* directLighting_t::factory(paraMap_t &params, renderEnvironment_t &
 	// Background settings
 	inte->transpBackground = bg_transp;
 	inte->transpRefractedBackground = bg_transp_refract;
-	
+	// sss settings
+	inte->usePhotonSSS = useSSS;
+	inte->nSSSPhotons = sssPhotons;
+	inte->nSSSDepth = sssdepth;
+	inte->nSingleScatterSamples = singleSSamples;
+	inte->isDirectLight = true;
+	inte->sssScale = sScale;
+
+	Y_INFO << "The translucent scale is " << inte->sssScale << yendl;
+	// end
 	return inte;
 }
 
@@ -196,7 +248,6 @@ extern "C"
 	{
 		render.registerFactory("directlighting",directLighting_t::factory);
 	}
-
 }
 
 __END_YAFRAY
