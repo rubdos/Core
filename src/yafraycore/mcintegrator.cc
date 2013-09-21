@@ -1178,13 +1178,10 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
 							//if (scatNum >= nBounces) {
 							//	break;
 							//}
-
 						}
 					}
-
 					if (refracOut)
                     {
-
 						//std::cout << "ray = " << curr << "  ray.dir = " << ray.dir << "  from=" << ray.from << "  scatteDist=" << ray.tmax << std::endl;
 
 						// refract out
@@ -1235,7 +1232,6 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
 					break;
 				}
 			}
-
 			if (isDirectLight)
             {
 				break;

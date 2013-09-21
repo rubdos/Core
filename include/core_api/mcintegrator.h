@@ -59,8 +59,7 @@ class YAFRAYCORE_EXPORT mcIntegrator_t: public tiledIntegrator_t
 		virtual color_t getTranslucentInScatter(renderState_t& state, ray_t& stepRay, float currentStep) const;
 
 		virtual color_t estimateSSSSingleScatteringPhotons(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const;
-
-		// sss end
+        // sss end
 		int rDepth; //! Ray depth
 		bool trShad; //! Use transparent shadows
 		int sDepth; //! Shadow depth for transparent shadows
@@ -85,7 +84,7 @@ class YAFRAYCORE_EXPORT mcIntegrator_t: public tiledIntegrator_t
 		std::vector<light_t*> lights; //! An array containing all the scene lights
 		bool transpBackground; //! Render background as transparent
 		bool transpRefractedBackground; //! Render refractions of background as transparent
-		/// SSS
+		// SSS
 		bool usePhotonSSS;
 		unsigned int nSSSPhotons;
 		int nSSSDepth;

@@ -182,6 +182,7 @@ bool photonIntegrator_t::preprocess()
 	lightPowerD = new pdf1D_t(energies, numDLights);
 
 	Y_INFO << integratorName << ": Light(s) photon color testing for diffuse map:" << yendl;
+
 	for(int i=0;i<numDLights;++i)
 	{
 		pcol = tmplights[i]->emitPhoton(.5, .5, .5, .5, ray, lightPdf);
