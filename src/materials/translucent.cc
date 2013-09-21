@@ -96,10 +96,12 @@ class translucentMat_t: public nodeMaterial_t
 		float	g;
 };
 
-translucentMat_t::translucentMat_t(color_t diffuseC, color_t specC, color_t glossyC, color_t siga, color_t sigs, float sigs_factor, float ior, float _g, float mT, float mD, float mG, float exp): diffuseCol(diffuseC),specRefCol(specC),gloss_color(glossyC),
-								sigma_a(siga),sigma_s(sigs), sigmaS_Factor(sigs_factor), IOR(ior),g(_g),
-								translucency(mT), diffusity(mD), glossity(mG), exponent(exp),
-								diffuseS(0), glossyS(0), glossyRefS(0), bumpS(0), transpS(0), translS(0)
+translucentMat_t::translucentMat_t(color_t diffuseC, color_t specC, color_t glossyC, color_t siga, color_t sigs,
+                                   float sigs_factor, float ior, float _g, float mT, float mD, float mG, float exp):
+                                       diffuseCol(diffuseC), specRefCol(specC), gloss_color(glossyC), sigma_a(siga),
+                                       sigma_s(sigs), sigmaS_Factor(sigs_factor), IOR(ior),g(_g), translucency(mT),
+                                       diffusity(mD), glossity(mG), exponent(exp), diffuseS(0), glossyS(0), glossyRefS(0),
+                                       bumpS(0), transpS(0), translS(0)
 {
 	cFlags[C_TRANSLUCENT] = (BSDF_TRANSLUCENT);
 	if (glossity>0)
@@ -271,12 +273,11 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
 	switch(cIndex[pick])
 	{
 		case C_TRANSLUCENT: // specular reflect
-
-			break;
-		case C_GLOSSY: // glossy
+		    break;
+		case C_GLOSSY:      // glossy
 			Blinn_Sample(Hs, s1, s.s2, exponent);
 			break;
-		case C_DIFFUSE: // lambertian
+		case C_DIFFUSE:     // lambertian
 		default:
 			wi = SampleCosHemisphere(N, sp.NU, sp.NV, s1, s.s2);
 			cos_Ng_wi = sp.Ng*wi;
@@ -378,6 +379,7 @@ float translucentMat_t::pdf(const renderState_t &state, const surfacePoint_t &sp
 		}
 	}
 	if(!nMatch || sum < 0.00001) return 0.f;
+
 	return pdf / sum;
 }
 
@@ -410,7 +412,7 @@ material_t* translucentMat_t::factory(paraMap_t &params, std::list< paraMap_t > 
 	float _g = 0;
 	float mT=0.9, mG=1.0, mD=0.001f;
 	float expn = 800;
-	//const std::string *name=0;
+
 	params.getParam("color", col);
 	params.getParam("glossy_color", glossyC);
 	params.getParam("specular_color", specC);
@@ -422,8 +424,8 @@ material_t* translucentMat_t::factory(paraMap_t &params, std::list< paraMap_t > 
 	params.getParam("diffuse_reflect", mD);
 	params.getParam("glossy_reflect", mG);
 	params.getParam("sss_transmit", mT);
-	params.getParam("exponent", expn); // povman: change exp to expn. 'exp' is a math expresion of exponential
-	// povman: alert * position
+	params.getParam("exponent", expn); // povman: change to expn. 'exp' is a math expresion of exponential
+
 	translucentMat_t *mat = new translucentMat_t(col, specC, glossyC, siga, sigs, sigs_factor, ior, _g, mT, mD, mG, expn);
 
 	std::vector<shaderNode_t *> roots;
@@ -438,8 +440,7 @@ material_t* translucentMat_t::factory(paraMap_t &params, std::list< paraMap_t > 
 	nodeList["sigmaS_shader"] = NULL;
 	nodeList["sigmaA_shader"] = NULL;
 
-	//povman: new form
-	//
+	// parse nodes
 	if(mat->loadNodes(paramList, render))
 	{
         mat->parseNodes(params, roots, nodeList);
