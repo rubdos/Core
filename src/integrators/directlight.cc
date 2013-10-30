@@ -87,7 +87,7 @@ bool directLighting_t::preprocess()
 	{
 		//success = createSSSMaps();
 		success = createSSSMapsByPhotonTracing();
-		set << "SSS shoot:" << nCausPhotons << " photons. ";
+		set << "SSS shoot:" << nSSSPhotons << " photons. ";
 		std::map<const object3d_t*, photonMap_t*>::iterator it = SSSMaps.begin();
 		while (it!=SSSMaps.end())
         {
