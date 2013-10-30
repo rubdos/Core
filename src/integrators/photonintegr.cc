@@ -529,6 +529,8 @@ bool photonIntegrator_t::preprocess()
 	    //Y_INFO << "SSSMap : " << SSSMaps.size() << yendl;
 		//createSSSMaps();
 		createSSSMapsByPhotonTracing();
+		// povman:add text to banner info
+		set << "SSS shoot:" << nSSSPhotons << " photons. ";
 		std::map<const object3d_t*, photonMap_t*>::iterator it = SSSMaps.begin();
 		while (it!=SSSMaps.end())
         {
@@ -881,7 +883,6 @@ colorA_t photonIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) con
 				}
 			}
 		}
-
 		// add caustics
 		if(bsdfs & BSDF_DIFFUSE) col += estimateCausticPhotons(state, sp, wo);
         // SSS
