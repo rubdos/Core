@@ -18,14 +18,15 @@
  *      Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <core_api/material.h>
+//#include <core_api/material.h>
 #include <core_api/environment.h> //
 #include <core_api/scene.h>
 #include <materials/maskmat.h>
 #include <materials/microfacet.h> //
-//#include <yafraycore/spectrum.h>
+#include <yafraycore/spectrum.h>
 // povman add:
-#include <yafraycore/nodematerial.h>
+#include <core_api/mcintegrator.h>
+//#include <yafraycore/nodematerial.h>
 //unused ??
 
 
@@ -38,7 +39,7 @@ __BEGIN_YAFRAY
 #define C_TRANSLUCENT   0
 #define C_GLOSSY        1
 #define C_DIFFUSE       2
-
+/*
 struct TranslucentData_t
 {
     color_t difC;
@@ -48,23 +49,29 @@ struct TranslucentData_t
     float mTransl, mDiffuse, mGlossy, pDiffuse;
 
     void *stack;
-};
+};*/
 // povman: TODO; move class to header file??
 class translucentMat_t: public nodeMaterial_t
 {
 public:
-    translucentMat_t(color_t diffuseC, color_t specC, color_t glossyC, color_t siga, color_t sigs, float sigs_factor, float ior, float _g, float mT, float mD, float mG, float exp);
+    translucentMat_t(color_t diffuseC, color_t specC, color_t glossyC, color_t siga, color_t sigs, float sigs_factor,
+                     float ior, float _g, float mT, float mD, float mG, float exp);
+
     virtual ~translucentMat_t();
+
     virtual void initBSDF(const renderState_t &state, surfacePoint_t &sp, unsigned int &bsdfTypes)const;
+
     virtual color_t eval(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo,
                          const vector3d_t &wl, BSDF_t bsdfs)const;
     // povman: from material.h
+    virtual color_t sample(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, vector3d_t &wi, sample_t &s, float &W)const;
+
+    /*  UNUSED?? 
     virtual color_t sample(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo,
-                        vector3d_t &wi, sample_t &s, float &W)const;
-    virtual color_t sample(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo,
-                        vector3d_t *const dir, color_t &tcol, sample_t &s, float *const W)const    {return color_t(0.f);}
-    // end
+                      vector3d_t *const dir, color_t &tcol, sample_t &s, float *const W)const {return color_t(0.f);}
+    */
     virtual color_t emit(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo)const;
+
     virtual float pdf(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, const vector3d_t &wi, BSDF_t bsdfs)const;
     //virtual void getSpecular(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo,
     //                       bool &refl, bool &refr, vector3d_t *const dir, color_t *const col)const;
@@ -137,7 +144,6 @@ translucentMat_t::~translucentMat_t()
 void translucentMat_t::initBSDF(const renderState_t &state, surfacePoint_t &sp, unsigned int &bsdfTypes)const
 {
     TranslucentData_t *dat = (TranslucentData_t *)state.userdata;
-
     dat->stack = (char*)state.userdata + sizeof(TranslucentData_t);
     nodeStack_t stack(dat->stack);
     if(bumpS) evalBump(stack, state, sp, bumpS);
@@ -448,7 +454,7 @@ material_t* translucentMat_t::factory(paraMap_t &params, std::list< paraMap_t > 
     {
         mat->parseNodes(params, roots, nodeList);
     }
-    else Y_ERROR << "Glossy: loadNodes() failed!" << yendl;
+    else Y_ERROR << "Translucent: loadNodes() failed!" << yendl;
 
     mat->diffuseS = nodeList["diffuse_shader"];
     mat->glossyS = nodeList["glossy_shader"];
@@ -464,14 +470,14 @@ material_t* translucentMat_t::factory(paraMap_t &params, std::list< paraMap_t > 
 
         mat->solveNodesOrder(roots);
 
-        if(mat->diffuseS) mat->getNodeList(mat->diffuseS, colorNodes);
-        if(mat->glossyS) mat->getNodeList(mat->glossyS, colorNodes);
+        if(mat->diffuseS)   mat->getNodeList(mat->diffuseS, colorNodes);
+        if(mat->glossyS)    mat->getNodeList(mat->glossyS, colorNodes);
         if(mat->glossyRefS) mat->getNodeList(mat->glossyRefS, colorNodes);
-        if(mat->transpS) mat->getNodeList(mat->transpS, colorNodes);
-        if(mat->translS) mat->getNodeList(mat->translS, colorNodes);
+        if(mat->transpS)    mat->getNodeList(mat->transpS, colorNodes);
+        if(mat->translS)    mat->getNodeList(mat->translS, colorNodes);
         mat->filterNodes(colorNodes, mat->allViewdep, VIEW_DEP);
         mat->filterNodes(colorNodes, mat->allViewindep, VIEW_INDEP);
-        if(mat->bumpS) mat->getNodeList(mat->bumpS, mat->bumpNodes);
+        if(mat->bumpS)      mat->getNodeList(mat->bumpS, mat->bumpNodes);
     }
     mat->reqMem = mat->reqNodeMem + sizeof(TranslucentData_t);
 
