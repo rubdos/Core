@@ -677,12 +677,12 @@ color_t mcIntegrator_t::sampleAmbientOcclusion(renderState_t &state, const surfa
     return col / (float)n;
 }
 
-// SSS
+
+// SSS code
 float phaseFunc ( const vector3d_t &wi, const vector3d_t &wo, float g )
 {
-    //float g = 0;
     float cosTheta = wi*wo;
-    return (1+3*g*cosTheta)*0.25*M_1_PI;
+    return (1+3*g*cosTheta)*M_1_PI_4; //0.25*M_1_PI;
 }
 
 matrix4x4_t GetTransformMatrix(float theta, float phi)
@@ -851,6 +851,7 @@ bool mcIntegrator_t::createSSSMaps()
             vector3d_t wi = -ray.dir, wo;
             material = hit->material;
             material->initBSDF(state, *hit, bsdfs);
+            /* Translucent material */
             if(bsdfs & BSDF_TRANSLUCENT)
             {
                 // if photon intersect with SSS material, add this photon to cooresponding object's SSSMap and absorb it
@@ -1010,7 +1011,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
         const material_t *material = 0;
         const volumeHandler_t *vol = 0;
 
-        bool isRefrectedOut = false;
+        //bool isRefrectedOut = false;
 
         while( scene->intersect(ray, *hit2) )
         {
@@ -1232,7 +1233,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                             //if (!isStored) {
                             //std::cout << "photon refacted out" << "  " << pcol << std::endl;
                             //}
-                            isRefrectedOut = true;
+                            //isRefrectedOut = true;
                             //break;
                             continue;
                         }
@@ -1323,8 +1324,7 @@ void mcIntegrator_t::destorySSSMaps()
 color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3d_t &wo, float IOR, float g, const color_t &sigmaS, const color_t &sigmaA )
 {
     int m_n = 2;
-
-    color_t rd(0.25*M_1_PI);
+    color_t rd(M_1_PI_4); //(0.25*M_1_PI); 
     color_t qd(1.f);
     color_t rm(0.0f);
 
@@ -1358,9 +1358,9 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
     point3d_t rSourcePosR = inPhoton.pos + inPhoton.hitNormal*-1*z_r.R;
     point3d_t rSourcePosG = inPhoton.pos + inPhoton.hitNormal*-1*z_r.G;
     point3d_t rSourcePosB = inPhoton.pos + inPhoton.hitNormal*-1*z_r.B;
-    point3d_t vSourcePosR = inPhoton.pos + inPhoton.hitNormal*z_v.R;
-    point3d_t vSourcePosG = inPhoton.pos + inPhoton.hitNormal*z_v.G;
-    point3d_t vSourcePosB = inPhoton.pos + inPhoton.hitNormal*z_v.B;
+    //point3d_t vSourcePosR = inPhoton.pos + inPhoton.hitNormal*z_v.R; // unused?
+    //point3d_t vSourcePosG = inPhoton.pos + inPhoton.hitNormal*z_v.G; // unused?
+    //point3d_t vSourcePosB = inPhoton.pos + inPhoton.hitNormal*z_v.B; // unused?
 
     // compute the intersect diection of the two faces
 
@@ -1448,30 +1448,38 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
         dr = colorSqrt(r*r + z_r*z_r);
         dv = colorSqrt(r*r + z_v*z_v);
 
-        rm += ( z_r*(1+sig_tr*dr)*colorExp(-1*sig_tr*dr)*0.25*M_1_PI/(dr*dr*dr)
+        rm += ( z_r*(1+sig_tr*dr)*colorExp(-1*sig_tr*dr)*M_1_PI_4/(dr*dr*dr)
+                - z_v*(1+sig_tr*dv)*colorExp(-1*sig_tr*dv)*M_1_PI_4/(dv*dv*dv)  );
+
+        /*rm += ( z_r*(1+sig_tr*dr)*colorExp(-1*sig_tr*dr)*0.25*M_1_PI/(dr*dr*dr)
                 - z_v*(1+sig_tr*dv)*colorExp(-1*sig_tr*dv)*0.25*M_1_PI/(dv*dv*dv)  );
+        */
     }
 
     color_t result(0.0f);
 
     //result = rm*Li*cosWiN*Kt_i*Kt_o*M_1_PI;
 
-    if (gamma <= 0.5*M_PI && gamma >=0)
+    /* povman test: 
+     * change "0.5*M_PI" to "M_PI_2" and 2*M_1_PI to 2*M_2_PI.
+     * btw.. (0.5*M_PI) is equal to "M_PI_2" and "2*M_1_PI" is equal to "M_2_PI" define value inside math.h
+    */
+    if (gamma <= M_PI_2 && gamma >=0)
     {
-        result += 2*M_1_PI*(0.5*M_PI-gamma)*rd;
-        result += 2*M_1_PI*gamma*qd;
+        result += M_2_PI*(M_PI_2-gamma)*rd;
+        result += M_2_PI*gamma*qd;
     }
-    else if ( gamma > 0.5*M_PI && gamma <= M_PI )
+    else if ( gamma > M_PI_2 && gamma <= M_PI )
     {
-        result += 2*M_1_PI*(M_PI - gamma)*qd;
-        result += 2*M_1_PI*(gamma - 0.5*M_PI)*rm;
+        result += M_2_PI*(M_PI - gamma)*qd;
+        result += M_2_PI*(gamma - M_PI_2)*rm;
     }
     else
     {
         result += rd;
     }
 
-    result = result*Li*cosWiN*Kt_i*Kt_o;
+    result = result * Li * cosWiN * Kt_i * Kt_o;
     return result;
 }
 
@@ -1548,8 +1556,10 @@ color_t mcIntegrator_t::estimateSSSSingleScattering(renderState_t &state, surfac
     if (wo*sp.N < 0) return singleS;
 
     float t0 = 1e10f, t1 = -1e10f;
-    //std::cout << "entry point is " << sp.P << std::endl;
-    //std::cout << "dir  is " << -1*wo << std::endl;
+    /* for debug..
+    std::cout << "entry point is " << sp.P << std::endl;
+    std::cout << "dir  is " << -1*wo << std::endl;
+    */
 
     // get the material infomation
     void *o_udat = state.userdata;
@@ -1597,10 +1607,10 @@ color_t mcIntegrator_t::estimateSSSSingleScattering(renderState_t &state, surfac
 
     //float badDist = (hit.P-sp.P).length();
 
-    bool ismeetBadFace = false;
+    //bool ismeetBadFace = false;
     while ( hit.N * refDir < 0 )
     {
-        ismeetBadFace = true;
+        //ismeetBadFace = true;
         //std::cout << "not out " << hit.P << std::endl;
         ray.from = hit.P;
         ray.tmin = MIN_RAYDIST;
@@ -1636,8 +1646,8 @@ color_t mcIntegrator_t::estimateSSSSingleScattering(renderState_t &state, surfac
         //std::cout << "trTmp is " << trTmp << std::endl;
 
         color_t radiance = getTranslucentInScatter(state, stepRay, currentStep);
-        //if ( state.pixelNumber == 489949 )
-        //  std::cout << "radiance is " << radiance << std::endl;
+
+        //if ( state.pixelNumber == 489949 ) std::cout << "radiance is " << radiance << std::endl;
 
         singleS += trTmp * radiance * sigma_s * currentStep * Kt_o * sssScale;
 
@@ -1645,18 +1655,21 @@ color_t mcIntegrator_t::estimateSSSSingleScattering(renderState_t &state, surfac
         if(pos - t0 >= dist)
             break;
     }
-    //singleS += 0.001;
-    //if (singleS.energy() > 1) {
-    //if ( state.pixelNumber == 489949 )
-    //{
-    //  std::cout << " index = " << state.pixelNumber << std::endl;
-    //  std::cout << "singleS is " << singleS << " stepTau = " << stepTau << "    dist = " << dist << std::endl << std::endl;
-    //}
-    //}
-    //std::cout << "singleS is " << singleS << std::endl << std::endl;
-    //  std::cout << "refracted dir  is " << refDir << std::endl;
-    //  std::cout << "exit point is " << hit.P << std::endl;
-    //  std::cout << "the length of ray is " << t1-t0 << std::endl << std::endl;
+    /* for debug..
+    singleS += 0.001;
+    if (singleS.energy() > 1) 
+    {
+        if ( state.pixelNumber == 489949 )
+        {
+            std::cout << " index = " << state.pixelNumber << std::endl;
+            std::cout << "singleS is " << singleS << " stepTau = " << stepTau << "    dist = " << dist << std::endl << std::endl;
+        }
+    }
+    std::cout << "singleS is " << singleS << std::endl << std::endl;
+    std::cout << "refracted dir  is " << refDir << std::endl;
+    std::cout << "exit point is " << hit.P << std::endl;
+    std::cout << "the length of ray is " << t1-t0 << std::endl << std::endl;
+    */
 
     // restore old render state data
     state.userdata = o_udat;
@@ -1729,10 +1742,10 @@ color_t mcIntegrator_t::estimateSSSSingleSImportantSampling(renderState_t &state
 
     //float badDist = (hit.P-sp.P).length();
 
-    bool ismeetBadFace = false;
+    //bool ismeetBadFace = false;
     while ( hit.N * refDir < 0 )
     {
-        ismeetBadFace = true;
+        //ismeetBadFace = true;
         //std::cout << "not out " << hit.P << std::endl;
         ray.from = hit.P;
         ray.tmin = MIN_RAYDIST;
@@ -1742,27 +1755,33 @@ color_t mcIntegrator_t::estimateSSSSingleSImportantSampling(renderState_t &state
             return singleS;
         }
     }
-    //if(ismeetBadFace){
-    //  std::cout << " bad dist = " << badDist << "  new dist = " << (hit.P-sp.P).length() << std::endl;
-    //  std::cout << std::endl;
-    //}
+    /* for debug..
+    if(ismeetBadFace)
+    {
+        std::cout << " bad dist = " << badDist << "  new dist = " << (hit.P-sp.P).length() << std::endl;
+        std::cout << std::endl;
+    }
+    */
 
     // get the light transmit distance
     t0 = 0;
     t1 = (hit.P-sp.P).length();
     float dist = (t1-t0);
-    //important sampling
+
+    //importance sampling
     float sigT = sigma_t.energy();
     float range = 1.f - exp(-1*dist*sigT);
     if (range == 1)
     {
         range -= 1e-6;
     }
-    //  if (state.pixelNumber == 70280) {
-    //      std::cout << "sigma_t = " << sigma_t << std::endl;
-    //      std::cout << "dist = " << dist << std::endl;
-    //      std::cout << "range = " << range << std::endl;
-    //  }
+    /* for debug..
+    if (state.pixelNumber == 70280) {
+        std::cout << "sigma_t = " << sigma_t << std::endl;
+        std::cout << "dist = " << dist << std::endl;
+        std::cout << "range = " << range << std::endl;
+    }
+    */
     float lastSamplePos = 0.0f, currSamplePos;
     for (int i=1; i<=samples; i++)
     {
@@ -1782,11 +1801,13 @@ color_t mcIntegrator_t::estimateSSSSingleSImportantSampling(renderState_t &state
     color_t trTmp(1.f);
     color_t stepTau(0.f);
 
-    //  if ((state.pixelNumber == 223580) || (state.pixelNumber == 223600) )
-    //  {
-    //      std::cout << state.pixelNumber << std::endl;
-    //      std::cout << "Normal = " << sp.N << std::endl;
-    //  }
+    /* for debug..
+    if ((state.pixelNumber == 223580) || (state.pixelNumber == 223600) )
+    {
+        std::cout << state.pixelNumber << std::endl;
+        std::cout << "Normal = " << sp.N << std::endl;
+    }
+    */
 
     for (int stepSample = 0; stepSample < samples; stepSample++)
     {
@@ -1804,15 +1825,19 @@ color_t mcIntegrator_t::estimateSSSSingleSImportantSampling(renderState_t &state
 
         singleS += trTmp * inScatter * sigma_s * currentStep * Kt_o * sssScale;
 
-        //std::cout << state.pixelNumber << std::endl;
-        //if (state.pixelNumber == 70280) {
-        //      std::cout << "trTmp = " << trTmp << "   inScatter = " << inScatter << "  currentStep == " << currentStep << "  kt_o = " << Kt_o << std::endl;
-        //          std::cout << "singleS = " << singleS << std::endl;
-        //      }
-        //      else if (state.pixelNumber == 223600) {
-        //          std::cout << "trTmp = " << trTmp << "   inScatter = " << inScatter << "  currentStep == " << currentStep << "  kt_o = " << Kt_o << std::endl;
-        //          std::cout << "singleS = " << singleS << std::endl;
-        //      }
+        /* for debug..
+        std::cout << state.pixelNumber << std::endl;
+        if (state.pixelNumber == 70280) 
+        {
+            std::cout << "trTmp = " << trTmp << "   inScatter = " << inScatter << "  currentStep == " << currentStep << "  kt_o = " << Kt_o << std::endl;
+            std::cout << "singleS = " << singleS << std::endl;
+        }
+        else if (state.pixelNumber == 223600)
+        {
+            std::cout << "trTmp = " << trTmp << "   inScatter = " << inScatter << "  currentStep == " << currentStep << "  kt_o = " << Kt_o << std::endl;
+            std::cout << "singleS = " << singleS << std::endl;
+        }
+        */
 
         pos += currentStep;
 
@@ -1821,18 +1846,21 @@ color_t mcIntegrator_t::estimateSSSSingleSImportantSampling(renderState_t &state
             break;
         }
     }
-    //if ((state.pixelNumber == 70280) || (state.pixelNumber == 223600) )
-    //  std::cout << std::endl;
-    //  std::cout << "refracted dir  is " << refDir << std::endl;
-    //  std::cout << "exit point is " << hit.P << std::endl;
-    //  std::cout << "the length of ray is " << t1-t0 << std::endl << std::endl;
-
+    /* for debug..
+    if ((state.pixelNumber == 70280) || (state.pixelNumber == 223600) )
+    {
+        std::cout << std::endl;
+        std::cout << "refracted dir  is " << refDir << std::endl;
+        std::cout << "exit point is " << hit.P << std::endl;
+        std::cout << "the length of ray is " << t1-t0 << std::endl << std::endl;
+    }
+    */
     // restore old render state data
     state.userdata = o_udat;
 
-    //  if (state.pixelNumber == 70280) {
-    //      singleS = color_t(1.0,0.0,0.0);
-    //  }
+    /* for debug..
+    if (state.pixelNumber == 70280) singleS = color_t(1.0,0.0,0.0);
+    */
 
     singleS *= diffuseC;
     singleS *= mTransl;
@@ -2086,10 +2114,10 @@ color_t mcIntegrator_t::estimateSSSSingleScatteringPhotons(renderState_t &state,
 
     //float badDist = (hit.P-sp.P).length();
 
-    bool ismeetBadFace = false;
+    //bool ismeetBadFace = false;
     while ( hit.N * refDir < 0 )
     {
-        ismeetBadFace = true;
+        //ismeetBadFace = true;
         //std::cout << "not out " << hit.P << std::endl;
         ray.from = hit.P;
         ray.tmin = MIN_RAYDIST;
