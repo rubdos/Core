@@ -130,12 +130,12 @@ class YAFRAYCORE_EXPORT imageFilm_t
 #endif
 
 	protected:
-		rgba2DImage_t *image; //!< rgba color buffer
-		gray2DImage_t *depthMap; //!< storage for z-buffer channel
+		rgba2DImage_t *image;       //!< rgba color buffer
+		gray2DImage_t *depthMap;    //!< storage for z-buffer channel
 		rgb2DImage_nw_t *densityImage; //!< storage for z-buffer channel
-		rgba2DImage_nw_t *dpimage; //!< render parameters badge image
-		tiledBitArray2D_t<3> *flags; //!< flags for adaptive AA sampling;
-		int dpHeight; //!< height of the rendering parameters badge;
+		rgba2DImage_nw_t *dpimage;      //!< render parameters badge image
+		tiledBitArray2D_t<3> *flags;    //!< flags for adaptive AA sampling;
+		int dpHeight;   //!< height of the rendering parameters badge;
 		int w, h, cx0, cx1, cy0, cy1;
 		int area_cnt, completed_cnt;
 		volatile int next_area;

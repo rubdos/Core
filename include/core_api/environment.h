@@ -31,7 +31,7 @@ class YAFRAYCORE_EXPORT renderEnvironment_t
 	public:
 		void loadPlugins(const std::string &path);
 		bool getPluginPath(std::string &path);
-		
+
 		typedef light_t 		*light_factory_t(paraMap_t &,renderEnvironment_t &);
 		typedef material_t 		*material_factory_t(paraMap_t &,std::list<paraMap_t> &, renderEnvironment_t &);
 		typedef texture_t 		*texture_factory_t(paraMap_t &,renderEnvironment_t &);
@@ -52,7 +52,7 @@ class YAFRAYCORE_EXPORT renderEnvironment_t
 		background_t* 	getBackground(const std::string &name)const;
 		integrator_t* 	getIntegrator(const std::string &name)const;
 		scene_t * 		getScene() { return curren_scene; };
-		
+
 		light_t* 		createLight		(const std::string &name, paraMap_t &params);
 		texture_t* 		createTexture	(const std::string &name, paraMap_t &params);
 		material_t* 	createMaterial	(const std::string &name, paraMap_t &params, std::list<paraMap_t> &eparams);
@@ -79,7 +79,7 @@ class YAFRAYCORE_EXPORT renderEnvironment_t
 		virtual void registerFactory(const std::string &name,shader_factory_t *f);
 		virtual void registerFactory(const std::string &name,volume_factory_t *f);
 		virtual void registerFactory(const std::string &name,volumeregion_factory_t *f);
-		
+
 		virtual void registerImageHandler(const std::string &name, const std::string &validExtensions, const std::string &fullName, imagehandler_factory_t *f);
 		virtual std::vector<std::string> listImageHandlers();
 		virtual std::vector<std::string> listImageHandlersFullName();
@@ -91,7 +91,7 @@ class YAFRAYCORE_EXPORT renderEnvironment_t
 
 		renderEnvironment_t();
 		virtual ~renderEnvironment_t();
-		
+
 	protected:
 		std::list< sharedlibrary_t > 	pluginHandlers;
 		std::map<std::string,light_factory_t *> 	light_factory;
@@ -105,7 +105,7 @@ class YAFRAYCORE_EXPORT renderEnvironment_t
 		std::map<std::string,volume_factory_t *> 	volume_factory;
 		std::map<std::string,volumeregion_factory_t *> 	volumeregion_factory;
 		std::map<std::string,imagehandler_factory_t *> 	imagehandler_factory;
-		
+
 		std::map<std::string,light_t *> 	light_table;
 		std::map<std::string,material_t *> 	material_table;
 		std::map<std::string,texture_t *> 	texture_table;
@@ -116,7 +116,7 @@ class YAFRAYCORE_EXPORT renderEnvironment_t
 		std::map<std::string,shaderNode_t *> shader_table;
 		std::map<std::string,volumeHandler_t *> volume_table;
 		std::map<std::string,VolumeRegion *> volumeregion_table;
-		
+
 		std::map<std::string,imageHandler_t *> imagehandler_table;
 		std::map<std::string,std::string> imagehandler_fullnames;
 		std::map<std::string,std::string> imagehandler_extensions;

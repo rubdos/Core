@@ -94,7 +94,7 @@ class YAFRAYCORE_EXPORT vector3d_t
 		vector3d_t& operator *=(PFLOAT s) { x*=s;  y*=s;  z*=s;  return *this;}
 		PFLOAT operator[] (int i) const{ return (&x)[i]; } //Lynx
 		void abs() { x=std::fabs(x);  y=std::fabs(y);  z=std::fabs(z); }
-		~vector3d_t() {};
+		//~vector3d_t() {}; // povman test
 		PFLOAT x,y,z;
 };
 
@@ -126,7 +126,7 @@ class YAFRAYCORE_EXPORT point3d_t
 		point3d_t& operator -=(const point3d_t &s) { x-=s.x;  y-=s.y;  z-=s.z;  return *this;}
 		PFLOAT operator[] (int i) const{ return (&x)[i]; } //Lynx
 		PFLOAT &operator[](int i) { return (&x)[i]; } //Lynx
-		~point3d_t() {};
+		//~point3d_t() {}; // povman: add but not active yet
 		PFLOAT x,y,z;
 };
 

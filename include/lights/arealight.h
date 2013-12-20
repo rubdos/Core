@@ -28,7 +28,7 @@ class areaLight_t : public light_t
 		static light_t *factory(paraMap_t &params, renderEnvironment_t &render);
 	protected:
 		point3d_t corner, c2, c3, c4;
-		vector3d_t toX,toY, normal, fnormal;
+		vector3d_t toX, toY, normal, fnormal;
 		vector3d_t du, dv; //!< directions for hemisampler (emitting photons)
 		color_t color; //!< includes intensity amplification! so...
 		int samples;

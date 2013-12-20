@@ -57,7 +57,7 @@ public:
 	
 	union
 	{
-		PFLOAT 			division;		//!< interior: division plane position
+		PFLOAT 	division;		//!< interior: division plane position
 		T** 	primitives;		//!< leaf: list of primitives
 		T*		onePrimitive;	//!< leaf: direct inxex of one primitive
 	};
@@ -69,7 +69,7 @@ template<class T> struct rKdStack
 {
 	const rkdTreeNode<T> *node; //!< pointer to far child
 	PFLOAT t; 		//!< the entry/exit signed distance
-	point3d_t pb; 		//!< the point coordinates of entry/exit point
+	point3d_t pb; 	//!< the point coordinates of entry/exit point
 	int	 prev; 		//!< the pointer to the previous stack item
 };
 
