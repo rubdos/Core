@@ -133,7 +133,14 @@ void renderEnvironment_t::loadPlugins(const std::string &path)
 		pluginHandlers.push_back(plug);
 	}
 }
+/** povman: new code for getPluginPath */
+bool renderEnvironment_t::getPluginPath(std::string &path)
+{
+    path = std::string(Y_PLUGINPATH);
+    return true;
+}
 
+/* this code is unused because atm, this application is not installable
 bool renderEnvironment_t::getPluginPath(std::string &path)
 {
 #ifdef _WIN32
@@ -175,7 +182,7 @@ bool renderEnvironment_t::getPluginPath(std::string &path)
 	return true;
 #endif
 }
-
+*/
 
 material_t* renderEnvironment_t::getMaterial(const std::string &name)const
 {

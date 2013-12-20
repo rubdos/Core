@@ -150,7 +150,8 @@ bool scene_t::endCurveMesh(const material_t *mat, float strandStart, float stran
 	vector3d_t N(0),u(0),v(0);
 	int n = points.size();
 	// Vertex extruding
-	for (i=0;i<n;i++){
+	for (i=0;i<n;i++)
+    {
 		o = points[i];
 		if (strandShape < 0)
 		{

@@ -702,7 +702,7 @@ void imageFilm_t::drawRenderSettings()
 
 	std::stringstream ss;
 
-	ss << "YafaRay (" << version << ")";
+	ss << "TheBounty (" << version << ")";
 
 	ss << std::setprecision(2);
 	double times = gTimer.getTime("rendert");
