@@ -4,8 +4,8 @@
 #define __BEGIN_YAFRAY namespace yafaray {
 #define __END_YAFRAY }
 
-#define PACKAGE "YafaRay"
-#define VERSION "0.1.5"
+#define PACKAGE "TheBounty"
+#define VERSION "0.1.6.0"
 
 #if (__GNUC__ > 3)
         #define GCC_HASCLASSVISIBILITY
