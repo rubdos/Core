@@ -151,7 +151,7 @@ void photonKdTree<T>::buildTree(u_int32 start, u_int32 end, bound_t &nodeBound, 
 	u_int32 curNode = nextFreeNode;
 	PFLOAT splitPos = prims[splitEl]->pos[splitAxis];
 	nodes[curNode].createInterior(splitAxis, splitPos, nodeBound);
-	// add boundbox and summarry photon here ( for SSS)
+	// add boundbox and summary photon here ( for SSS)
 	nodes[curNode].photonNum = end-start;	
 	++nextFreeNode;
 	bound_t boundL = nodeBound, boundR = nodeBound;

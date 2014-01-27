@@ -64,16 +64,16 @@ struct YAFRAYCORE_EXPORT surfacePoint_t
 {
 	//int object; //!< the object owner of the point.
 	const material_t *material; //!< the surface material
-	const light_t *light; //!< light source if surface point is on a light
-	const object3d_t *object; //!< object the prim belongs to
+	const light_t *light;       //!< light source if surface point is on a light
+	const object3d_t *object;   //!< object the prim belongs to
 //	point2d_t screenpos; // only used with 'win' texture coord. mode
 	void *origin;
 
 	// Geometry related
-    vector3d_t N; //!< the shading normal.
-	vector3d_t Ng; //!< the geometric normal.
-	vector3d_t orcoNg; //!< the untransformed geometric normal.
-	point3d_t P; //!< the (world) position.
+    vector3d_t N;       //!< the shading normal.
+	vector3d_t Ng;      //!< the geometric normal.
+	vector3d_t orcoNg;  //!< the untransformed geometric normal.
+	point3d_t P;        //!< the (world) position.
 	point3d_t orcoP;
 //	color_t vertex_col;
 	bool hasUV;
