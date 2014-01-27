@@ -183,7 +183,7 @@ class YAFRAYCORE_EXPORT rgbe_t
 			if (rgbe[3])
 			{   /*nonzero pixel*/
 				f = fLdexp(1.0,rgbe[3]-(int)(128+8));
-				return color_t(rgbe[0] * f,rgbe[1] * f,rgbe[2] * f);
+				return color_t(rgbe[0] * f, rgbe[1] * f, rgbe[2] * f);
 			}
 			else return color_t(0,0,0);
 		}

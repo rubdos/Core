@@ -45,18 +45,20 @@ class YAFRAYCORE_EXPORT mcIntegrator_t: public tiledIntegrator_t
 		virtual color_t sampleAmbientOcclusion(renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo) const;
 
 		// SSS
-		/*! Creates SSS photon map for different objects*/
-		virtual bool createSSSMaps();
+		/*! Creates SSS photon map for different objects */
+		// virtual bool createSSSMaps();
 		virtual bool createSSSMapsByPhotonTracing();
 		//virtual bool destorySSSMaps();
 		virtual void destorySSSMaps();
 
 		/*! Estimates SSS photons for a given surface point of one specified objec*/
 		virtual color_t estimateSSSMaps(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo ) const;
-
-		virtual color_t estimateSSSSingleScattering(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const;
-		virtual color_t estimateSSSSingleSImportantSampling(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const;
-		virtual color_t getTranslucentInScatter(renderState_t& state, ray_t& stepRay, float currentStep) const;
+		//
+        virtual color_t estimateSSSSingleScattering(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const;
+		// povman: used by all integrators: directlight, photonmap and pathtracer
+        virtual color_t estimateSSSSingleSImportantSampling(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const;
+		//
+        virtual color_t getTranslucentInScatter(renderState_t& state, ray_t& stepRay, float currentStep) const;
 
 		virtual color_t estimateSSSSingleScatteringPhotons(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const;
         // sss end
@@ -85,15 +87,24 @@ class YAFRAYCORE_EXPORT mcIntegrator_t: public tiledIntegrator_t
 		std::vector<light_t*> lights; //! An array containing all the scene lights
 		bool transpBackground; //! Render background as transparent
 		bool transpRefractedBackground; //! Render refractions of background as transparent
-		// SSS
-		bool usePhotonSSS;
+		
+        // SSS        
+		bool usePhotonSSS; //! bool to use photon if have a SSS  scene material.
+
+        // promedio de fotones que necesitamos impactar en ese material para un procesado optimo..
+        // cuestion: el total de fotones a disparar se calculara en base a esta cifra.??
 		unsigned int nSSSPhotons;
-		int nSSSDepth;
-		unsigned int nSingleScatterSamples;
-		bool isDirectLight;
-		std::map<const object3d_t*, photonMap_t*> SSSMaps; //! Container of SSS photons for different objects
+        
+		int nSSSDepth; // amount of bounces
+        
+		unsigned int nSingleScatterSamples; // amount of samples for photon.
+        
+		bool isDirectLight; // si el origen los fotones es una fuente de luz directa
+         
+		std::map<const object3d_t*, photonMap_t*> SSSMaps; // Container of SSS photons for different objects
 	public:
-		static float sssScale;
+		// factor of scale ( if 1U != 1m)
+        static float sssScale;
 };
 //SSS
 struct TranslucentData_t

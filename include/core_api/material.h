@@ -66,9 +66,9 @@ struct pSample_t: public sample_t // << whats with the public?? structs inherit 
 	pSample_t(float s_1, float s_2, float s_3, BSDF_t sflags, const color_t &l_col, const color_t& transm=color_t(1.f)):
 		sample_t(s_1, s_2, sflags), s3(s_3), lcol(l_col), alpha(transm){}
 	float s3;
-	const color_t lcol; //!< the photon color from last scattering
+	const color_t lcol;  //!< the photon color from last scattering
 	const color_t alpha; //!< the filter color between last scattering and this hit (not pre-applied to lcol!)
-	color_t color; //!< the new color after scattering, i.e. what will be lcol for next scatter.
+	color_t color;       //!< the new color after scattering, i.e. what will be lcol for next scatter.
 };
 
 class YAFRAYCORE_EXPORT material_t
@@ -81,43 +81,37 @@ class YAFRAYCORE_EXPORT material_t
 			first before any other methods (except isTransparent/getTransparency)! The renderstate
 			holds a pointer to preallocated userdata to save data that only depends on the current sp,
 			like texture lookups etc.
-			\param bsdfTypes returns flags for all bsdf components the material has
-		 */
+			\param bsdfTypes returns flags for all bsdf components the material has. */
         virtual void initBSDF(const renderState_t &state, surfacePoint_t &sp, BSDF_t &bsdfTypes)const = 0;
 
 		/*! evaluate the BSDF for the given components.
-				@param types the types of BSDFs to be evaluated (e.g. diffuse only, or diffuse and glossy) */
+			\param types the types of BSDFs to be evaluated (e.g. diffuse only, or diffuse and glossy). */
 		virtual color_t eval(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, const vector3d_t &wl, BSDF_t types)const = 0;
 
 		/*! take a sample from the BSDF, given a 2-dimensional sample value and the BSDF types to be sampled from
 			\param s s1, s2 and flags members give necessary information for creating the sample, pdf and sampledFlags need to be returned
-			\param W returns the weight for importance sampling
-		*/
+			\param W returns the weight for importance sampling. */
 		virtual color_t sample(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, vector3d_t &wi, sample_t &s, float &W)const = 0;// {return color_t(0.f);}
 		virtual color_t sample(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, vector3d_t *const dir, color_t &tcol, sample_t &s, float *const W)const {return color_t(0.f);}
 
-		/*! return the pdf for sampling the BSDF with wi and wo
-		*/
+		/*! return the pdf for sampling the BSDF with wi and wo	*/
 		virtual float pdf(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, const vector3d_t &wi, BSDF_t bsdfs)const {return 0.f;}
-
 
 		/*! indicate whether light can (partially) pass the material without getting refracted,
 			e.g. a curtain or even very thin foils approximated as single non-refractive layer.
-			used to trace transparent shadows. Note that in this case, initBSDF was NOT called before!
-		*/
+			used to trace transparent shadows. Note that in this case, initBSDF was NOT called before! */
 		virtual bool isTransparent() const { return false; }
 
 		/*!	used for computing transparent shadows.	Default implementation returns black (i.e. solid shadow).
-			This is only used for shadow calculations and may only be called when isTransparent returned true.	*/
+			This is only used for shadow calculations and may only be called when isTransparent returned true. */
 		virtual color_t getTransparency(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo)const { return color_t(0.0); }
+
 		/*! evaluate the specular components for given direction. Somewhat a specialization of sample(),
 			because neither sample values nor pdf values are necessary for this.
 			Typical use: recursive raytracing of integrators.
 			\param dir dir[0] returns reflected direction, dir[1] refracted direction
 			\param col col[0] returns reflected spectrum, dir[1] refracted spectrum */
-		virtual void getSpecular(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo,
-								 bool &reflect, bool &refract, vector3d_t *const dir, color_t *const col)const
-		{ reflect=false; refract=false; }
+		virtual void getSpecular(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, bool &reflect, bool &refract, vector3d_t *const dir, color_t *const col)const { reflect=false; refract=false; }
 
 		/*! get the overall reflectivity of the material (used to compute radiance map for example) */
 		virtual color_t getReflectivity(const renderState_t &state, const surfacePoint_t &sp, BSDF_t flags)const;
@@ -138,12 +132,12 @@ class YAFRAYCORE_EXPORT material_t
 		virtual bool scatterPhoton(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wi, vector3d_t &wo, pSample_t &s) const;
 
 		BSDF_t getFlags() const { return bsdfFlags; }
+
 		/*! Materials may have to do surface point specific (pre-)calculation that need extra storage.
 			returns the required amount of "userdata" memory for all the functions that require a render state */
 		size_t getReqMem() const { return reqMem; }
 
 		/*! Get materials IOR (for refracted photons) */
-
 		virtual float getMatIOR() const { return 1.5f; }
 
 	protected:
