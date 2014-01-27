@@ -12,50 +12,50 @@ __BEGIN_YAFRAY
 
 namespace kdtree {
 
-#define PHOTONKD_MAX_STACK 64
+#define PHOTON_KD_MAX_STACK 64
 #define PHOTON_NON_REC_LOOKUP 1
 
-	//*******************************
-	// added by ronnie
-	// for include boundingbox infos
-	//*******************************
-	template <class T>
-	struct kdBoundNode
+//*******************************
+// added by ronnie
+// for include boundingbox infos
+//*******************************
+template <class T>
+struct kdBoundNode
+{
+	~kdBoundNode()
 	{
-		~kdBoundNode()
-		{
-			if (!IsLeaf()) {
-				if (data!=NULL) {
-					delete data;
-				}
+		if (!IsLeaf()) {
+			if (data!=NULL) {
+				delete data;
 			}
 		}
-		void createLeaf(const T *d, bound_t &boundBox)
-		{
-			flags = 3;
-			nodeBound = boundBox;
-			data = d;
-		}
-		void createInterior(int axis, PFLOAT d, bound_t &boundBox)
-		{
-			division = d;
-			nodeBound = boundBox;
-			flags = (flags & ~3) | axis;
-			data = NULL;
-		}
-		PFLOAT 	SplitPos() const { return division; }
-		int 	SplitAxis() const { return flags & 3; }
-		int 	nPrimitives() const { return flags >> 2; }
-		bool 	IsLeaf() const { return (flags & 3) == 3; }
-		u_int32	getRightChild() const { return (flags >> 2); }
-		void 	setRightChild(u_int32 i) { flags = (flags&3) | (i << 2); }
+	}
+	void createLeaf(const T *d, bound_t &boundBox)
+	{
+		flags = 3;
+		nodeBound = boundBox;
+		data = d;
+	}
+	void createInterior(int axis, PFLOAT d, bound_t &boundBox)
+	{
+		division = d;
+		nodeBound = boundBox;
+		flags = (flags & ~3) | axis;
+		data = NULL;
+	}
+	PFLOAT 	SplitPos() const { return division; }
+	int 	SplitAxis() const { return flags & 3; }
+	int 	nPrimitives() const { return flags >> 2; }
+	bool 	IsLeaf() const { return (flags & 3) == 3; }
+	u_int32	getRightChild() const { return (flags >> 2); }
+	void 	setRightChild(u_int32 i) { flags = (flags&3) | (i << 2); }
 		
-		PFLOAT division;
-		const T *data;
-		bound_t nodeBound;
-		int		photonNum;
-		u_int32	flags;
-	};
+	PFLOAT division;
+	const T *data;
+	bound_t nodeBound;
+	int		photonNum;
+	u_int32	flags;
+};
 
 template<class NodeData> struct ComparePhotonNode
 {
@@ -66,7 +66,7 @@ template<class NodeData> struct ComparePhotonNode
 		return d1->pos[axis] == d2->pos[axis] ? (d1 < d2) : d1->pos[axis] < d2->pos[axis];
 	}
 };
-
+//-
 template <class T>
 class photonKdTree
 {
@@ -75,13 +75,17 @@ class photonKdTree
 		~photonKdTree(){ if(nodes) y_free(nodes); }
 		template<class LookupProc> void lookup(const point3d_t &p, const LookupProc &proc, PFLOAT &maxDistSquared) const;
 		double lookupStat()const{ return double(Y_PROCS)/double(Y_LOOKUPS); } //!< ratio of photons tested per lookup call
+		//povman: specific code for SSS
 		int GetPhotons( const point3d_t& p, std::vector<const T*> &array, float threshold );
 		int PhotonNumInDisc(const point3d_t& p, PFLOAT scale, PFLOAT dist) const;
+		//end
 	protected:
 		template<class LookupProc> void recursiveLookup(const point3d_t &p, const LookupProc &proc, PFLOAT &maxDistSquared, int nodeNum) const;
+		//povman: specific code for SSS
 		void recursiveGetPhotons( const point3d_t& p, std::vector<const T*> &array, int nodeNum, float threshold );
 		void recursiveSumPhotons(int nodeNum);
 		int recursiveFindNumInDisc(const point3d_t& p, PFLOAT scale, PFLOAT dist, int nodeNum) const;
+		//end
 		struct KdStack
 		{
 			const kdBoundNode<T> *node; //!< pointer to far child
@@ -96,7 +100,7 @@ class photonKdTree
 		mutable unsigned int Y_LOOKUPS, Y_PROCS;
 };
 
-
+//-
 template<class T>
 photonKdTree<T>::photonKdTree(const std::vector<T> &dat)
 {
@@ -119,7 +123,7 @@ photonKdTree<T>::photonKdTree(const std::vector<T> &dat)
 	
 	for(u_int32 i=1; i<nElements; ++i) treeBound.include(dat[i].pos);
 	
-	Y_INFO << "photonKdTree: Starting recusive tree build for "<<nElements<<" elements..." << yendl;
+	Y_INFO << "photonKdTree: Starting recursive tree build for "<<nElements<<" elements..." << yendl;
 	
 	buildTree(0, nElements, treeBound, elements);
 	
@@ -136,7 +140,7 @@ void photonKdTree<T>::buildTree(u_int32 start, u_int32 end, bound_t &nodeBound, 
 	if(end - start == 1)
 	{
 		nodes[nextFreeNode].createLeaf(prims[start],nodeBound);
-		nodes[nextFreeNode].photonNum = 1;
+		nodes[nextFreeNode].photonNum = 1; // specific code for SSS
 		nextFreeNode++;
 		return;
 	}
@@ -146,13 +150,13 @@ void photonKdTree<T>::buildTree(u_int32 start, u_int32 end, bound_t &nodeBound, 
 					&prims[end], ComparePhotonNode<T>(splitAxis));
 	u_int32 curNode = nextFreeNode;
 	PFLOAT splitPos = prims[splitEl]->pos[splitAxis];
-	nodes[curNode].createInterior(splitAxis, splitPos,nodeBound);
-	// add boundbox and summarry photon here
-	nodes[curNode].photonNum = end-start;
-	
+	nodes[curNode].createInterior(splitAxis, splitPos, nodeBound);
+	// add boundbox and summarry photon here ( for SSS)
+	nodes[curNode].photonNum = end-start;	
 	++nextFreeNode;
 	bound_t boundL = nodeBound, boundR = nodeBound;
-	switch(splitAxis){
+	switch(splitAxis)
+    {
 		case 0: boundL.setMaxX(splitPos); boundR.setMinX(splitPos); break;
 		case 1: boundL.setMaxY(splitPos); boundR.setMinY(splitPos); break;
 		case 2: boundL.setMaxZ(splitPos); boundR.setMinZ(splitPos); break;
@@ -164,13 +168,15 @@ void photonKdTree<T>::buildTree(u_int32 start, u_int32 end, bound_t &nodeBound, 
 	buildTree(splitEl, end, boundR, prims);
 }
 
+
+//-
 template<class T>
 void photonKdTree<T>::buildTree2(u_int32 start, u_int32 end, bound_t &nodeBound, const T **prims, int axis)
 {
 	if(end - start == 1)
 	{
 		nodes[nextFreeNode].createLeaf(prims[start], nodeBound);
-		nodes[nextFreeNode].photonNum = 1;
+		nodes[nextFreeNode].photonNum = 1; // specific for SSS
 		nextFreeNode++;
 		return;
 	}
@@ -181,9 +187,8 @@ void photonKdTree<T>::buildTree2(u_int32 start, u_int32 end, bound_t &nodeBound,
 					&prims[end], ComparePhotonNode<T>(splitAxis));
 	u_int32 curNode = nextFreeNode;
 	PFLOAT splitPos = prims[splitEl]->pos[splitAxis];
-	nodes[curNode].createInterior(splitAxis, splitPos,nodeBound);
-	nodes[curNode].photonNum = end-start;
-	
+	nodes[curNode].createInterior(splitAxis, splitPos, nodeBound);
+	nodes[curNode].photonNum = end-start;	
 	++nextFreeNode;
 	bound_t boundL = nodeBound, boundR = nodeBound;
 	switch(splitAxis){
@@ -197,14 +202,13 @@ void photonKdTree<T>::buildTree2(u_int32 start, u_int32 end, bound_t &nodeBound,
 	nodes[curNode].setRightChild (nextFreeNode);
 	buildTree2(splitEl, end, boundR, prims, (axis+1)%3);
 }
-
-
+//-
 template<class T> template<class LookupProc> 
 void photonKdTree<T>::lookup(const point3d_t &p, const LookupProc &proc, PFLOAT &maxDistSquared) const
 {
-#if NON_REC_LOOKUP > 0
+#if PHOTON_NON_REC_LOOKUP > 0 //NON_REC_LOOKUP > 0
 	++Y_LOOKUPS;
-	KdStack stack[KD_MAX_STACK];
+	KdStack stack[PHOTON_KD_MAX_STACK]; //KD_MAX_STACK];
 	const kdBoundNode<T> *farChild, *currNode = nodes;
 	
 	int stackPtr = 1;
@@ -217,13 +221,13 @@ void photonKdTree<T>::lookup(const point3d_t &p, const LookupProc &proc, PFLOAT 
 			int axis = currNode->SplitAxis();
 			PFLOAT splitVal = currNode->SplitPos();
 			
-			if( p[axis] < splitVal ) //need traverse left first
-			{
+            if( p[axis] < splitVal ) //need traverse left first
+            {
 				farChild = &nodes[currNode->getRightChild()];
 				currNode++;
-			}
-			else //need traverse right child first
-			{
+            } 
+            else //need traverse right child first
+            {
 				farChild = currNode+1;
 				currNode = &nodes[currNode->getRightChild()];
 			}
@@ -238,7 +242,7 @@ void photonKdTree<T>::lookup(const point3d_t &p, const LookupProc &proc, PFLOAT 
 		PFLOAT dist2 = v.lengthSqr();
 
 		if (dist2 < maxDistSquared)
-		{
+        {
 			++Y_PROCS;
 			proc(currNode->data, dist2, maxDistSquared);
 		}
@@ -265,11 +269,14 @@ void photonKdTree<T>::lookup(const point3d_t &p, const LookupProc &proc, PFLOAT 
 	++Y_LOOKUPS;
 	if(Y_LOOKUPS == 159999)
 	{
-		Y_INFO << "pointKd-Tree:average photons tested per lookup:" << double(Y_PROCS)/double(Y_LOOKUPS) << yendl;
+		// povman: change pointKd-Tree msg to photon Kd_Tree..
+        Y_INFO << "photonKd-Tree:average photons tested per lookup:" << double(Y_PROCS)/double(Y_LOOKUPS) << yendl;
 	}
 #endif
 }
 
+
+//-
 template<class T> template<class LookupProc> 
 void photonKdTree<T>::recursiveLookup(const point3d_t &p, const LookupProc &proc, PFLOAT &maxDistSquared, int nodeNum) const
 {
@@ -278,9 +285,11 @@ void photonKdTree<T>::recursiveLookup(const point3d_t &p, const LookupProc &proc
 	{
 		vector3d_t v = currNode->data->pos - p;
 		PFLOAT dist2 = v.lengthSqr();
-		if (dist2 < maxDistSquared)
+        if (dist2 < maxDistSquared)
+        {
 			proc(currNode->data, dist2, maxDistSquared);
 			++Y_PROCS;
+        }
 		return;
 	}
 	int axis = currNode->SplitAxis();
@@ -289,152 +298,162 @@ void photonKdTree<T>::recursiveLookup(const point3d_t &p, const LookupProc &proc
 	if(p[axis] < currNode->SplitPos())
 	{
 		recursiveLookup(p, proc, maxDistSquared, nodeNum+1);
-		if (dist2 < maxDistSquared)
+        if (dist2 < maxDistSquared)
+        {
 			recursiveLookup(p, proc, maxDistSquared, currNode->getRightChild());
+        }
 	}
 	else
 	{
 		recursiveLookup(p, proc, maxDistSquared, currNode->getRightChild());
-		if (dist2 < maxDistSquared)
+        if (dist2 < maxDistSquared)
+        {
 			recursiveLookup(p, proc, maxDistSquared, nodeNum+1);
+        }
 	}
 }
 	
-	template<class T>
-	int photonKdTree<T>::GetPhotons( const point3d_t& p, std::vector<const T*> &array, float threshold )
-	{
-		array.clear();
-		recursiveGetPhotons(p,array,0,threshold);
-		return array.size();
-	}
+// povman: specifics templates for SSS
+template<class T>
+int photonKdTree<T>::GetPhotons( const point3d_t& p, std::vector<const T*> &array, float threshold )
+{
+	array.clear();
+	recursiveGetPhotons(p,array,0,threshold);
+	return array.size();
+}
 	
-	template<class T>
-	void photonKdTree<T>::recursiveSumPhotons(int nodeNum)
-	{
-		kdBoundNode<T> *currNode = &nodes[nodeNum];
-		if(currNode->IsLeaf())
-			return;
+template<class T>
+void photonKdTree<T>::recursiveSumPhotons(int nodeNum)
+{
+	kdBoundNode<T> *currNode = &nodes[nodeNum];
+    if(currNode->IsLeaf())
+    {
+		return;
+    }	
+	// compute left
+	recursiveSumPhotons(nodeNum+1);
 		
-		// compute left
-		recursiveSumPhotons(nodeNum+1);
+	// compute right
+	recursiveSumPhotons(currNode->getRightChild());
 		
-		// compute right
-		recursiveSumPhotons(currNode->getRightChild());
+	// compute current
+	// pos
+	T* dat = new T();
+	float weight = (float)nodes[nodeNum+1].photonNum/(float)currNode->photonNum;
+	dat->pos = nodes[nodeNum+1].data->pos*weight + nodes[currNode->getRightChild()].data->pos*(1-weight);
 		
-		// compute current
-		// pos
-		T* dat = new T();
-		float weight = (float)nodes[nodeNum+1].photonNum/(float)currNode->photonNum;
-		dat->pos = nodes[nodeNum+1].data->pos*weight + nodes[currNode->getRightChild()].data->pos*(1-weight);
+	// c
+	dat->c = nodes[nodeNum+1].data->c + nodes[currNode->getRightChild()].data->c;
 		
-		// c
-		dat->c = nodes[nodeNum+1].data->c + nodes[currNode->getRightChild()].data->c;
+	// dir
+	vector3d_t left(nodes[nodeNum+1].data->dir);
+	vector3d_t right(nodes[currNode->getRightChild()].data->dir);
+	vector3d_t newDir = left*weight + right*(1.f-weight);
+	dat->dir = newDir.normalize();;//nodes[nodeNum+1].data->dir*weight + nodes[currNode->getRightChild()].data->dir*(1-weight);
 		
-		// dir
-		vector3d_t left(nodes[nodeNum+1].data->dir);
-		vector3d_t right(nodes[currNode->getRightChild()].data->dir);
-		vector3d_t newDir = left*weight + right*(1.f-weight);
-		dat->dir = newDir.normalize();;//nodes[nodeNum+1].data->dir*weight + nodes[currNode->getRightChild()].data->dir*(1-weight);
+	//normal
+	dat->hitNormal = nodes[nodeNum+1].data->hitNormal*weight + nodes[currNode->getRightChild()].data->hitNormal*(1-weight);
+	dat->hitNormal.normalize();
 		
-		//normal
-		dat->hitNormal = nodes[nodeNum+1].data->hitNormal*weight + nodes[currNode->getRightChild()].data->hitNormal*(1-weight);
-		dat->hitNormal.normalize();
+	// source pos
+	dat->sourcePos = nodes[nodeNum+1].data->sourcePos*weight + nodes[currNode->getRightChild()].data->sourcePos*(1-weight);
 		
-		// source pos
-		dat->sourcePos = nodes[nodeNum+1].data->sourcePos*weight + nodes[currNode->getRightChild()].data->sourcePos*(1-weight);
-		
-		// depth
-		dat->sourceDepth =  nodes[nodeNum+1].data->sourceDepth*weight + nodes[currNode->getRightChild()].data->sourceDepth*(1-weight);
-		
-		currNode->data = dat;
-	}
+	// depth
+	dat->sourceDepth =  nodes[nodeNum+1].data->sourceDepth*weight + nodes[currNode->getRightChild()].data->sourceDepth*(1-weight);
 	
-	template<class T>
-	void photonKdTree<T>::recursiveGetPhotons( const point3d_t& p, std::vector<const T*> &array, int nodeNum, float threshold )
+	currNode->data = dat;
+}
+	
+template<class T>
+void photonKdTree<T>::recursiveGetPhotons( const point3d_t& p, std::vector<const T*> &array, int nodeNum, float threshold )
+{
+	kdBoundNode<T> *currNode = &nodes[nodeNum];
+	if(currNode->IsLeaf())
 	{
-		kdBoundNode<T> *currNode = &nodes[nodeNum];
-		if(currNode->IsLeaf())
-		{
+		array.push_back(currNode->data);
+		return;
+	}
+		
+	if( !currNode->nodeBound.includes(p) )
+	{
+		// compute the angle of node to p
+		vector3d_t ptoCenter = p - currNode->nodeBound.center();
+		vector3d_t boxDiag = currNode->nodeBound.g-currNode->nodeBound.a;
+			
+		//std::cout << "ptoCenter is " << ptoCenter << std::endl;
+		//std::cout << "boxDiag is " << boxDiag << std::endl;
+			
+		float diagDis = boxDiag.length();
+		float ptocDis = ptoCenter.length();
+		ptoCenter.normalize();
+		boxDiag.normalize();
+			
+		float cosAng1 = ptoCenter*boxDiag;
+		boxDiag.x *= -1.f;
+		float cosAng2 = ptoCenter*boxDiag;
+		boxDiag.y *= -1.f;
+		float cosAng3 = ptoCenter*boxDiag;
+		boxDiag.x *= -1.f;
+		float cosAng4 = ptoCenter*boxDiag;
+			
+		float cosAng = fabs(cosAng1)<fabs(cosAng2)?cosAng1:cosAng2;
+		cosAng = fabs(cosAng)<fabs(cosAng3)?cosAng:cosAng3;
+		cosAng = fabs(cosAng)<fabs(cosAng4)?cosAng:cosAng4;
+		float sinAng = fSqrt(1-cosAng*cosAng);
+			
+		float aperture = sinAng*diagDis/ptocDis;
+			
+		if (threshold*ptocDis > (diagDis) && aperture <= threshold)
+        {
 			array.push_back(currNode->data);
 			return;
 		}
-		
-		if( !currNode->nodeBound.includes(p) )
-		{
-			// compute the angle of node to p
-			vector3d_t ptoCenter = p - currNode->nodeBound.center();
-			vector3d_t boxDiag = currNode->nodeBound.g-currNode->nodeBound.a;
-			
-			//std::cout << "ptoCenter is " << ptoCenter << std::endl;
-			//std::cout << "boxDiag is " << boxDiag << std::endl;
-			
-			float diagDis = boxDiag.length();
-			float ptocDis = ptoCenter.length();
-			ptoCenter.normalize();
-			boxDiag.normalize();
-			
-			float cosAng1 = ptoCenter*boxDiag;
-			boxDiag.x *= -1.f;
-			float cosAng2 = ptoCenter*boxDiag;
-			boxDiag.y *= -1.f;
-			float cosAng3 = ptoCenter*boxDiag;
-			boxDiag.x *= -1.f;
-			float cosAng4 = ptoCenter*boxDiag;
-			
-			float cosAng = fabs(cosAng1)<fabs(cosAng2)?cosAng1:cosAng2;
-			cosAng = fabs(cosAng)<fabs(cosAng3)?cosAng:cosAng3;
-			cosAng = fabs(cosAng)<fabs(cosAng4)?cosAng:cosAng4;
-			float sinAng = fSqrt(1-cosAng*cosAng);
-			
-			float aperture = sinAng*diagDis/ptocDis;
-			
-			if (threshold*ptocDis > (diagDis) && aperture <= threshold) {
-				array.push_back(currNode->data);
-				return;
-			}
-		}
-		// compute left
-		recursiveGetPhotons(p,array,nodeNum+1,threshold);
-		
-		// compute right
-		recursiveGetPhotons(p,array,currNode->getRightChild(),threshold);
 	}
-	
-	template<class T>
-	int photonKdTree<T>::PhotonNumInDisc(const point3d_t& p, PFLOAT scale, PFLOAT dist) const
-	{
-		return recursiveFindNumInDisc(p,scale,dist,0);
-	}
-	
-	template<class T>
-	int photonKdTree<T>::recursiveFindNumInDisc(const point3d_t& p, PFLOAT scale, PFLOAT dist, int nodeNum) const
-	{
-		kdBoundNode<T> *currNode = &nodes[nodeNum];
-		const T* dat = currNode->data;
+	// compute left
+	recursiveGetPhotons(p,array,nodeNum+1,threshold);
 		
-		if(currNode->IsLeaf())
-		{
-			vector3d_t v = dat->pos-p;
-			float r  = v.length()*scale;
-			if (r < dist) {
-				return currNode->photonNum;
-			}
-			else {
-				return 0;
-			}
-		}
+	// compute right
+	recursiveGetPhotons(p,array,currNode->getRightChild(),threshold);
+}
+	
+template<class T>
+int photonKdTree<T>::PhotonNumInDisc(const point3d_t& p, PFLOAT scale, PFLOAT dist) const
+{
+	return recursiveFindNumInDisc(p,scale,dist,0);
+}
+	
+template<class T>
+int photonKdTree<T>::recursiveFindNumInDisc(const point3d_t& p, PFLOAT scale, PFLOAT dist, int nodeNum) const
+{
+	kdBoundNode<T> *currNode = &nodes[nodeNum];
+	const T* dat = currNode->data;
 		
+	if(currNode->IsLeaf())
+	{
 		vector3d_t v = dat->pos-p;
 		float r  = v.length()*scale;
-		if (r < dist) {
+		if (r < dist)
+        {
 			return currNode->photonNum;
 		}
-		
-		return recursiveFindNumInDisc(p,scale,dist,nodeNum+1) + 
-			recursiveFindNumInDisc(p,scale,dist,currNode->getRightChild());
+		else 
+        {
+			return 0;
+		}
 	}
+		
+	vector3d_t v = dat->pos-p;
+	float r  = v.length()*scale;
+	if (r < dist)
+    {
+		return currNode->photonNum;
+	}
+		
+	return recursiveFindNumInDisc(p,scale,dist,nodeNum+1) + 
+		recursiveFindNumInDisc(p,scale,dist,currNode->getRightChild());
+}
 	
-} // namespace::kdtree
+} // namespace::pkdtree
 
 __END_YAFRAY
 

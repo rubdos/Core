@@ -3,7 +3,8 @@
 #define Y_PHOTONMAP_H
 
 #include <yafray_config.h>
-// povman: add for SSS TODO: need review..
+// povman: photonkdtree.h is a more advanced code added for SSS translucent material..
+// contain an expanded code from pkdtree.h
 #include "photonkdtree.h"
 // end
 #include "pkdtree.h"
@@ -147,20 +148,20 @@ class YAFRAYCORE_EXPORT photonMap_t
 		void updateTree();
 		void clear(){ photons.clear(); delete tree; tree=0; updated=false; }
 		bool ready() const { return updated; }
-	//	void gather(const point3d_t &P, std::vector< foundPhoton_t > &found, unsigned int K, PFLOAT &sqRadius) const;
+	    //void gather(const point3d_t &P, std::vector< foundPhoton_t > &found, unsigned int K, PFLOAT &sqRadius) const;
 		int gather(const point3d_t &P, foundPhoton_t *found, unsigned int K, PFLOAT &sqRadius) const;
 		const photon_t* findNearest(const point3d_t &P, const vector3d_t &n, PFLOAT dist) const;
-		// SSS
+		// add SSS code
 		void getAllPhotons(const point3d_t& woP, std::vector<const photon_t*>& sssPhotons);
 		int numberOfPhotonInDisc(const point3d_t &p, PFLOAT scale, PFLOAT dist) const;
-		// end
+        // end
 	protected:
 		std::vector<photon_t> photons;
 		int paths; //!< amount of photon paths that have been traced for generating the map
 		bool updated;
 		PFLOAT searchRadius;
 		//kdtree::pointKdTree<photon_t> *tree;
-		// povman: SSS different
+		// povman: add photonKdTree for use with SSS maps
 		kdtree::photonKdTree<photon_t> *tree;
 };
 
