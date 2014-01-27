@@ -39,27 +39,36 @@
 
 // Reference defines, this should be defined by the standard cmath header
 
-//# define M_E		2.7182818284590452354	/* e */
-//# define M_LOG2E	1.4426950408889634074	/* log_2 e */
-//# define M_LOG10E	0.43429448190325182765	/* log_10 e */
+//# define M_E		    2.7182818284590452354	/* e */
+//# define M_LOG2E	    1.4426950408889634074	/* log_2 e */
+//# define M_LOG10E	    0.43429448190325182765	/* log_10 e */
 //# define M_LN2		0.69314718055994530942	/* log_e 2 */
 //# define M_LN10		2.30258509299404568402	/* log_e 10 */
-//# define M_PI		3.14159265358979323846	/* pi */
-//# define M_PI_2		1.57079632679489661923	/* pi/2 */
+//for fix Softimage error building
+#ifndef _MATH_DEFINES_DEFINED //M_PI
+    #define M_PI		3.14159265358979323846 //26433832795 /* pi */
+//#endif
+//#ifndef M_PI_2
+    #define M_PI_2		1.57079632679489661923 //13216916398 /* pi/2 */
+#endif
 //# define M_PI_4		0.78539816339744830962	/* pi/4 */
 //# define M_1_PI		0.31830988618379067154	/* 1/pi */
 //# define M_2_PI		0.63661977236758134308	/* 2/pi */
 //# define M_2_SQRTPI	1.12837916709551257390	/* 2/sqrt(pi) */
-//# define M_SQRT2	1.41421356237309504880	/* sqrt(2) */
+//# define M_SQRT2	    1.41421356237309504880	/* sqrt(2) */
 //# define M_SQRT1_2	0.70710678118654752440	/* 1/sqrt(2) */
 
 __BEGIN_YAFRAY
 
-#define M_2PI		6.28318530717958647692 // PI * 2
-#define M_PI2		9.86960440108935861882 // PI ^ 2
-#define M_1_2PI		0.15915494309189533577 // 1 / (2 * PI)
-#define M_4_PI		1.27323954473516268615 // 4 / PI
-#define M_4_PI2		0.40528473456935108578 // 4 / PI ^ 2
+#define M_2PI       6.28318530717958647692 //5286766559 // PI * 2
+#define M_PI2       9.86960440108935861882 // PI ^ 2
+#define M_1_2PI     0.15915494309189533577 // 1 / (2 * PI)
+#define M_4_PI      1.27323954473516268615 // 4 / PI
+#define M_4_PI2     0.40528473456935108578 // 4 / PI ^ 2
+/* povman add */
+#define M_1_PI_4    0.07957747154594766788 //4441881686257 /* 1/(pi/4) */
+#define M_1_PI_8    0.03978873577297383394 //2220940843129 /* 1/(pi/8) */
+/* end */
 
 #define degToRad(deg) (deg * 0.01745329251994329576922)  // deg * PI / 180
 #define radToDeg(rad) (rad * 57.29577951308232087684636) // rad * 180 / PI
