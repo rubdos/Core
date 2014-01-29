@@ -295,12 +295,12 @@ bool mcIntegrator_t::createCausticMap()
                         vol->transmittance(state, ray, vcol);
                         transm = vcol;
                     }
-
                 }
                 std::swap(hit, hit2);
                 vector3d_t wi = -ray.dir, wo;
                 material = hit->material;
                 material->initBSDF(state, *hit, bsdfs);
+                //
                 if(bsdfs & (BSDF_DIFFUSE | BSDF_GLOSSY))
                 {
                     //deposit caustic photon on surface
@@ -677,8 +677,7 @@ color_t mcIntegrator_t::sampleAmbientOcclusion(renderState_t &state, const surfa
     return col / (float)n;
 }
 
-
-// SSS code
+// povman: SSS specific code
 float phaseFunc ( const vector3d_t &wi, const vector3d_t &wo, float g )
 {
     float cosTheta = wi*wo;
@@ -726,7 +725,7 @@ vector3d_t SamplePhaseFunc(float s1, float s2, float g, const vector3d_t &wi)
 
     if (wi.y < 0)
     {
-        phi = 2*M_PI - phi;
+        phi = M_2PI - phi; //povman test: phi = 2*M_PI - phi;
     }
 
     matrix4x4_t transMat = GetTransformMatrix(theta, phi);
@@ -740,20 +739,24 @@ vector3d_t SamplePhaseFunc(float s1, float s2, float g, const vector3d_t &wi)
     {
         sTheta = acos((0.5-sqrt(0.25-3*g*(0.5-0.75*g-s1)))/(1.5*g));
     }
-    sPhi = s2*2*M_PI;
+    // povman test: improve M_2PI = 6.283185307179586476925286766559 
+    sPhi = s2*M_2PI;
+    //sPhi = s2*2*M_PI;
     matrix4x4_t rotateMat = GetTransformMatrix(sTheta, sPhi);
 
     dir = vector3d_t(0,0,1);
 
     dir = transMat*(rotateMat*dir);
 
-//    std::cout << sTheta << "  ";
-//    std::cout << acos(dir*wi) << std::endl;
+    /* for debug..
+    std::cout << sTheta << "  ";
+    std::cout << acos(dir*wi) << std::endl;
+    */
 
     return dir;
 }
 
-
+/* unused..
 bool mcIntegrator_t::createSSSMaps()
 {
     // init and compute light pdf etc.
@@ -851,7 +854,7 @@ bool mcIntegrator_t::createSSSMaps()
             vector3d_t wi = -ray.dir, wo;
             material = hit->material;
             material->initBSDF(state, *hit, bsdfs);
-            /* Translucent material */
+            // Translucent material 
             if(bsdfs & BSDF_TRANSLUCENT)
             {
                 // if photon intersect with SSS material, add this photon to cooresponding object's SSSMap and absorb it
@@ -928,12 +931,16 @@ bool mcIntegrator_t::createSSSMaps()
     return true;
 }
 
+*/
+
 float mcIntegrator_t::sssScale = 10.f;
 
+// direclighting..
 bool mcIntegrator_t::createSSSMapsByPhotonTracing()
 {
     // init and compute light pdf etc.
     ray_t ray;
+    //pov: maxBounces = al parametro nSSSDepth (UI)
     int maxBounces = this->nSSSDepth;
     unsigned int nPhotons=this->nSSSPhotons;
     int numLights = lights.size();
@@ -947,7 +954,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
     pdf1D_t *lightPowerD = new pdf1D_t(energies, numLights);
     for(int i=0; i<numLights; ++i)
     {
-        Y_INFO << "energy: "<< energies[i] <<" (dirac: "<<lights[i]->diracLight()<<")\n";
+        Y_INFO << integratorName << ": Light Energy: "<< energies[i] <<" (dirac: "<< lights[i]->diracLight() <<" )"<< yendl;
     }
     delete[] energies;
 
@@ -957,7 +964,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
     else pb = new ConsoleProgressBar_t(80);
 
     int pbStep;
-    Y_INFO << "SSS: shoot photons " << nPhotons << yendl;
+    Y_INFO << integratorName << ": SSS shooting "<< nPhotons <<" photons"<< yendl;
     Y_INFO << integratorName << ": Building SSS photon map by photon tracing..." << yendl;
     pb->init(128);
     pbStep = std::max(1U, nPhotons / 128);
@@ -971,10 +978,12 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
     renderState_t state;
     unsigned char userdata[USER_DATA_SIZE+7];
     state.userdata = (void *)( &userdata[7] - ( ((size_t)&userdata[7])&7 ) ); // pad userdata to 8 bytes
-    //std::cout<<"INFO: caustic map " << cMap.nPhotons() << std::endl;
-
+    
     while(!done)
     {
+        //povman: add cancel progress by click 'ESC' or exit render: work!!
+        if(scene->getSignals() & Y_SIG_ABORT) done = true;
+
         // sampling the light to shoot photon
         s1 = RI_vdC(curr);
         s2 = scrHalton(2, curr);
@@ -986,12 +995,14 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
         int lightNum = lightPowerD->DSample(sL, &lightNumPdf);
         if(lightNum >= numLights)
         {
-            std::cout << "lightPDF sample error! "<<sL<<"/"<<lightNum<<"  "<< curr <<"/"<< nPhotons <<"\n";
+            //povman: add yafout msg mode..
+            Y_ERROR << integratorName << ": lightPDF sample error! "<< sL <<"/"<< lightNum <<"  "<< curr <<"/"<< nPhotons << yendl;			
+            //std::cout << "lightPDF sample error! "<<sL<<"/"<<lightNum<<"  "<< curr <<"/"<< nPhotons <<"\n";
             delete lightPowerD;
             return false;
         }
 
-        // shoot photon
+        // shot photon
         color_t pcol = lights[lightNum]->emitPhoton(s1, s2, s3, s4, ray, lightPdf);
         color_t pcol_t;
         ray.tmin = MIN_RAYDIST;
@@ -1017,7 +1028,8 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
         {
             if(isnan(pcol.R) || isnan(pcol.G) || isnan(pcol.B))
             {
-                std::cout << "NaN WARNING (photon color)" << std::endl;
+                Y_WARNING << integratorName << "NaN WARNING (photon color)" << yendl;
+                //std::cout << "NaN WARNING (photon color)" << std::endl;
                 break;
             }
             color_t transm(1.f), vcol;
@@ -1038,13 +1050,18 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
             // if the rey intersects with translucent objects.
             if(bsdfs & BSDF_TRANSLUCENT)
             {
-                /*std::cout << "enter ray = " << curr << "  wi = " << wi  << std::endl;
+                /* povman: conserve this code for use in debug mode..
+                std::cout << "enter ray = " << curr << "  wi = " << wi  << std::endl;
                 if (isRefrectedOut) {
                     std::cout << "In  curr=" << curr << "  wi = " << wi << "  N=" << hit->N << " from=" << ray.from << "   pcol=" << pcol << std::endl;
                     isRefrectedOut = false;
                 }*/
-                color_t diffuseC, sigma_s, sigma_a;
-                float IOR, _g;
+                /* request user data values from material UI */
+                color_t diffuseC; // diff color
+                color_t sigma_s;  // scatter color
+                color_t sigma_a;  // subsurface(absorption) color
+                float IOR; // index of refraction
+                float _g;  // phase function
                 TranslucentData_t *dat = (TranslucentData_t*)state.userdata;
                 diffuseC = dat->difC;
                 sigma_a = dat->sig_a;
@@ -1052,7 +1069,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                 IOR = dat->IOR;
                 _g = dat->g;
 
-                float sig_a_ = sigma_a.col2bri();
+                float sig_a_ = sigma_a.col2bri(); // normalize? reduce albedo??
                 float sig_s_ = sigma_s.col2bri();
                 float sig_t_ = sig_a_ + (1.f-_g)*sig_s_;
                 float sig_t_1 = 1.f/sig_t_;
@@ -1061,8 +1078,8 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                 //hal2.setStart(curr);
 
                 //std::cout << "random seed " << curr << std::endl;
-
-                // if photon intersect with SSS material, get the refract direction and continue to trace this photon.
+                //Si el foton intercepta con un material SSS, conseguimos la direccion de refraccion y continuamos el trazado de este fotón.
+                // if photon intersect with SSS material, get the refracted direction and continue to trace this photon.
                 if( refract(hit->N, wi, wo, IOR) )
                 {
                     inCount++;
@@ -1074,7 +1091,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
 
                     // get the refrace try
                     float sc1 = ourRandom();//hal2.getNext();
-                    float sc2,sc3;
+                    float sc2, sc3;
                     float scatteDist = -1.f*log(1-sc1)*sig_t_1/sssScale;
                     //float scatteDist = 1.f/(sig_t_1*sssScale);
                     vector3d_t sdir = wo;
@@ -1082,7 +1099,6 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                     ray.dir = wo;
                     ray.tmin = MIN_RAYDIST/sssScale;
                     ray.tmax = scatteDist;
-
 
                     point3d_t scattePt = ray.from + scatteDist*ray.dir;
                     float cosWo = ray.dir*(-1.f*hit->N);
@@ -1114,12 +1130,8 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                             SSSMaps[refObj] = sssMap_t;
                         }
                     }
-
                     //std::cout << "first refracted = " << curr << "  wi = " << wi << "  N=" << hit->N << " wo=" << wo << "   pcol=" << pcol << std::endl;
-
-
                     int scatNum = 0;
-
                     while (!(refracOut = scene->intersect(ray, *hit2)))
                     {
                         //std::cout << "ray = " << curr << "  ray.dir = " << ray.dir << "  from=" << ray.from << "  scatteDist=" << ray.tmax << std::endl;
@@ -1128,17 +1140,14 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                         pcol_t = pcol;
                         pcol *= fExp(-1*sig_t_*scatteDist*sssScale); // power attuation
 
-                        if (pcol.energy() < 1e-6)
-                        {
-                            break;
-                        }
+                        if (pcol.energy() < 1e-6)  break;
 
                         // roulette whether scatter or absorb
                         float s = ourRandom();//hal2.getNext();
-                        if (  s < sig_a_*sig_t_1 )
+                        if (  s < sig_a_ * sig_t_1 )
                         {
                             // absorbed, then break
-                            //std::cout << "absorbed" << std::endl;
+                            // std::cout << "absorbed" << std::endl;
                             absorbCount++;
                             break;
                         }
@@ -1205,17 +1214,13 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                     if (refracOut)
                     {
                         //std::cout << "ray = " << curr << "  ray.dir = " << ray.dir << "  from=" << ray.from << "  scatteDist=" << ray.tmax << std::endl;
-
                         // refract out
                         // compute new direction and
                         std::swap(hit, hit2);
                         wi = -ray.dir;
                         material = hit->material;
 
-                        if (-1*hit->N*wi<=0)
-                        {
-                            break;
-                        }
+                        if (-1*hit->N*wi<=0) break;
 
                         if( refract(-1*hit->N, wi, wo, 1.0f/IOR) )
                         {
@@ -1283,13 +1288,11 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
             //std::cout << curr << " not translucent objects:" << std::endl;
 
             pcol = sample.color;
-
             ray.from = hit->P;
             ray.dir = wo;
             ray.tmin = MIN_RAYDIST;
             ray.tmax = -1.0;
             ++nBounces;
-
         }
         ++curr;
         //if(curr % pbStep == 0) pb->update();
@@ -1299,10 +1302,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
     }
     pb->done();
     pb->setTag("SSS photon map built.");
-
-    std::cout << "In photons: " << inCount << std::endl;
-    std::cout << "absorbed photons: " << absorbCount << std::endl;
-
+    Y_INFO << integratorName <<": Shooting ["<< inCount <<"] SSS photons, absorbed ["<< absorbCount <<"]"<< yendl;
     delete lightPowerD;
     if(!intpb) delete pb;
 
@@ -1323,6 +1323,7 @@ void mcIntegrator_t::destorySSSMaps()
 
 color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3d_t &wo, float IOR, float g, const color_t &sigmaS, const color_t &sigmaA )
 {
+    //pov: remember even, here is inside loop
     int m_n = 2;
     color_t rd(M_1_PI_4); //(0.25*M_1_PI); 
     color_t qd(1.f);
@@ -1348,10 +1349,24 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
     color_t sig_s_ = (1.f-g)*sigmaS;
     color_t sig_t_ = sigmaA + sig_s_;
     color_t alpha_ = sig_s_/sig_t_;
-    color_t sig_tr = colorSqrt(3*sigmaA*sig_t_);
+
+    /* Effective transport extinction coefficient */
+    color_t sig_tr = colorSqrt(3 * sigmaA * sig_t_);
 
     color_t z_r = 1.f/sig_t_/mcIntegrator_t::sssScale;
-    float Fdr = -1.440/(IOR*IOR)+0.710/IOR+0.668+0.0636*IOR;
+
+    /* povman: test optimized Fdr from papers */
+    float Fdr;
+    if (IOR < 1.0) 
+    {
+        Fdr = -1.4399f * (IOR * IOR)+ 0.7099f * IOR + 0.6681f + 0.0636f / IOR;
+    } 
+    else 
+    {
+        Fdr = -1.440/(IOR*IOR)+ 0.710/IOR + 0.668 + 0.0636 * IOR;        
+    }    
+    //- end test
+
     float A = (1+Fdr)/(1-Fdr);
     color_t z_v = z_r*(1+1.333333333f*A);
 
@@ -1362,7 +1377,7 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
     //point3d_t vSourcePosG = inPhoton.pos + inPhoton.hitNormal*z_v.G; // unused?
     //point3d_t vSourcePosB = inPhoton.pos + inPhoton.hitNormal*z_v.B; // unused?
 
-    // compute the intersect diection of the two faces
+    // compute the intersect direction of the two faces
 
     vector3d_t refDir;
     vector3d_t intersectDir = Ni^No;
@@ -1409,8 +1424,8 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
     z_r = z_r*mcIntegrator_t::sssScale;
     z_v = z_v*mcIntegrator_t::sssScale;
 
-    color_t dr = colorSqrt(r*r + z_r*z_r);
-    color_t dv = colorSqrt(r*r + z_v*z_v);
+    color_t dr = colorSqrt(r*r + z_r*z_r); // povman: distance to positive light
+    color_t dv = colorSqrt(r*r + z_v*z_v); // povman: distance to negative light
 
     color_t drm, dvm;
     dvm = colorSqrt(mr*mr+z_r*z_r);
@@ -1424,10 +1439,10 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
 
     rd *= (real+vir);
 
-    qd = z_r*(1+sig_tr*dr)*colorExp(-1*sig_tr*dr)*0.125*M_1_PI/(dr*dr*dr)
-         + z_v*(1+sig_tr*dv)*colorExp(-1*sig_tr*dv)*0.125*M_1_PI/(dv*dv*dv)
-         + xv*(1+sig_tr*drm)*colorExp(-1*sig_tr*drm)*0.125*M_1_PI/(drm*drm*drm)
-         + xr*(1+sig_tr*dvm)*colorExp(-1*sig_tr*dvm)*0.125*M_1_PI/(dvm*dvm*dvm);
+    qd = z_r*(1+sig_tr*dr)*colorExp(-1*sig_tr*dr)*M_1_PI_8/(dr*dr*dr)        //0.125*M_1_PI/(dr*dr*dr)
+         + z_v*(1+sig_tr*dv)*colorExp(-1*sig_tr*dv)*M_1_PI_8/(dv*dv*dv)      //0.125*M_1_PI/(dv*dv*dv)
+         + xv*(1+sig_tr*drm)*colorExp(-1*sig_tr*drm)*M_1_PI_8/(drm*drm*drm)  //0.125*M_1_PI/(drm*drm*drm)
+         + xr*(1+sig_tr*dvm)*colorExp(-1*sig_tr*dvm)*M_1_PI_8/(dvm*dvm*dvm); //0.125*M_1_PI/(dvm*dvm*dvm);
 
     // compute rm
 
@@ -1448,33 +1463,31 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
         dr = colorSqrt(r*r + z_r*z_r);
         dv = colorSqrt(r*r + z_v*z_v);
 
-        rm += ( z_r*(1+sig_tr*dr)*colorExp(-1*sig_tr*dr)*M_1_PI_4/(dr*dr*dr)
-                - z_v*(1+sig_tr*dv)*colorExp(-1*sig_tr*dv)*M_1_PI_4/(dv*dv*dv)  );
-
-        /*rm += ( z_r*(1+sig_tr*dr)*colorExp(-1*sig_tr*dr)*0.25*M_1_PI/(dr*dr*dr)
-                - z_v*(1+sig_tr*dv)*colorExp(-1*sig_tr*dv)*0.25*M_1_PI/(dv*dv*dv)  );
-        */
+        rm += ( z_r*(1+sig_tr*dr)*colorExp(-1*sig_tr*dr)*M_1_PI_4/(dr*dr*dr)     // 0.25*M_1_PI/(dr*dr*dr)
+                - z_v*(1+sig_tr*dv)*colorExp(-1*sig_tr*dv)*M_1_PI_4/(dv*dv*dv)); // 0.25*M_1_PI/(dv*dv*dv));
     }
 
     color_t result(0.0f);
 
     //result = rm*Li*cosWiN*Kt_i*Kt_o*M_1_PI;
 
-    /* povman test: 
-     * change "0.5*M_PI" to "M_PI_2" and 2*M_1_PI to 2*M_2_PI.
+    /* povman test: use pre-calculate defined variable, instead here
+     * change "0.5*M_PI" to "M_PI_2" (pi/2)
+     * change "2*M_1_PI" to "M_2_PI" (2/pi)
      * btw.. (0.5*M_PI) is equal to "M_PI_2" and "2*M_1_PI" is equal to "M_2_PI" define value inside math.h
     */
-    if (gamma <= M_PI_2 && gamma >=0)
+    
+    if (gamma <= M_PI_2 && gamma >=0) // ( 0 <=> 1.57)
     {
         result += M_2_PI*(M_PI_2-gamma)*rd;
         result += M_2_PI*gamma*qd;
-    }
-    else if ( gamma > M_PI_2 && gamma <= M_PI )
+    }// o si esta entre pi/2 y pi..
+    else if ( gamma > M_PI_2 && gamma <= M_PI ) // (1.5 <=> 3.14)
     {
         result += M_2_PI*(M_PI - gamma)*qd;
         result += M_2_PI*(gamma - M_PI_2)*rm;
     }
-    else
+    else //(g > 3.14)
     {
         result += rd;
     }
@@ -1482,7 +1495,7 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
     result = result * Li * cosWiN * Kt_i * Kt_o;
     return result;
 }
-
+// use for photonmap..
 color_t mcIntegrator_t::estimateSSSMaps(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo ) const
 {
     color_t sum(0.f);
@@ -1526,6 +1539,7 @@ color_t mcIntegrator_t::estimateSSSMaps(renderState_t &state, surfacePoint_t &sp
     // sum all photon in translucent object
     std::vector<const photon_t*> photons;
     sssMap_t->getAllPhotons(sp.P,photons);
+    // its here the best place for optimized IOR, before loop?
 
     for (unsigned int i=0; i<photons.size(); i++)
     {
@@ -1534,7 +1548,7 @@ color_t mcIntegrator_t::estimateSSSMaps(renderState_t &state, surfacePoint_t &sp
         //sum += dipole3(*photons[i],sp,wo,IOR,0.f,sigma_s,sigma_a);
         //sum += dipoleAdnQuadpole(*photons[i],sp,wo,IOR,0.f,sigma_s,sigma_a);
         //sum += dipoleAdnQuadpole2(*photons[i],sp,wo,IOR,0.f,sigma_s,sigma_a);
-        sum += RdQdRm(*photons[i],sp,wo,IOR,_g,sigma_s,sigma_a);
+        sum += RdQdRm(*photons[i], sp, wo, IOR, _g, sigma_s, sigma_a);
 
     }
     sum *= sssScale*sssScale/((float)sssMap_t->nPaths());
@@ -1655,7 +1669,7 @@ color_t mcIntegrator_t::estimateSSSSingleScattering(renderState_t &state, surfac
         if(pos - t0 >= dist)
             break;
     }
-    /* for debug..
+    /* povman: conserve this code for debug..
     singleS += 0.001;
     if (singleS.energy() > 1) 
     {
@@ -1680,7 +1694,7 @@ color_t mcIntegrator_t::estimateSSSSingleScattering(renderState_t &state, surfac
     return singleS;
 }
 
-
+// use for photonmap and directlighting..
 color_t mcIntegrator_t::estimateSSSSingleSImportantSampling(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const
 {
     //float stepSize = 0.1f/sssScale;
@@ -1706,9 +1720,10 @@ color_t mcIntegrator_t::estimateSSSSingleSImportantSampling(renderState_t &state
     const material_t *material = sp.material;
     material->initBSDF(state, sp, bsdfs);
 
+    // get material values
     color_t diffuseC;
     color_t sigma_s, sigma_a, sigma_t;
-    float IOR,mTransl;
+    float IOR, mTransl;
     TranslucentData_t* dat = (TranslucentData_t*)state.userdata;
     diffuseC = dat->difC;
     sigma_a = dat->sig_a;
@@ -2016,16 +2031,14 @@ color_t mcIntegrator_t::getTranslucentInScatter(renderState_t& state, ray_t& ste
                     if (lightRay.tmax < 0.f) lightRay.tmax = 1e10; // infinitely distant light
                     bool shadowed = scene->isShadowed(state, lightRay);
 
-                    //std::cout << "sample " << i << " isshadowed = " << shadowed << std::endl;
-                    //if ( state.pixelNumber == 489949 )
-                    //  std::cout << "dist = " << dist << "   kt_i=" << Kt_i << std::endl;
-
+                    /* for debug..
+                     * std::cout << "sample " << i << " isshadowed = " << shadowed << std::endl;
+                     * if ( state.pixelNumber == 489949 ) std::cout << "dist = " << dist << "   kt_i=" << Kt_i << std::endl;
+                     */
                     if(!shadowed)
                     {
                         ccol += ls.col / ls.pdf;
-
                         color_t lightstepTau = sigma_t * dist * sssScale;
-
                         lightTr += colorExp(-1*lightstepTau)*Kt_i*phaseFunc(lightRay.dir, -1*stepRay.dir, _g);;
                     }
                 }
@@ -2042,13 +2055,10 @@ color_t mcIntegrator_t::getTranslucentInScatter(renderState_t& state, ray_t& ste
 
             inScatter += lightTr * ccol;
         } // end of area lights loop
-
     }
-
     inScatter *= phaseFunc(lightRay.dir, -1*stepRay.dir, _g);
 
     //inScatter *= 30.f;
-
     state.userdata = o_udat;
     return inScatter;
 }
@@ -2124,10 +2134,12 @@ color_t mcIntegrator_t::estimateSSSSingleScatteringPhotons(renderState_t &state,
         ray.tmax = -1;
         if (!scene->intersect(ray, hit)) return singleS;
     }
-    //  if(ismeetBadFace){
-    //      std::cout << " bad dist = " << badDist << "  new dist = " << (hit.P-sp.P).length() << std::endl;
-    //      std::cout << std::endl;
-    //  }
+    // for debug..
+    //if(ismeetBadFace)
+    //{
+    //    std::cout << " bad dist = " << badDist << "  new dist = " << (hit.P-sp.P).length() << std::endl;
+    //    std::cout << std::endl;
+    //}
     t0 = 0;
     t1 = (hit.P-sp.P).length();
     float dist = (t1-t0);

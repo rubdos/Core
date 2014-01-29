@@ -35,8 +35,8 @@ void photonGather_t::operator()(const photon_t *photon, PFLOAT dist2, PFLOAT &ma
 		// Add photon to unordered array of photons
 		photons[foundPhotons++] = foundPhoton_t(photon, dist2);
 		if (foundPhotons == nLookup) {
-				std::make_heap(&photons[0], &photons[nLookup]);
-				maxDistSquared = photons[0].distSquare;
+            std::make_heap(&photons[0], &photons[nLookup]);
+			maxDistSquared = photons[0].distSquare;
 		}
 	}
 	else {
@@ -51,10 +51,11 @@ void photonGather_t::operator()(const photon_t *photon, PFLOAT dist2, PFLOAT &ma
 void photonMap_t::updateTree()
 {
 	if(tree) delete tree;
-	if(photons.size() > 0)
+    if(photons.size() > 0)
 	{
-		// povman; change for SSS -> tree = new kdtree::pointKdTree<photon_t>(photons);
-		tree = new kdtree::photonKdTree<photon_t>(photons);
+		// povman: use new photonKdTree for SSS
+        // tree = new kdtree::pointKdTree<photon_t>(photons);
+        tree = new kdtree::photonKdTree<photon_t>(photons);
 		updated = true;
 	}
 	else tree=0;
@@ -75,10 +76,11 @@ const photon_t* photonMap_t::findNearest(const point3d_t &P, const vector3d_t &n
 	tree->lookup(P, proc, dist);
 	return proc.nearest;
 }
-// povman: add for SSS
+// povman: add specific code for SSS
+
 //const std::vector<const photon_t*>& photonMap_t::getAllPhotons(const point3d_t& woP)
 //{
-//	tree->GetPhotons(woP,sssPhotons,1.0f);
+//	phtree->GetPhotons(woP,sssPhotons,1.0f);
 //	/*sssPhotons.clear();
 //	for (int i=0; i<photons.size(); i++) {
 //		sssPhotons.push_back(&photons[i]);
@@ -88,14 +90,14 @@ const photon_t* photonMap_t::findNearest(const point3d_t &P, const vector3d_t &n
 
 void photonMap_t::getAllPhotons(const point3d_t& woP, std::vector<const photon_t*>& sssPhotons)
 {
-	tree->GetPhotons(woP,sssPhotons, 1.0f);
+	tree->GetPhotons(woP, sssPhotons, 1.0f);
 }
 
 int photonMap_t::numberOfPhotonInDisc(const point3d_t &p, PFLOAT scale, PFLOAT dist) const
 {
-	return tree->PhotonNumInDisc(p,scale,dist);
+	return tree->PhotonNumInDisc(p, scale, dist);
 }
-// end
+// end add
 
 
 __END_YAFRAY
