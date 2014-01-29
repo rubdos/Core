@@ -651,12 +651,14 @@ inline bool biDirIntegrator_t::connectLPath(renderState_t &state, int t, pathDat
     // multiply probabilities with qi's
     int k = t;
     // forward:
-    for(int i=std::max(MIN_PATH_LENGTH,2), st=t+1; i<st; ++i)
+    for(int i=std::max(MIN_PATH_LENGTH,2), st=t+1; i<st; ++i){
         pd.path[i].pdf_f *= pd.eyePath[st-i-1].qi_wi;
+    }
 
     //backward:
-    for(int i=MIN_PATH_LENGTH, t1=t-1; i<t1; ++i)
+    for(int i=MIN_PATH_LENGTH, t1=t-1; i<t1; ++i){
         pd.path[k-i].pdf_b *= pd.eyePath[i].qi_wo;
+    }
     return true;
 }
 

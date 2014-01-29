@@ -343,7 +343,7 @@ bool photonIntegrator_t::preprocess()
 	delete lightPowerD;
 
 	tmplights.clear();
-
+    // povman: buscamos las luces de la escena que aporten 'causticas'... ¿explicitamente ( por parametro )?
 	for(int i=0;i<(int)lights.size();++i)
 	{
 		if(lights[i]->shootsCausticP())
@@ -352,16 +352,15 @@ bool photonIntegrator_t::preprocess()
 			tmplights.push_back(lights[i]);
 		}
 	}
-
+    // povman: solo si las hay, iniciamos el proceso del mapa de causticas
 	if(numCLights > 0)
 	{
-
 		done = false;
 		curr=0;
 
 		fNumLights = (float)numCLights;
 		energies = new float[numCLights];
-
+        // povman: sumamos la 'energia' total
 		for(int i=0;i<numCLights;++i) energies[i] = tmplights[i]->totalEnergy().energy();
 
 		lightPowerD = new pdf1D_t(energies, numCLights);
@@ -401,7 +400,7 @@ bool photonIntegrator_t::preprocess()
 
 			if(lightNum >= numCLights)
 			{
-				Y_ERROR << integratorName << ": lightPDF sample error! "<<sL<<"/"<<lightNum<<"... stopping now." << yendl;
+				Y_ERROR << integratorName <<": lightPDF sample error! "<< sL <<"/"<< lightNum <<"... stopping now."<< yendl;
 				delete lightPowerD;
 				return false;
 			}
@@ -524,20 +523,21 @@ bool photonIntegrator_t::preprocess()
 		Y_INFO << integratorName << ": Done." << yendl;
 	}
 	// SSS --------->
-	if (usePhotonSSS)
+    if (usePhotonSSS)
 	{
-	    //Y_INFO << "SSSMap : " << SSSMaps.size() << yendl;
-		//createSSSMaps();
-		createSSSMapsByPhotonTracing();
-		// povman:add text to banner info
+        //Y_INFO << "SSSMap : " << SSSMaps.size() << yendl;
+        //createSSSMaps();
+        // prepass
+        createSSSMapsByPhotonTracing();
+        // povman:add text to banner info
 		set << "SSS shoot:" << nSSSPhotons << " photons. ";
 		std::map<const object3d_t*, photonMap_t*>::iterator it = SSSMaps.begin();
 		while (it!=SSSMaps.end())
         {
-			it->second->updateTree();
+		    it->second->updateTree();
 			Y_INFO << "SSS:" << it->second->nPhotons() << " photons. " << yendl;
 			it++;
-		}
+        }
 	}
 	// end
 
@@ -557,7 +557,7 @@ bool photonIntegrator_t::preprocess()
 	{
 #ifdef USING_THREADS
 		// == remove too close radiance points ==//
-		kdtree::pointKdTree< radData_t > *rTree = new kdtree::pointKdTree< radData_t >(pgdat.rad_points);
+        kdtree::pointKdTree< radData_t > *rTree = new kdtree::pointKdTree< radData_t >(pgdat.rad_points);
 		std::vector< radData_t > cleaned;
 		for(unsigned int i=0; i<pgdat.rad_points.size(); ++i)
 		{
@@ -885,13 +885,14 @@ colorA_t photonIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) con
 		}
 		// add caustics
 		if(bsdfs & BSDF_DIFFUSE) col += estimateCausticPhotons(state, sp, wo);
-        // SSS
+
+        // povman: SSS code for translucent material 
         if(bsdfs & BSDF_TRANSLUCENT)
 		{
 			col += estimateSSSMaps(state,sp,wo);
 			col += estimateSSSSingleSImportantSampling(state,sp,wo);
 		}
-		//-
+		//end
 		recursiveRaytrace(state, ray, bsdfs, sp, wo, col, alpha);
 
 		if(transpRefractedBackground)

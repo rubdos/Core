@@ -96,12 +96,12 @@ bool pathIntegrator_t::preprocess()
 	{
 		//success = createSSSMaps();
 		success = createSSSMapsByPhotonTracing();
-		set << "SSS shoot:" << nSSSPhotons << " photons. ";
+		set << " SSS photons:[" << nSSSPhotons << "] ";
 		std::map<const object3d_t*, photonMap_t*>::iterator it = SSSMaps.begin();
 		while (it!=SSSMaps.end())
         {
 			it->second->updateTree();
-			Y_INFO << "SSS:" << it->second->nPhotons() << " photons. " << yendl;
+            Y_INFO << integratorName << ": Builting: " << it->second->nPhotons() << " elements. " << yendl;
 			it++;
 		}
 	}
