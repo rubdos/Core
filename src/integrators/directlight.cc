@@ -143,13 +143,22 @@ colorA_t directLighting_t::integrate(renderState_t &state, diffRay_t &ray) const
 			if(useAmbientOcclusion) col += sampleAmbientOcclusion(state, sp, wo);
 		}
 
-		// SSS
-		if (bsdfs & BSDF_TRANSLUCENT) {
-			//col += estimateAllDirectLight(state, sp, wo);
-			col += estimateSSSMaps(state,sp,wo);
-			//col += estimateSSSSingleScattering(state,sp,wo);
-			//col += estimateSSSSingleScatteringPhotons(state,sp,wo);
-			col += estimateSSSSingleSImportantSampling(state,sp,wo);
+		// if have translucent SSS materials..
+		if (bsdfs & BSDF_TRANSLUCENT) 
+        {
+            /* commit log: Added 'if(usePhotonSSS)' to fix the error when trying 
+               to process estimateSSSMaps and estimateSSSSingleSImportantSampling, 
+               without having created the photonmaps for SSS.
+            */
+            // and is activate use SSS photons..
+            if (usePhotonSSS)
+            {
+                //col += estimateAllDirectLight(state, sp, wo);
+			    col += estimateSSSMaps(state, sp, wo);
+			    //col += estimateSSSSingleScattering(state,sp,wo);
+			    //col += estimateSSSSingleScatteringPhotons(state,sp,wo);
+			    col += estimateSSSSingleSImportantSampling(state, sp, wo);
+            }
 		}
 		//--
 		recursiveRaytrace(state, ray, bsdfs, sp, wo, col, alpha);
@@ -186,7 +195,7 @@ integrator_t* directLighting_t::factory(paraMap_t &params, renderEnvironment_t &
 	bool bg_transp = true;
 	bool bg_transp_refract = true;
 	// SSS
-	bool useSSS=false;
+	bool useSSS = false;
 	int sssdepth = 10, sssPhotons = 200000;
 	int singleSSamples = 128;
 	float sScale = 40.f;

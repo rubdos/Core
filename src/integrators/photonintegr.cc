@@ -343,7 +343,7 @@ bool photonIntegrator_t::preprocess()
 	delete lightPowerD;
 
 	tmplights.clear();
-    // povman: buscamos las luces de la escena que aporten 'causticas'... ¿explicitamente ( por parametro )?
+    // povman: search cuastics lights..
 	for(int i=0;i<(int)lights.size();++i)
 	{
 		if(lights[i]->shootsCausticP())
@@ -352,7 +352,7 @@ bool photonIntegrator_t::preprocess()
 			tmplights.push_back(lights[i]);
 		}
 	}
-    // povman: solo si las hay, iniciamos el proceso del mapa de causticas
+    // povman: if have.. proced
 	if(numCLights > 0)
 	{
 		done = false;
@@ -360,7 +360,7 @@ bool photonIntegrator_t::preprocess()
 
 		fNumLights = (float)numCLights;
 		energies = new float[numCLights];
-        // povman: sumamos la 'energia' total
+        // povman: sum of total energy..
 		for(int i=0;i<numCLights;++i) energies[i] = tmplights[i]->totalEnergy().energy();
 
 		lightPowerD = new pdf1D_t(energies, numCLights);
@@ -535,7 +535,7 @@ bool photonIntegrator_t::preprocess()
 		while (it!=SSSMaps.end())
         {
 		    it->second->updateTree();
-			Y_INFO << "SSS:" << it->second->nPhotons() << " photons. " << yendl;
+			//Y_INFO << "SSS:" << it->second->nPhotons() << " photons. " << yendl;
 			it++;
         }
 	}
@@ -886,11 +886,18 @@ colorA_t photonIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) con
 		// add caustics
 		if(bsdfs & BSDF_DIFFUSE) col += estimateCausticPhotons(state, sp, wo);
 
-        // povman: SSS code for translucent material 
+        // povman: if have translucent SSS material ..
         if(bsdfs & BSDF_TRANSLUCENT)
 		{
-			col += estimateSSSMaps(state,sp,wo);
-			col += estimateSSSSingleSImportantSampling(state,sp,wo);
+            /* commit log: Added 'if(usePhotonSSS)' to fix the error when trying 
+               to process estimateSSSMaps and estimateSSSSingleSImportantSampling, 
+               without having created the photonmaps for SSS.
+            */
+            // ..and 'use SSS photons' is active.
+            if(usePhotonSSS){
+                col += estimateSSSMaps(state,sp,wo);
+                col += estimateSSSSingleSImportantSampling(state,sp,wo);
+            }
 		}
 		//end
 		recursiveRaytrace(state, ray, bsdfs, sp, wo, col, alpha);

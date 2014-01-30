@@ -170,10 +170,18 @@ colorA_t pathIntegrator_t::integrate(renderState_t &state, diffRay_t &ray/*, sam
 			col += estimateAllDirectLight(state, sp, wo);
 			if(causticType == PHOTON || causticType == BOTH) col += estimateCausticPhotons(state, sp, wo);
 		}
-		// SSS
-		if (bsdfs & BSDF_TRANSLUCENT) {
-			col += estimateSSSMaps(state,sp,wo);
-			col += estimateSSSSingleSImportantSampling(state,sp,wo);
+		// if have SSS material..
+		if (bsdfs & BSDF_TRANSLUCENT) 
+        {
+            /* commit log: Added 'if(usePhotonSSS)' to fix the error when trying 
+               to process estimateSSSMaps and estimateSSSSingleSImportantSampling, 
+               without having created the photonmaps for SSS.
+            */
+            // ..and use SSS photons is active..
+            if(usePhotonSSS) {
+                col += estimateSSSMaps(state,sp,wo);
+                col += estimateSSSSingleSImportantSampling(state,sp,wo);
+            }
 		}
 
 		// path tracing:
