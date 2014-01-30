@@ -186,9 +186,7 @@ void ShirleyDisk(PFLOAT r1, PFLOAT r2, PFLOAT &u, PFLOAT &v)
 
 YAFRAYCORE_EXPORT int myseed=123212;
 
-vector3d_t randomVectorCone(const vector3d_t &D,
-				const vector3d_t &U, const vector3d_t &V,
-				PFLOAT cosang, PFLOAT z1, PFLOAT z2)
+vector3d_t randomVectorCone(const vector3d_t &D, const vector3d_t &U, const vector3d_t &V, PFLOAT cosang, PFLOAT z1, PFLOAT z2)
 {
   PFLOAT t1=M_2PI*z1, t2=1.0-(1.0-cosang)*z2;
   return (U*fCos(t1) + V*fSin(t1))*fSqrt(1.0-t2*t2) + D*t2;

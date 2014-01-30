@@ -1078,7 +1078,6 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                 //hal2.setStart(curr);
 
                 //std::cout << "random seed " << curr << std::endl;
-                //Si el foton intercepta con un material SSS, conseguimos la direccion de refraccion y continuamos el trazado de este fotón.
                 // if photon intersect with SSS material, get the refracted direction and continue to trace this photon.
                 if( refract(hit->N, wi, wo, IOR) )
                 {
@@ -1089,7 +1088,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                     bool refracOut = false;
                     //bool isStored = false;
 
-                    // get the refrace try
+                    // get the refracte try
                     float sc1 = ourRandom();//hal2.getNext();
                     float sc2, sc3;
                     float scatteDist = -1.f*log(1-sc1)*sig_t_1/sssScale;
@@ -1153,7 +1152,8 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                         }
                         else
                         {
-                            /* // scattered
+                            /* 
+                            // scattered
                             // store photon
                             //std::cout << "scattered " << s << " " <<sig_a_*sig_t_1 << std::endl;
                             //if (!isStored) {
@@ -1195,7 +1195,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                             sc2 = ourRandom();//scrHalton(2, scatteCount);
                             sc3 = ourRandom();//scrHalton(3, scatteCount);
                             //sdir = SampleSphere(sc2,sc3);
-                            sdir = SamplePhaseFunc(sc2,sc3,_g,ray.dir);
+                            sdir = SamplePhaseFunc(sc2, sc3, _g, ray.dir);
 
                             sc1 = ourRandom();//hal2.getNext();
                             scatteDist = -1.f*log(1-sc1)*sig_t_1/sssScale;
@@ -1323,7 +1323,7 @@ void mcIntegrator_t::destorySSSMaps()
 
 color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3d_t &wo, float IOR, float g, const color_t &sigmaS, const color_t &sigmaA )
 {
-    //pov: remember even, here is inside loop
+    //pov: remember even, here is inside a loop
     int m_n = 2;
     color_t rd(M_1_PI_4); //(0.25*M_1_PI); 
     color_t qd(1.f);
@@ -1346,16 +1346,21 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
     vector3d_t v = inPhoton.pos-sp.P;
     float r  = v.length()*mcIntegrator_t::sssScale;
 
+    /* Reduced scattering coefficient */
     color_t sig_s_ = (1.f-g)*sigmaS;
+
+    /* Reduced extinction coefficient */
     color_t sig_t_ = sigmaA + sig_s_;
+
+    /* Reduced albedo */
     color_t alpha_ = sig_s_/sig_t_;
 
-    /* Effective transport extinction coefficient */
+    /* Effective extinction coefficient */
     color_t sig_tr = colorSqrt(3 * sigmaA * sig_t_);
 
     color_t z_r = 1.f/sig_t_/mcIntegrator_t::sssScale;
 
-    /* povman: test optimized Fdr from papers */
+    /* povman: test optimized Fdr from papers, based in ior values */
     float Fdr;
     if (IOR < 1.0) 
     {
@@ -1433,12 +1438,13 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
 
 
     //rd *= alpha_;
-
+    /* Diffuse reflectance function (Equation[4])*/
     color_t real = z_r*(sig_tr+1/dr)*colorExp(-1.f*sig_tr*dr)/(dr*dr);
     color_t vir = z_v*(sig_tr+1/dv)*colorExp(-1.f*sig_tr*dv)/(dv*dv);
 
     rd *= (real+vir);
 
+    /**/
     qd = z_r*(1+sig_tr*dr)*colorExp(-1*sig_tr*dr)*M_1_PI_8/(dr*dr*dr)        //0.125*M_1_PI/(dr*dr*dr)
          + z_v*(1+sig_tr*dv)*colorExp(-1*sig_tr*dv)*M_1_PI_8/(dv*dv*dv)      //0.125*M_1_PI/(dv*dv*dv)
          + xv*(1+sig_tr*drm)*colorExp(-1*sig_tr*drm)*M_1_PI_8/(drm*drm*drm)  //0.125*M_1_PI/(drm*drm*drm)
@@ -1474,15 +1480,15 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
     /* povman test: use pre-calculate defined variable, instead here
      * change "0.5*M_PI" to "M_PI_2" (pi/2)
      * change "2*M_1_PI" to "M_2_PI" (2/pi)
-     * btw.. (0.5*M_PI) is equal to "M_PI_2" and "2*M_1_PI" is equal to "M_2_PI" define value inside math.h
+     * btw.. (0.5*M_PI) is equal to "M_PI_2" and "2*M_1_PI" is equal to "M_2_PI" defined value inside math.h ??
     */
     
     if (gamma <= M_PI_2 && gamma >=0) // ( 0 <=> 1.57)
     {
         result += M_2_PI*(M_PI_2-gamma)*rd;
         result += M_2_PI*gamma*qd;
-    }// o si esta entre pi/2 y pi..
-    else if ( gamma > M_PI_2 && gamma <= M_PI ) // (1.5 <=> 3.14)
+    }
+    else if ( gamma > M_PI_2 && gamma <= M_PI ) // (1.57 <=> 3.14)
     {
         result += M_2_PI*(M_PI - gamma)*qd;
         result += M_2_PI*(gamma - M_PI_2)*rm;
@@ -1539,8 +1545,7 @@ color_t mcIntegrator_t::estimateSSSMaps(renderState_t &state, surfacePoint_t &sp
     // sum all photon in translucent object
     std::vector<const photon_t*> photons;
     sssMap_t->getAllPhotons(sp.P,photons);
-    // its here the best place for optimized IOR, before loop?
-
+    
     for (unsigned int i=0; i<photons.size(); i++)
     {
         //sum += dipole(*photons[i],sp,wo,IOR,0.f,sigma_s,sigma_a);
@@ -2019,7 +2024,7 @@ color_t mcIntegrator_t::getTranslucentInScatter(renderState_t& state, ray_t& ste
                     //float cosWi = fabs(outHit.N*outRay.dir);
                     float dist = (exitP - sp.P).length();//*cosWi/sqrtf((1.f-(1.f/(float)IOR)*(1.f/(float)IOR))*(1-cosWi*cosWi));
                     //if ( state.pixelNumber == 489949 )
-                    //  std::cout << "\t sigma_t="<< sigma_t << "   IOR=" << IOR << "  cosWi="<<cosWi << "   " << (1.f-(1.f/(float)IOR)*(1.f/(float)IOR)) << std::endl;
+                    //    std::cout << "\t sigma_t="<< sigma_t << "   IOR=" << IOR << "  cosWi="<<cosWi << "   " << (1.f-(1.f/(float)IOR)*(1.f/(float)IOR)) << std::endl;
 
                     float Kr_i, Kt_i;
                     fresnel(outRay.dir, outHit.N, IOR, Kr_i, Kt_i);
@@ -2045,13 +2050,10 @@ color_t mcIntegrator_t::getTranslucentInScatter(renderState_t& state, ray_t& ste
             } // end of area light sample loop
 
             lightTr *= iN;
-
-            //if ( state.pixelNumber == 489949 )
-            //  std::cout << "\t lightTr = " << lightTr << std::endl;
+            //if ( state.pixelNumber == 489949 )  std::cout << "\t lightTr = " << lightTr << std::endl;
 
             ccol = ccol * iN;
-            //if ( state.pixelNumber == 489949 )
-            //  std::cout << "\t ccol = " << ccol << std::endl;
+            //if ( state.pixelNumber == 489949 )  std::cout << "\t ccol = " << ccol << std::endl;
 
             inScatter += lightTr * ccol;
         } // end of area lights loop
