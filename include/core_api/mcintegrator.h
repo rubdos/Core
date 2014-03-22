@@ -97,13 +97,13 @@ class YAFRAYCORE_EXPORT mcIntegrator_t: public tiledIntegrator_t
         
 		int nSSSDepth; // amount of bounces
         
-		unsigned int nSingleScatterSamples; // amount of samples for photon.
+		unsigned int nSingleScatterSamples; // amount of scatter samples.
         
 		bool isDirectLight; // si el origen los fotones es una fuente de luz directa
          
 		std::map<const object3d_t*, photonMap_t*> SSSMaps; // Container of SSS photons for different objects
 	public:
-		// factor of scale ( if 1U != 1m)
+		// factor of geometry scale ( if 1U != 1m)
         static float sssScale;
 };
 //SSS

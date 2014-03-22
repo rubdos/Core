@@ -63,60 +63,77 @@ class YAFRAYCORE_EXPORT imageFilm_t
 		};
 
 		/*! imageFilm_t Constructor */
-		imageFilm_t(int width, int height, int xstart, int ystart, colorOutput_t &out, float filterSize=1.0, filterType filt=BOX,
-		renderEnvironment_t *e = NULL, bool showSamMask = false, int tSize = 32,
-		imageSpliter_t::tilesOrderType tOrder=imageSpliter_t::LINEAR, bool pmA = false, bool drawParams = false);
+		imageFilm_t(int width, int height, int xstart, int ystart, colorOutput_t &out, float filterSize=1.0,
+            filterType filt=BOX, renderEnvironment_t *e = NULL, bool showSamMask = false, int tSize = 32, 
+            imageSpliter_t::tilesOrderType tOrder=imageSpliter_t::LINEAR, bool pmA = false, bool drawParams = false);
+
 		/*! imageFilm_t Destructor */
 		~imageFilm_t();
+
 		/*! Initialize imageFilm for new rendering, i.e. set pixels black etc */
 		void init(int numPasses = 0);
+
 		/*! Allocates memory for the z-buffer rendering */
 		void initDepthMap();
+
 		/*! Prepare for next pass, i.e. reset area_cnt, check if pixels need resample...
 			\param adaptive_AA if true, flag pixels to be resampled
 			\param threshold color threshold for adaptive antialiasing */
 		void nextPass(bool adaptive_AA, std::string integratorName);
+
 		/*! Return the next area to be rendered
 			CAUTION! This method MUST be threadsafe!
 			\return false if no area is left to be handed out, true otherwise */
 		bool nextArea(renderArea_t &a);
+
 		/*! Indicate that all pixels inside the area have been sampled for this pass */
 		void finishArea(renderArea_t &a);
+
 		/*! Output all pixels to the color output */
 		void flush(int flags = IF_ALL, colorOutput_t *out = 0);
+
 		/*! query if sample (x,y) was flagged to need more samples.
 			IMPORTANT! You may only call this after you have called nextPass(true, ...), otherwise
 			no such flags have been created !! */
 		bool doMoreSamples(int x, int y) const;
+
 		/*!	Add image sample; dx and dy describe the position in the pixel (x,y).
 			IMPORTANT: when a is given, all samples within a are assumed to come from the same thread!
-			use a=0 for contributions outside the area associated with current thread!
-		*/
+			use a=0 for contributions outside the area associated with current thread!*/
 		void addSample(const colorA_t &c, int x, int y, float dx, float dy, const renderArea_t *a = 0);
-		/*!	Add depth (z-buffer) sample; dx and dy describe the position in the pixel (x,y)
-		*/
+
+		/*!	Add depth (z-buffer) sample; dx and dy describe the position in the pixel (x,y)	*/
 		void addDepthSample(int chan, float val, int x, int y, float dx, float dy);
+
 		/*!	Add light density sample; dx and dy describe the position in the pixel (x,y).
 			IMPORTANT: when a is given, all samples within a are assumed to come from the same thread!
-			use a=0 for contributions outside the area associated with current thread!
-		*/
+			use a=0 for contributions outside the area associated with current thread!*/
 		void addDensitySample(const color_t &c, int x, int y, float dx, float dy, const renderArea_t *a = 0);
+
 		//! Enables/Disables a light density estimation image
 		void setDensityEstimation(bool enable);
+
 		//! set number of samples for correct density estimation (if enabled)
 		void setNumSamples(int n){ numSamples = n; }
+
 		/*! Enables/disables color clamping */
 		void setClamp(bool c){ clamp = c; }
+
 		/*! Enables/disables gamma correction of output; when gammaVal is <= 0 the current value is kept */
 		void setGamma(float gammaVal, bool enable);
+
 		/*! Sets the adaptative AA sampling threshold */
 		void setAAThreshold(CFLOAT thresh){ AA_thesh=thresh; }
+
 		/*! Enables interactive color buffer output for preview during render */
 		void setInteractive(bool ia){ interactive = ia; }
+
 		/*! Sets a custom progress bar in the image film */
 		void setProgressBar(progressBar_t *pb);
+
 		/*! The following methods set the strings used for the parameters badge rendering */
 		void setAAParams(const std::string &aa_params);
+
 		void setIntegParams(const std::string &integ_params);
 		void setCustomString(const std::string &custom);
 		void setUseParamsBadge(bool on = true) { drawParams = on; }

@@ -126,7 +126,7 @@ class YAFRAYCORE_EXPORT point3d_t
 		point3d_t& operator -=(const point3d_t &s) { x-=s.x;  y-=s.y;  z-=s.z;  return *this;}
 		PFLOAT operator[] (int i) const{ return (&x)[i]; } //Lynx
 		PFLOAT &operator[](int i) { return (&x)[i]; } //Lynx
-		//~point3d_t() {}; // povman: add but not active yet
+		//~point3d_t() {}; // povman: add but not activate yet
 		PFLOAT x,y,z;
 };
 
