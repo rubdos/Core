@@ -385,12 +385,12 @@ inline vector3d_t RandomSpherical()
 	return v;
 }
 // povman: add for SSS
-inline GFLOAT dot( const normal_t &a,const normal_t &b)
+inline GFLOAT dot( const normal_t &a, const normal_t &b)
 {
 	return (a.x*b.x+a.y*b.y+a.z*b.z);
 }
 
-inline GFLOAT dot( const vector3d_t &a,const vector3d_t &b)
+inline GFLOAT dot( const vector3d_t &a, const vector3d_t &b)
 {
 	return (a.x*b.x+a.y*b.y+a.z*b.z);
 }

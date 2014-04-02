@@ -148,7 +148,7 @@ class YAFRAYCORE_EXPORT material_t
 		BSDF_t bsdfFlags;
 		size_t reqMem; //!< the amount of "temporary" memory required to compute/store surface point specific data
 		volumeHandler_t* volI; //!< volumetric handler for space inside material (opposed to surface normal)
-		volumeHandler_t* volO; //!< volumetric handler for space outside ofmaterial (where surface normal points to)
+		volumeHandler_t* volO; //!< volumetric handler for space outside of material (where surface normal points to)
 };
 
 
