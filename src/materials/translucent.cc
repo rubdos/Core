@@ -77,6 +77,7 @@ public:
     //virtual void getSpecular(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo,
     //                       bool &refl, bool &refr, vector3d_t *const dir, color_t *const col)const;
     static material_t* factory(paraMap_t &params, std::list< paraMap_t > &eparans, renderEnvironment_t &env);
+
 protected:
     shaderNode_t* diffuseS;     //!< shader node for diffuse color
     shaderNode_t* glossyS;      //!< shader node for glossy color
@@ -111,14 +112,15 @@ diffuseCol(diffuseC), specRefCol(specC), gloss_color(glossyC), sigma_a(siga), si
 IOR(ior), g(_g), translucency(mT), diffusity(mD), glossity(mG), exponent(exp), diffuseS(0), glossyS(0), glossyRefS(0),
 bumpS(0), transpS(0), translS(0) 
 {
-    cFlags[C_TRANSLUCENT] = (BSDF_TRANSLUCENT); // povman: it is consistent the 'arbitrary' use of '()'
-    if (glossity>0)
+    // povman: it is consistent the 'arbitrary' use of '()'??
+    cFlags[C_TRANSLUCENT] = (BSDF_TRANSLUCENT); //(1) is used.. 
+    if (glossity > 0)
     {
-        cFlags[C_GLOSSY] = (BSDF_GLOSSY | BSDF_REFLECT); // is use 
+        cFlags[C_GLOSSY] = (BSDF_GLOSSY | BSDF_REFLECT); // (2) is used..
 
-        if(diffusity>0)
+        if(diffusity > 0)
         {
-            cFlags[C_DIFFUSE] = BSDF_DIFFUSE | BSDF_REFLECT; // not..
+            cFlags[C_DIFFUSE] = BSDF_DIFFUSE | BSDF_REFLECT; // (2) not used..
             with_diffuse = true;
             nBSDF = 3;
         }
@@ -133,7 +135,7 @@ bumpS(0), transpS(0), translS(0)
         cFlags[C_GLOSSY] = cFlags[C_DIFFUSE] = BSDF_NONE;
         nBSDF = 1;
     }
-    bsdfFlags = cFlags[C_TRANSLUCENT] | cFlags[C_GLOSSY] | cFlags[C_DIFFUSE]; // not..
+    bsdfFlags = cFlags[C_TRANSLUCENT] | cFlags[C_GLOSSY] | cFlags[C_DIFFUSE]; // (3) not used..
 }
 
 translucentMat_t::~translucentMat_t()
@@ -215,8 +217,7 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
     TranslucentData_t *dat = (TranslucentData_t *)state.userdata;
     float cos_Ng_wo = sp.Ng*wo;
     float cos_Ng_wi;
-    //povman test: add updated code from glossy.cc and comment old code
-    vector3d_t N = FACE_FORWARD(sp.Ng, sp.N, wo);//vector3d_t N = (cos_Ng_wo < 0) ? -sp.N : sp.N;
+    vector3d_t N = FACE_FORWARD(sp.Ng, sp.N, wo);
     vector3d_t Hs(0.f);
     s.pdf = 0.f;
     float Kr, Kt;
@@ -286,16 +287,20 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
     color_t scolor(0.f);
     switch(cIndex[pick])
     {
-    case C_TRANSLUCENT: // specular reflect
-        break;
-    case C_GLOSSY:      // glossy; compute sampled half-angle vector H for Blinn distribution (microfacet.h)
-        Blinn_Sample(Hs, s1, s.s2, exponent);
-        break;
-    case C_DIFFUSE:     // lambertian
-    default: //! Sample a cosine-weighted hemisphere given the coordinate system built by N, Ru, Rv.(sample_utils.h)
-        wi = SampleCosHemisphere(N, sp.NU, sp.NV, s1, s.s2);
-        cos_Ng_wi = sp.Ng*wi;
-        if(cos_Ng_wo*cos_Ng_wi < 0) return color_t(0.f);
+        case C_TRANSLUCENT:
+            // specular reflect
+            break;
+        case C_GLOSSY:
+            // glossy; compute sampled half-angle vector H for Blinn distribution (microfacet.h)
+            Blinn_Sample(Hs, s1, s.s2, exponent);
+            break;
+        case C_DIFFUSE:
+            // lambertian
+            default: 
+                //! Sample a cosine-weighted hemisphere given the coordinate system built by N, Ru, Rv.(sample_utils.h)
+                wi = SampleCosHemisphere(N, sp.NU, sp.NV, s1, s.s2);
+                cos_Ng_wi = sp.Ng*wi;
+                if(cos_Ng_wo*cos_Ng_wi < 0) return color_t(0.f);
     }
 
     wiN = std::fabs(wi * N);
@@ -303,8 +308,7 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
 
     if(cIndex[pick] != C_TRANSLUCENT)
     {
-        // povman: if glossy reflect value is > 0.0..
-        // evaluate BSDFs and PDFs...
+        // povman: if glossy reflect value is > 0.0  BSDFs and PDFs is evaluated
         if(use[C_GLOSSY])
         {
             float glossy; //PFLOAT glossy;
@@ -333,8 +337,8 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
             wiN = std::fabs(wi * N);
 
             { // povman: review this 'nocondition' bracet  ??
-                s.pdf += Blinn_Pdf(Hs.z, cos_wo_H, exponent) * width[rcIndex[C_GLOSSY]];
-                glossy = Blinn_D(Hs.z, exponent) * SchlickFresnel(cos_wo_H, dat->mGlossy) / ASDivisor(cos_wo_H, woN, wiN);
+            s.pdf += Blinn_Pdf(Hs.z, cos_wo_H, exponent) * width[rcIndex[C_GLOSSY]];
+            glossy = Blinn_D(Hs.z, exponent) * SchlickFresnel(cos_wo_H, dat->mGlossy) / ASDivisor(cos_wo_H, woN, wiN);
             } // end ?
             // povman test.. 
             // scolor = (CFLOAT)glossy*(1.f-Kt*dat->mTransl)*(glossyS ? glossyS->getColor(stack) : gloss_color);
@@ -361,8 +365,8 @@ color_t translucentMat_t::emit(const renderState_t &state, const surfacePoint_t 
 float translucentMat_t::pdf(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, const vector3d_t &wi, BSDF_t bsdfs)const
 {
     TranslucentData_t *dat = (TranslucentData_t *)state.userdata;
-    bool transmit = ((sp.Ng * wo) * (sp.Ng * wi)) < 0.f;
-    if(transmit) return 0.f;
+    if( ((sp.Ng * wo)*(sp.Ng * wi)) < 0.f ) return 0.f;
+    //-
     vector3d_t N = FACE_FORWARD(sp.Ng, sp.N, wo);
     float pdf = 0.f;
     CFLOAT Kr, Kt;
@@ -422,9 +426,9 @@ material_t* translucentMat_t::factory(paraMap_t &params, std::list< paraMap_t > 
     color_t col(1.0f);
     color_t glossyC(1.0f);
     color_t specC(1.0f);
-    color_t siga(0.01f);
-    color_t sigs(1.0f);
-    float sigs_factor = 1.0f;
+    color_t sigA(0.01f);
+    color_t sigS(1.0f);
+    float sigS_factor = 1.0f;
     float ior = 1.3;
     float _g = 0;
     float mT = 0.9, mG = 1.0, mD = 0.001f;
@@ -433,17 +437,17 @@ material_t* translucentMat_t::factory(paraMap_t &params, std::list< paraMap_t > 
     params.getParam("color", col);
     params.getParam("glossy_color", glossyC);
     params.getParam("specular_color", specC);
-    params.getParam("sigmaA", siga);
-    params.getParam("sigmaS", sigs);
-    params.getParam("sigmaS_factor", sigs_factor);
+    params.getParam("sigmaA", sigA);
+    params.getParam("sigmaS", sigS);
+    params.getParam("sigmaS_factor", sigS_factor);
     params.getParam("IOR", ior);
     params.getParam("g", _g);
     params.getParam("diffuse_reflect", mD);
     params.getParam("glossy_reflect", mG);
     params.getParam("sss_transmit", mT);
-    params.getParam("exponent", expn); // povman: change 'exp' to 'expn' name. 'exp' is a math expresion of exponential
+    params.getParam("exponent", expn);
 
-    translucentMat_t *mat = new translucentMat_t(col, specC, glossyC, siga, sigs, sigs_factor, ior, _g, mT, mD, mG, expn);
+    translucentMat_t *mat = new translucentMat_t(col, specC, glossyC, sigA, sigS, sigS_factor, ior, _g, mT, mD, mG, expn);
 
     std::vector<shaderNode_t *> roots;
     std::map<std::string, shaderNode_t *> nodeList;
