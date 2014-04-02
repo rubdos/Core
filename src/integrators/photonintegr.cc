@@ -343,7 +343,7 @@ bool photonIntegrator_t::preprocess()
 	delete lightPowerD;
 
 	tmplights.clear();
-    // povman: search cuastics lights..
+    // povman: search caustics lights..
 	for(int i=0;i<(int)lights.size();++i)
 	{
 		if(lights[i]->shootsCausticP())
@@ -527,7 +527,7 @@ bool photonIntegrator_t::preprocess()
 	{
         //Y_INFO << "SSSMap : " << SSSMaps.size() << yendl;
         //createSSSMaps();
-        // prepass
+        // prepass        
         createSSSMapsByPhotonTracing();
         // povman:add text to banner info
 		set << "SSS shoot:" << nSSSPhotons << " photons. ";
@@ -535,6 +535,8 @@ bool photonIntegrator_t::preprocess()
 		while (it!=SSSMaps.end())
         {
 		    it->second->updateTree();
+            Y_INFO << integratorName << ": Building SSS photons kd-tree:" << yendl;
+            //Y_INFO << integratorName << ": Builting: " << it->second->nPhotons() << " elements. " << yendl;
 			//Y_INFO << "SSS:" << it->second->nPhotons() << " photons. " << yendl;
 			it++;
         }
@@ -895,7 +897,7 @@ colorA_t photonIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) con
             */
             // ..and 'use SSS photons' is active.
             if(usePhotonSSS){
-                col += estimateSSSMaps(state,sp,wo);
+                col += estimateSSSMaps(state,sp,wo); //(1)
                 col += estimateSSSSingleSImportantSampling(state,sp,wo);
             }
 		}
@@ -925,7 +927,6 @@ integrator_t* photonIntegrator_t::factory(paraMap_t &params, renderEnvironment_t
 	bool transpShad=false;
 	bool finalGather=true;
 	bool show_map=false;
-	bool useSSS=false; // SSS
 	int shadowDepth=5;
 	int raydepth=5;
 	int numPhotons = 100000;
@@ -942,6 +943,7 @@ integrator_t* photonIntegrator_t::factory(paraMap_t &params, renderEnvironment_t
 	bool bg_transp_refract = true;
 
 	// SSS
+    bool useSSS=false;	
 	int sssdepth = 10, sssPhotons = 200000;
 	int singleSSamples = 128;
 	float sScale = 40.f;

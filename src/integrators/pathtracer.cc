@@ -96,7 +96,7 @@ bool pathIntegrator_t::preprocess()
 	{
 		//success = createSSSMaps();
 		success = createSSSMapsByPhotonTracing();
-		set << " SSS photons:[" << nSSSPhotons << "] ";
+		set << " SSS:[" << nSSSPhotons << "] photons ";
 		std::map<const object3d_t*, photonMap_t*>::iterator it = SSSMaps.begin();
 		while (it!=SSSMaps.end())
         {
@@ -179,8 +179,8 @@ colorA_t pathIntegrator_t::integrate(renderState_t &state, diffRay_t &ray/*, sam
             */
             // ..and use SSS photons is active..
             if(usePhotonSSS) {
-                col += estimateSSSMaps(state,sp,wo);
-                col += estimateSSSSingleSImportantSampling(state,sp,wo);
+                col += estimateSSSMaps(state,sp,wo); // to mcintegrator.cc, line 1518
+                col += estimateSSSSingleSImportantSampling(state,sp,wo); // to mcintegrator.cc, line 1715
             }
 		}
 
