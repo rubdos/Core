@@ -498,7 +498,7 @@ CFLOAT textureBlend_t::getFloat(const point3d_t &p) const
 colorA_t textureBlend_t::getColor(const point3d_t &p) const
 {
 	// TODO: colorband
-        return colorA_t(1.0,1.0,1.0,1.0);
+    return colorA_t(1.0,1.0,1.0,1.0);
 }
 
 texture_t *textureBlend_t::factory(paraMap_t &params, renderEnvironment_t &render)

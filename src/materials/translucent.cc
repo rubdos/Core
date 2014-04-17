@@ -2,6 +2,7 @@
  *      translucent.cc: translucent materials
  *      This is part of the yafray package
  *      Copyright (C) 2010  Ronnie
+ *      Copyright (C) 2014  Pedro Alcaide
  *
  *      This library is free software; you can redistribute it and/or
  *      modify it under the terms of the GNU Lesser General Public
@@ -153,9 +154,9 @@ void translucentMat_t::initBSDF(const renderState_t &state, surfacePoint_t &sp, 
     std::vector<shaderNode_t *>::const_iterator iter, end=allViewindep.end();
     for(iter = allViewindep.begin(); iter!=end; ++iter) (*iter)->eval(stack, state, sp);
 
-    dat->difC = diffuseS?diffuseS->getColor(stack):diffuseCol;
-    dat->sig_s = sigmaS_Factor * (translS?translS->getColor(stack):this->sigma_s);
-    dat->sig_a = transpS?transpS->getColor(stack):this->sigma_a;
+    dat->difC = diffuseS ? diffuseS->getColor(stack):diffuseCol;
+    dat->sig_s = sigmaS_Factor * (translS ? translS->getColor(stack):this->sigma_s);
+    dat->sig_a = transpS ? transpS->getColor(stack):this->sigma_a;
     dat->IOR = this->IOR;
     dat->g = this->g;
 
@@ -168,7 +169,7 @@ void translucentMat_t::initBSDF(const renderState_t &state, surfacePoint_t &sp, 
     bsdfTypes = bsdfFlags;
 }
 //-
-color_t translucentMat_t::eval(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, const vector3d_t &wl, BSDF_t bsdfs)const
+color_t translucentMat_t::eval(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, const vector3d_t &wl, BSDF_t bsdfs) const 
 {
     if( !(bsdfs & BSDF_DIFFUSE) || ((sp.Ng*wl)*(sp.Ng*wo)) < 0.f )
     {
@@ -223,7 +224,7 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
     float Kr, Kt;
     float wiN = 0.f , woN = 0.f;
 
-    fresnel(wi, N, IOR, Kr, Kt); // povman: this code is used??
+    fresnel(wi, N, IOR, Kr, Kt);
 
     // missing! get components
     nodeStack_t stack(dat->stack);
@@ -232,7 +233,7 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
     int cIndex[3]; // entry values: 0 := specular part, 1 := glossy part, 2:= diffuse part;
     int rcIndex[3]; // reverse fmapping of cIndex, gives position of spec/glossy/diff in val/width array
     accumC[0] = Kt*dat->mTransl;
-    accumC[1] = (1.f - Kt*dat->mTransl)*(1.f - dat->pDiffuse);
+    accumC[1] = (1.f - Kt*dat->mTransl)*(1.f - dat->pDiffuse); // povman: review pDiffuse
     accumC[2] = (1.f - Kt*dat->mTransl)*(dat->pDiffuse);
 
     int nMatch = 0, pick = -1;
@@ -266,7 +267,7 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
         {
             val[i] *= inv_sum;
             width[i] *= inv_sum;
-            if((s.s1 <= val[i]) && (pick<0 )){
+            if((s.s1 <= val[i]) && (pick < 0)){
                 pick = i;
             }
         }
@@ -287,20 +288,20 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
     color_t scolor(0.f);
     switch(cIndex[pick])
     {
-        case C_TRANSLUCENT:
-            // specular reflect
-            break;
-        case C_GLOSSY:
-            // glossy; compute sampled half-angle vector H for Blinn distribution (microfacet.h)
-            Blinn_Sample(Hs, s1, s.s2, exponent);
-            break;
-        case C_DIFFUSE:
-            // lambertian
-            default: 
-                //! Sample a cosine-weighted hemisphere given the coordinate system built by N, Ru, Rv.(sample_utils.h)
-                wi = SampleCosHemisphere(N, sp.NU, sp.NV, s1, s.s2);
-                cos_Ng_wi = sp.Ng*wi;
-                if(cos_Ng_wo*cos_Ng_wi < 0) return color_t(0.f);
+    case C_TRANSLUCENT:
+        // specular reflect
+        break;
+    case C_GLOSSY:
+        // glossy; compute sampled half-angle vector H for Blinn distribution (microfacet.h)
+        Blinn_Sample(Hs, s1, s.s2, exponent);
+        break;
+    case C_DIFFUSE:
+        // lambertian
+        default: 
+            //! Sample a cosine-weighted hemisphere given the coordinate system built by N, Ru, Rv.(sample_utils.h)
+            wi = SampleCosHemisphere(N, sp.NU, sp.NV, s1, s.s2);
+            cos_Ng_wi = sp.Ng*wi;
+            if(cos_Ng_wo*cos_Ng_wi < 0) return color_t(0.f);
     }
 
     wiN = std::fabs(wi * N);
@@ -308,7 +309,7 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
 
     if(cIndex[pick] != C_TRANSLUCENT)
     {
-        // povman: if glossy reflect value is > 0.0  BSDFs and PDFs is evaluated
+        // povman: if glossy reflect value is > 0.0
         if(use[C_GLOSSY])
         {
             float glossy; //PFLOAT glossy;
@@ -336,18 +337,17 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
 
             wiN = std::fabs(wi * N);
 
-            { // povman: review this 'nocondition' bracet  ??
-            s.pdf += Blinn_Pdf(Hs.z, cos_wo_H, exponent) * width[rcIndex[C_GLOSSY]];
-            glossy = Blinn_D(Hs.z, exponent) * SchlickFresnel(cos_wo_H, dat->mGlossy) / ASDivisor(cos_wo_H, woN, wiN);
+            { // povman: review this 'no-condition' bracet  ??
+                s.pdf += Blinn_Pdf(Hs.z, cos_wo_H, exponent) * width[rcIndex[C_GLOSSY]];
+                glossy = Blinn_D(Hs.z, exponent) * SchlickFresnel(cos_wo_H, dat->mGlossy) / ASDivisor(cos_wo_H, woN, wiN);
             } // end ?
             // povman test.. 
             // scolor = (CFLOAT)glossy*(1.f-Kt*dat->mTransl)*(glossyS ? glossyS->getColor(stack) : gloss_color);
             scolor = (float)glossy * (1.f-Kt*dat->mTransl)*(glossyS ? glossyS->getColor(stack) : gloss_color);
         }
-
+        // povman: if diffuse reflect value is > 0.0
         if(use[C_DIFFUSE])
         {
-            //Y_INFO << "if(use[C_DIFFUSE])..\n" << yendl;
             scolor += (1.f-Kt*dat->mTransl)*diffuseReflect(wiN, woN, dat->mGlossy, dat->mDiffuse, (diffuseS ? diffuseS->getColor(stack) : diffuseCol));
             s.pdf += wiN * width[rcIndex[C_DIFFUSE]];
         }
