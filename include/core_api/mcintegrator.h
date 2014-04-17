@@ -47,7 +47,10 @@ protected:
 	// SSS
 	/*! Creates SSS photon map for different objects */
 	// virtual bool createSSSMaps();
+
+    /*! Create Subsurface maps using photon tracing */
 	virtual bool createSSSMapsByPhotonTracing();
+
 	//virtual bool destorySSSMaps();
 	virtual void destorySSSMaps();
 
@@ -60,7 +63,7 @@ protected:
 	//
     virtual color_t getTranslucentInScatter(renderState_t& state, ray_t& stepRay, float currentStep) const;
 
-	virtual color_t estimateSSSSingleScatteringPhotons(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const;
+	//virtual color_t estimateSSSSingleScatteringPhotons(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const;
     // sss end
 
 	int rDepth; //! Ray depth
@@ -91,17 +94,17 @@ protected:
     // SSS        
 	bool usePhotonSSS; //! bool to use photon if have a SSS  scene material.
 
-    // promedio de fotones que necesitamos impactar en ese material para un procesado optimo..
-    // cuestion: el total de fotones a disparar se calculara en base a esta cifra.??
+    // amount of shot photons
 	unsigned int nSSSPhotons;
         
 	int nSSSDepth; // amount of bounces
         
 	unsigned int nSingleScatterSamples; // amount of scatter samples.
         
-	bool isDirectLight; // si el origen los fotones es una fuente de luz directa
+	bool isDirectLight; // if use with directlight integrator
          
 	std::map<const object3d_t*, photonMap_t*> SSSMaps; // Container of SSS photons for different objects
+
 public:
 	// factor of geometry scale ( if 1U != 1m)
     static float sssScale;

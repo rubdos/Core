@@ -138,15 +138,25 @@ struct foundPhoton_t
 class YAFRAYCORE_EXPORT photonMap_t
 {
 	public:
-		photonMap_t(): paths(0), updated(false), searchRadius(1.), tree(0){ }
-		~photonMap_t(){ if(tree) delete tree; }
+		// povman: expand constructor and destructor for add  phtree
+
+		//photonMap_t(): paths(0), updated(false), searchRadius(1.), tree(0){ }
+        photonMap_t(): paths(0), updated(false), searchRadius(1.), tree(0), phTree(0){ }
+
+        //~photonMap_t(){ if(tree) delete tree; }
+        ~photonMap_t(); //{ if(tree) delete tree; if(phTree) delete phTree;}
+
+        // end
 		void setNumPaths(int n){ paths=n; }
 		int nPaths() const{ return paths; }
 		int nPhotons() const{ return photons.size(); }
 		void pushPhoton(photon_t &p) { photons.push_back(p); updated=false; }
 		void swapVector(std::vector<photon_t> &vec) { photons.swap(vec); updated=false; }
 		void updateTree();
-		void clear(){ photons.clear(); delete tree; tree=0; updated=false; }
+        // povman: expand function clear for add phtree
+        //void clear(){ photons.clear(); delete tree; tree=0; updated=false; }
+		void clear(){ photons.clear(); delete tree; tree=0; delete phTree; phTree=0; updated=false; }
+        // end
 		bool ready() const { return updated; }
 	    //void gather(const point3d_t &P, std::vector< foundPhoton_t > &found, unsigned int K, PFLOAT &sqRadius) const;
 		int gather(const point3d_t &P, foundPhoton_t *found, unsigned int K, PFLOAT &sqRadius) const;
@@ -154,15 +164,18 @@ class YAFRAYCORE_EXPORT photonMap_t
 		// add SSS code
 		void getAllPhotons(const point3d_t& woP, std::vector<const photon_t*>& sssPhotons);
 		int numberOfPhotonInDisc(const point3d_t &p, PFLOAT scale, PFLOAT dist) const;
+        // test
+        void updatePhTree();
+
         // end
 	protected:
 		std::vector<photon_t> photons;
 		int paths; //!< amount of photon paths that have been traced for generating the map
 		bool updated;
 		PFLOAT searchRadius;
-		//kdtree::pointKdTree<photon_t> *tree;
+		kdtree::pointKdTree<photon_t> *tree;
 		// povman: add photonKdTree for use with SSS maps
-		kdtree::photonKdTree<photon_t> *tree;
+		kdtree::photonKdTree<photon_t> *phTree;
 };
 
 // photon "processes" for lookup
