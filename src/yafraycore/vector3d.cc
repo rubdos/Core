@@ -124,11 +124,12 @@ void fresnel(const vector3d_t & I, const vector3d_t & n, float IOR, float &Kr, f
 		N=n;
 	}
 	PFLOAT c=I*N;
-	PFLOAT g=eta*eta+c*c-1;
+	PFLOAT g = eta * eta + c * c - 1;
 	if(g<=0)
 		g=0;
 	else
-		g=fSqrt(g);
+		g = fSqrt(g);
+    //
 	PFLOAT aux=c*(g+c);
 
 	Kr=( ( 0.5*(g-c)*(g-c) )/( (g+c)*(g+c) ) ) *
