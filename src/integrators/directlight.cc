@@ -87,12 +87,11 @@ bool directLighting_t::preprocess()
 	{
 		//success = createSSSMaps();
 		success = createSSSMapsByPhotonTracing();
-        //set << " SSS: [" << nSSSPhotons << "] photons";
         set <<" SSS:["<< nSSSPhotons <<"] photons ";
 		std::map<const object3d_t*, photonMap_t*>::iterator it = SSSMaps.begin();
 		while (it!=SSSMaps.end())
         {
-			it->second->updateTree();
+			it->second->updatePhTree();
 			Y_INFO << integratorName << ": Builting: "  << it->second->nPhotons() << " photons. " << yendl;
 			it++;
 		}
@@ -113,17 +112,15 @@ bool directLighting_t::preprocess()
 colorA_t directLighting_t::integrate(renderState_t &state, diffRay_t &ray) const
 {
 	color_t col(0.0);
-	float alpha;
+	float alpha = 0.0;
 	surfacePoint_t sp;
 	void *o_udat = state.userdata;
 	bool oldIncludeLights = state.includeLights;
 
-	if(transpBackground) alpha=0.0;
-	else alpha=1.0;
+	if(!transpBackground) alpha = 1.0;
 
-	// Shoot ray into scene
-
-	if(scene->intersect(ray, sp)) // If it hits
+	// Shoot rays..
+	if(scene->intersect(ray, sp))
 	{
 		unsigned char userdata[USER_DATA_SIZE];
 		const material_t *material = sp.material;
@@ -140,36 +137,51 @@ colorA_t directLighting_t::integrate(renderState_t &state, diffRay_t &ray) const
 		if(bsdfs & BSDF_DIFFUSE)
 		{
 			col += estimateAllDirectLight(state, sp, wo);
-			if(usePhotonCaustics) col += estimateCausticPhotons(state, sp, wo);
-			if(useAmbientOcclusion) col += sampleAmbientOcclusion(state, sp, wo);
+			if (usePhotonCaustics)   col += estimateCausticPhotons(state, sp, wo);
+			if (useAmbientOcclusion) col += sampleAmbientOcclusion(state, sp, wo);
 		}
 
 		// if have translucent SSS materials..
 		if (bsdfs & BSDF_TRANSLUCENT) 
         {
-            /* commit log: Added 'if(usePhotonSSS)' to fix the error when trying 
-               to process estimateSSSMaps and estimateSSSSingleSImportantSampling, 
-               without having created the photonmaps for SSS.
-            */
-            // and is activate use SSS photons..
+            // and use SSS photons is ON ..
             if (usePhotonSSS)
             {
-                //col += estimateAllDirectLight(state, sp, wo);
-			    col += estimateSSSMaps(state, sp, wo);
+                col += estimateSSSMaps(state, sp, wo);
 			    //col += estimateSSSSingleScattering(state,sp,wo);
 			    //col += estimateSSSSingleScatteringPhotons(state,sp,wo);
 			    col += estimateSSSSingleSImportantSampling(state, sp, wo);
             }
+            /*
+            else
+            {
+                // povman: test for use singlescattering without using  SSS photon maps
+                // first result: some problems with blender 'material' preview, because to very slowly render preview.
+                // not good result with small parts of geometry
+                col += estimateSSSSingleScattering(state, sp, wo);
+            }
+            */
 		}
-		//--
+		// povman: in under function call, alpha values is re-asigned
+        // so.. the actual alpha value is ignored
 		recursiveRaytrace(state, ray, bsdfs, sp, wo, col, alpha);
-
-		if(transpRefractedBackground)
+            
+		if(transpRefractedBackground && transpBackground)
 		{
-			float m_alpha = material->getAlpha(state, sp, wo);
-			alpha = m_alpha + (1.f - m_alpha) * alpha;
-		}
-		else alpha = 1.0;
+            //float m_alpha = material->getAlpha(state, sp, wo);
+            //alpha = m_alpha + (1.f - m_alpha) * alpha;
+            // povman review: this code is useless..
+            // case 1, transpBackground = false, so alpha = 1.0:
+            //      m_alpha + (1.f - m_alpha) * alpha = alpha, m_alpha is always ignored...
+            // case 2, transpBackground = true, so alpha = 0.0:
+            //      m_alpha + (1.f - m_alpha) * alpha = m_alpha, always..
+            // only if transpBackground = true, request alpha value from material is used
+			alpha = material->getAlpha(state, sp, wo);            
+		} 
+        else 
+        {
+            alpha = 1.0;
+        }
 	}
 	else // Nothing hit, return background if any
 	{

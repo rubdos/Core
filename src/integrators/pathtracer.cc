@@ -100,7 +100,8 @@ bool pathIntegrator_t::preprocess()
 		std::map<const object3d_t*, photonMap_t*>::iterator it = SSSMaps.begin();
 		while (it!=SSSMaps.end())
         {
-			it->second->updateTree();
+            // change to use own update Tree
+			it->second->updatePhTree();
             Y_INFO << integratorName << ": Builting: " << it->second->nPhotons() << " elements. " << yendl;
 			it++;
 		}
@@ -162,7 +163,7 @@ colorA_t pathIntegrator_t::integrate(renderState_t &state, diffRay_t &ray/*, sam
 		const volumeHandler_t *vol;
 		color_t vcol(0.f);
 
-		// contribution of light emitting surfaces
+		// contribution of light from emitting surfaces
 		if(bsdfs & BSDF_EMIT) col += material->emit(state, sp, wo);
 
 		if(bsdfs & BSDF_DIFFUSE)
@@ -173,12 +174,9 @@ colorA_t pathIntegrator_t::integrate(renderState_t &state, diffRay_t &ray/*, sam
 		// if have SSS material..
 		if (bsdfs & BSDF_TRANSLUCENT) 
         {
-            /* commit log: Added 'if(usePhotonSSS)' to fix the error when trying 
-               to process estimateSSSMaps and estimateSSSSingleSImportantSampling, 
-               without having created the photonmaps for SSS.
-            */
             // ..and use SSS photons is active..
-            if(usePhotonSSS) {
+            if(usePhotonSSS)
+            {
                 col += estimateSSSMaps(state,sp,wo); // to mcintegrator.cc, line 1518
                 col += estimateSSSSingleSImportantSampling(state,sp,wo); // to mcintegrator.cc, line 1715
             }
@@ -339,7 +337,7 @@ integrator_t* pathIntegrator_t::factory(paraMap_t &params, renderEnvironment_t &
 	bool bg_transp = true;
 	bool bg_transp_refract = true;
 	// SSS
-	bool useSSS=false;
+	bool useSSS = false;
 	int sssdepth = 10, sssPhotons = 200000;
 	int singleSSamples = 128;
 	float sScale = 40.f;

@@ -534,11 +534,10 @@ bool photonIntegrator_t::preprocess()
 		std::map<const object3d_t*, photonMap_t*>::iterator it = SSSMaps.begin();
 		while (it!=SSSMaps.end())
         {
-		    it->second->updateTree();
+            // change to use own updateTree function
+		    it->second->updatePhTree();
             Y_INFO << integratorName << ": Building SSS photons kd-tree:" << yendl;
-            //Y_INFO << integratorName << ": Builting: " << it->second->nPhotons() << " elements. " << yendl;
-			//Y_INFO << "SSS:" << it->second->nPhotons() << " photons. " << yendl;
-			it++;
+            it++;
         }
 	}
 	// end
@@ -891,14 +890,11 @@ colorA_t photonIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) con
         // povman: if have translucent SSS material ..
         if(bsdfs & BSDF_TRANSLUCENT)
 		{
-            /* commit log: Added 'if(usePhotonSSS)' to fix the error when trying 
-               to process estimateSSSMaps and estimateSSSSingleSImportantSampling, 
-               without having created the photonmaps for SSS.
-            */
             // ..and 'use SSS photons' is active.
-            if(usePhotonSSS){
-                col += estimateSSSMaps(state,sp,wo); //(1)
-                col += estimateSSSSingleSImportantSampling(state,sp,wo);
+            if(usePhotonSSS)
+            {
+                col += estimateSSSMaps(state, sp, wo); //(1)
+                col += estimateSSSSingleSImportantSampling(state, sp, wo);
             }
 		}
 		//end
