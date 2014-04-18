@@ -126,7 +126,7 @@ class YAFRAYCORE_EXPORT point3d_t
 		point3d_t& operator -=(const point3d_t &s) { x-=s.x;  y-=s.y;  z-=s.z;  return *this;}
 		PFLOAT operator[] (int i) const{ return (&x)[i]; } //Lynx
 		PFLOAT &operator[](int i) { return (&x)[i]; } //Lynx
-		//~point3d_t() {}; // povman: add but not active yet
+		//~point3d_t() {}; // povman: add but not activate yet
 		PFLOAT x,y,z;
 };
 
@@ -385,12 +385,12 @@ inline vector3d_t RandomSpherical()
 	return v;
 }
 // povman: add for SSS
-inline GFLOAT dot( const normal_t &a,const normal_t &b)
+inline GFLOAT dot( const normal_t &a, const normal_t &b)
 {
 	return (a.x*b.x+a.y*b.y+a.z*b.z);
 }
 
-inline GFLOAT dot( const vector3d_t &a,const vector3d_t &b)
+inline GFLOAT dot( const vector3d_t &a, const vector3d_t &b)
 {
 	return (a.x*b.x+a.y*b.y+a.z*b.z);
 }

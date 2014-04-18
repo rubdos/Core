@@ -36,26 +36,33 @@ class YAFRAYPLUGIN_EXPORT yafrayInterface_t
 		virtual void loadPlugins(const char *path); //!< load plugins from path, if NULL load from default path, if available.
 		virtual bool startGeometry(); //!< call before creating geometry; only meshes and vmaps can be created in this state
 		virtual bool endGeometry(); //!< call after creating geometry;
+		virtual unsigned int getNextFreeID();
 		/*! start a triangle mesh
 			in this state only vertices, UVs and triangles can be created
 			\param id returns the ID of the created mesh
+            \param vertices returns the amount of vertex mesh
 		*/
-		virtual unsigned int getNextFreeID();
 		virtual bool startTriMesh(unsigned int id, int vertices, int triangles, bool hasOrco, bool hasUV=false, int type=0);
-		virtual bool startCurveMesh(unsigned int id, int vertices);
+		/*! start a curve mesh.
+            \param id returns the ID of the created curve mesh */
+        virtual bool startCurveMesh(unsigned int id, int vertices);
 		virtual bool startTriMeshPtr(unsigned int *id, int vertices, int triangles, bool hasOrco, bool hasUV=false, int type=0);
 		virtual bool endTriMesh(); //!< end current mesh and return to geometry state
 		virtual bool endCurveMesh(const material_t *mat, float strandStart, float strandEnd, float strandShape); //!< end current mesh and return to geometry state
 		virtual int  addVertex(double x, double y, double z); //!< add vertex to mesh; returns index to be used for addTriangle
 		virtual int  addVertex(double x, double y, double z, double ox, double oy, double oz); //!< add vertex with Orco to mesh; returns index to be used for addTriangle
 		virtual void addNormal(double nx, double ny, double nz); //!< add vertex normal to mesh; the vertex that will be attached to is the last one inserted by addVertex method
-		virtual bool addTriangle(int a, int b, int c, const material_t *mat); //!< add a triangle given vertex indices and material pointer
-		virtual bool addTriangle(int a, int b, int c, int uv_a, int uv_b, int uv_c, const material_t *mat); //!< add a triangle given vertex and uv indices and material pointer
-		virtual int  addUV(float u, float v); //!< add a UV coordinate pair; returns index to be used for addTriangle
-		virtual bool smoothMesh(unsigned int id, double angle); //!< smooth vertex normals of mesh with given ID and angle (in degrees)
+		//!< add a triangle given vertex indices and material pointer
+        virtual bool addTriangle(int a, int b, int c, const material_t *mat);
+        //!< add a triangle given vertex and uv indices and material pointer
+		virtual bool addTriangle(int a, int b, int c, int uv_a, int uv_b, int uv_c, const material_t *mat);
+		//!< add a UV coordinate pair; returns index to be used for addTriangle
+        virtual int  addUV(float u, float v);
+        //!< smooth vertex normals of mesh with given ID and angle (in degrees)
+		virtual bool smoothMesh(unsigned int id, double angle);
 		virtual bool addInstance(unsigned int baseObjectId, matrix4x4_t objToWorld);
 		// functions to build paramMaps instead of passing them from Blender
-		// (decouling implementation details of STL containers, paraMap_t etc. as much as possible)
+		// (decoupling implementation details of STL containers, paraMap_t etc. as much as possible)
 		virtual void paramsSetPoint(const char* name, double x, double y, double z);
 		virtual void paramsSetString(const char* name, const char* s);
 		virtual void paramsSetBool(const char* name, bool b);
@@ -79,7 +86,8 @@ class YAFRAYPLUGIN_EXPORT yafrayInterface_t
 		virtual background_t* 	createBackground	(const char* name);
 		virtual integrator_t* 	createIntegrator	(const char* name);
 		virtual VolumeRegion* 	createVolumeRegion	(const char* name);
-		virtual imageHandler_t*	createImageHandler	(const char* name, bool addToTable = true); //!< The addToTable parameter, if true, allows to avoid the interface from taking ownership of the image handler
+		//!< The addToTable parameter, if true, allows to avoid the interface from taking ownership of the image handler
+        virtual imageHandler_t*	createImageHandler	(const char* name, bool addToTable = true);
 		virtual unsigned int 	createObject		(const char* name);
 		virtual void clearAll(); //!< clear the whole environment + scene, i.e. free (hopefully) all memory.
 		virtual void render(colorOutput_t &output, progressBar_t *pb = 0); //!< render the scene...
@@ -87,7 +95,8 @@ class YAFRAYPLUGIN_EXPORT yafrayInterface_t
 		virtual void setInputGamma(float gammaVal, bool enable);
 		virtual void abort();
 		virtual paraMap_t* getRenderParameters() { return params; }
-		virtual bool getRenderedImage(colorOutput_t &output); //!< put the rendered image to output
+		//!< put the rendered image to output
+        virtual bool getRenderedImage(colorOutput_t &output);
 		virtual std::vector<std::string> listImageHandlers();
 		virtual std::vector<std::string> listImageHandlersFullName();
 		virtual std::string getImageFormatFromFullName(const std::string &fullname);

@@ -115,11 +115,13 @@ float Lanczos2(float dx, float dy)
 	return 0.f;
 }
 
-imageFilm_t::imageFilm_t (int width, int height, int xstart, int ystart, colorOutput_t &out, float filterSize, filterType filt,
-						  renderEnvironment_t *e, bool showSamMask, int tSize, imageSpliter_t::tilesOrderType tOrder, bool pmA, bool drawParams):
-	flags(0), w(width), h(height), cx0(xstart), cy0(ystart), gamma(1.0), filterw(filterSize*0.5), output(&out),
-	clamp(false), split(true), interactive(true), abort(false), correctGamma(false), splitter(0), pbar(0),
-	env(e), showMask(showSamMask), tileSize(tSize), tilesOrder(tOrder), premultAlpha(pmA), drawParams(drawParams)
+//-
+imageFilm_t::imageFilm_t (int width,int height,int xstart,int ystart,colorOutput_t &out, float filterSize,
+                          filterType filt,renderEnvironment_t *e,bool showSamMask,int tSize,
+                          imageSpliter_t::tilesOrderType tOrder, bool pmA, bool drawParams):
+flags(0), w(width), h(height), cx0(xstart), cy0(ystart), gamma(1.0), filterw(filterSize*0.5), output(&out),
+clamp(false), split(true), interactive(true), abort(false), correctGamma(false), splitter(0), pbar(0),
+env(e), showMask(showSamMask), tileSize(tSize), tilesOrder(tOrder), premultAlpha(pmA), drawParams(drawParams)
 {
 	cx1 = xstart + width;
 	cy1 = ystart + height;
@@ -771,9 +773,11 @@ void imageFilm_t::drawRenderSettings()
 		textOffsetX += logoWidth;
 
 		for ( lx = 0; lx < imWidth; lx++ )
-			for ( ly = 0; ly < imHeight; ly++ )
+        {
+            for ( ly = 0; ly < imHeight; ly++ ){
 				(*dpimage)(lx, ly) = logo->getPixel(lx, ly);
-
+            }
+        }
 		delete logo;
 	}
 
@@ -822,7 +826,7 @@ void imageFilm_t::drawRenderSettings()
 		// increment pen position
 		pen.x += slot->advance.x;
 		pen.y += slot->advance.y;
-	}
+    }
 
 	// Cleanup
 	FT_Done_Face    ( face );

@@ -115,7 +115,7 @@ PySequenceMethods sequence_methods_4 =
 PyTypeObject yafTile4_Type =
 {
 	PyVarObject_HEAD_INIT(NULL, 0)
-	"yaf_tile_4",							/* tp_name */
+	"yaf_tile_4",						/* tp_name */
 	sizeof(YafTile4Object_t),			/* tp_basicsize */
 	0,									/* tp_itemsize */
 	( destructor ) yaf_tile_4_dealloc,	/* tp_dealloc */
@@ -125,7 +125,7 @@ PyTypeObject yafTile4_Type =
 	NULL,								/* tp_compare */ /* DEPRECATED in python 3.0! */
 	NULL,								/* tp_repr */
 	NULL,                       		/* PyNumberMethods *tp_as_number; */
-	&sequence_methods_4,					/* PySequenceMethods *tp_as_sequence; */
+	&sequence_methods_4,				/* PySequenceMethods *tp_as_sequence; */
 	NULL,								/* PyMappingMethods *tp_as_mapping; */
 	NULL,								/* hashfunc tp_hash; */
 	NULL,								/* ternaryfunc tp_call; */
@@ -181,7 +181,7 @@ PySequenceMethods sequence_methods_1 =
 PyTypeObject yafTile1_Type =
 {
 	PyVarObject_HEAD_INIT(NULL, 0)
-	"yaf_tile_1",							/* tp_name */
+	"yaf_tile_1",						/* tp_name */
 	sizeof(YafTile1Object_t),			/* tp_basicsize */
 	0,									/* tp_itemsize */
 	( destructor ) yaf_tile_1_dealloc,	/* tp_dealloc */
@@ -191,7 +191,7 @@ PyTypeObject yafTile1_Type =
 	NULL,								/* tp_compare */ /* DEPRECATED in python 3.0! */
 	NULL,								/* tp_repr */
 	NULL,                       		/* PyNumberMethods *tp_as_number; */
-	&sequence_methods_1,					/* PySequenceMethods *tp_as_sequence; */
+	&sequence_methods_1,				/* PySequenceMethods *tp_as_sequence; */
 	NULL,								/* PyMappingMethods *tp_as_mapping; */
 	NULL,								/* hashfunc tp_hash; */
 	NULL,								/* ternaryfunc tp_call; */
@@ -247,7 +247,7 @@ PySequenceMethods sequence_methods_3 =
 PyTypeObject yafTile3_Type =
 {
 	PyVarObject_HEAD_INIT(NULL, 0)
-	"yaf_tile_3",							/* tp_name */
+	"yaf_tile_3",						/* tp_name */
 	sizeof(YafTile3Object_t),			/* tp_basicsize */
 	0,									/* tp_itemsize */
 	( destructor ) yaf_tile_3_dealloc,	/* tp_dealloc */
@@ -257,7 +257,7 @@ PyTypeObject yafTile3_Type =
 	NULL,								/* tp_compare */ /* DEPRECATED in python 3.0! */
 	NULL,								/* tp_repr */
 	NULL,                       		/* PyNumberMethods *tp_as_number; */
-	&sequence_methods_3,					/* PySequenceMethods *tp_as_sequence; */
+	&sequence_methods_3,				/* PySequenceMethods *tp_as_sequence; */
 	NULL,								/* PyMappingMethods *tp_as_mapping; */
 	NULL,								/* hashfunc tp_hash; */
 	NULL,								/* ternaryfunc tp_call; */
