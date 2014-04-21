@@ -47,18 +47,16 @@ void photonGather_t::operator()(const photon_t *photon, PFLOAT dist2, PFLOAT &ma
 		maxDistSquared = photons[0].distSquare;
 	}
 }
-// povman test: add other update for photonKdTree
+// povman: add update tree for photonKdTree
 void photonMap_t::updatePhTree()
 {
     if(phTree) delete phTree;
     if(photons.size() > 0)
-	{
-		// povman: use new photonKdTree for SSS
-        //tree = new kdtree::pointKdTree<photon_t>(photons);
+    {
         phTree = new kdtree::photonKdTree<photon_t>(photons);
-		updated = true;
-	}
-	else phTree=0;
+        updated = true;
+    }
+    else phTree=0;
 }
 //povman: expand destructor for add photonKdTree
 photonMap_t::~photonMap_t()
@@ -70,15 +68,13 @@ photonMap_t::~photonMap_t()
 
 void photonMap_t::updateTree()
 {
-	if(tree) delete tree;
+    if(tree) delete tree;
     if(photons.size() > 0)
-	{
-		// povman: use new photonKdTree for SSS
+    {
         tree = new kdtree::pointKdTree<photon_t>(photons);
-        //tree = new kdtree::photonKdTree<photon_t>(photons);
-		updated = true;
-	}
-	else tree=0;
+        updated = true;
+    }
+    else tree=0;
 }
 
 int photonMap_t::gather(const point3d_t &P, foundPhoton_t *found, unsigned int K, PFLOAT &sqRadius) const

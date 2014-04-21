@@ -1,21 +1,21 @@
 /****************************************************************************
- *      mcintegrator.h: A basic abstract integrator for MC sampling
- *      This is part of the yafray package
- *      Copyright (C) 2010  Rodrigo Placencia (DarkTide)
+ *    mcintegrator.h: A basic abstract integrator for MC sampling
+ *    This is part of the yafray package
+ *    Copyright (C) 2010  Rodrigo Placencia (DarkTide)
  *
- *      This library is free software; you can redistribute it and/or
- *      modify it under the terms of the GNU Lesser General Public
- *      License as published by the Free Software Foundation; either
- *      version 2.1 of the License, or (at your option) any later version.
+ *    This library is free software; you can redistribute it and/or
+ *    modify it under the terms of the GNU Lesser General Public
+ *    License as published by the Free Software Foundation; either
+ *    version 2.1 of the License, or (at your option) any later version.
  *
- *      This library is distributed in the hope that it will be useful,
- *      but WITHOUT ANY WARRANTY; without even the implied warranty of
- *      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *      Lesser General Public License for more details.
+ *    This library is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    Lesser General Public License for more details.
  *
- *      You should have received a copy of the GNU Lesser General Public
- *      License along with this library; if not, write to the Free Software
- *      Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *    You should have received a copy of the GNU Lesser General Public
+ *    License along with this library; if not, write to the Free Software
+ *    Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
 #include <core_api/mcintegrator.h>
@@ -978,14 +978,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
     
     while(!done)
     {
-        /* issue: cuando lanzamos un render con SSS activado, pero no hay materials SSS en la escena.
-         * Al intentar detener el render con ESC o con el boton (x), no funciona y el proceso queda congelado.
-         * Solucion: con la opcion 'break', el proceso se cancela saliendo del bucle 'while' y abortando el render.
-         * Otras observaciones: 
-         *     - chequear posibles fallos de memory leaf.
-         *     - esta situacion se puede evitar con un mensaje en el exportador, para que no active SSSMaps,
-         *     - si no hay materiales con SSS en la escena, y dejar este codigo como ultimo recurso.
-         */
+        /* Issue solved in exporter way..*/
         if(scene->getSignals() & Y_SIG_ABORT){
             done = true;
             break; //.. and add break, with done seems don't work
@@ -1126,7 +1119,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                         }
                         else
                         {
-                            // need create a new SSSMap for this object
+                            // create a new SSSMap for this object
                             // std::cout << "new translucent is "<< bsdfs <<"   "<< hitObj << std::endl;
                             photonMap_t* sssPhotonMap = new photonMap_t();
                             sssPhotonMap->pushPhoton(np);

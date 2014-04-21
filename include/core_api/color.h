@@ -2,7 +2,7 @@
  *
  * 			color.h: Color type and operators api
  *      This is part of the yafray package
- *      Copyright (C) 2002  Alejandro Conty Est�vez
+ *      Copyright (C) 2002  Alejandro Conty Estevez
  *
  *      This library is free software; you can redistribute it and/or
  *      modify it under the terms of the GNU Lesser General Public

@@ -1,3 +1,19 @@
+/****************************************************************************
+*
+*		This library is free software; you can redistribute it and/or
+*		modify it under the terms of the GNU Lesser General Public
+*		License as published by the Free Software Foundation; either
+*		version 2.1 of the License, or (at your option) any later version.
+*
+*		This library is distributed in the hope that it will be useful,
+*		but WITHOUT ANY WARRANTY; without even the implied warranty of
+*		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+*		Lesser General Public License for more details.
+*
+*		You should have received a copy of the GNU Lesser General Public
+*		License along with this library; if not, write to the Free Software
+*		Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+*/
 
 //#include <mcqmc.h>
 #include <core_api/environment.h>
@@ -445,7 +461,7 @@ int biDirIntegrator_t::createPath(renderState_t &state, ray_t &start, std::vecto
         v.G = v_prev.cos_wo * v.cos_wi / v.ds;
         ++nVert;
         state.userdata = v.userdata;
-//if(dbg<10) std::cout << nVert << "  mat: " << (void*) mat << " alpha:" << v.alpha << " p_f_s:" << v_prev.f_s << " qi:"<< v_prev.qi << std::endl;
+        //if(dbg<10) std::cout << nVert << "  mat: " << (void*) mat << " alpha:" << v.alpha << " p_f_s:" << v_prev.f_s << " qi:"<< v_prev.qi << std::endl;
         mat->initBSDF(state, v.sp, mBSDF);
         // create tentative sample for next path segment
         sample_t s(prng(), prng(), BSDF_ALL, true);
@@ -474,8 +490,10 @@ int biDirIntegrator_t::createPath(renderState_t &state, ray_t &start, std::vecto
             v.pdf_wi = mat->pdf(state, v.sp, ray.dir, v.wi, BSDF_ALL); // all BSDFs? think so...
             v.qi_wi = std::min( 0.98f, v.f_s.col2bri()*v.cos_wi / v.pdf_wi );
         }
-        if(v.qi_wi < 0) std::cout << "v["<<nVert<<"].qi_wi="<<v.qi_wi<<" ("<<v.f_s.col2bri()<<" "<<v.cos_wi<<" "<<v.pdf_wi<<")\n"
-                                      <<"\t"<<v.pdf_wo<<"  flags:"<<s.sampledFlags<<std::endl;
+        if(v.qi_wi < 0){
+            std::cout << "v["<<nVert<<"].qi_wi="<<v.qi_wi<<" ("<<v.f_s.col2bri()<<" "<<v.cos_wi<<" "<<v.pdf_wi<<")\n"
+                <<"\t"<<v.pdf_wo<<"  flags:"<<s.sampledFlags<<std::endl;
+        }
 
         v.flags = s.sampledFlags;
         v.wo = ray.dir;
@@ -570,16 +588,19 @@ inline bool biDirIntegrator_t::connectPaths(renderState_t &state, int s, int t, 
     // multiply probabilities with qi's
     int k = s+t-1;
     // forward:
-    for(int i=MIN_PATH_LENGTH, s1=s-1; i<s1; ++i)
+    for(int i=MIN_PATH_LENGTH, s1=s-1; i < s1; ++i){
         pd.path[i].pdf_f *= pd.lightPath[i].qi_wo;
-    for(int i=std::max(MIN_PATH_LENGTH,s+1), st=s+t; i<st; ++i)
+    }
+    for(int i=std::max(MIN_PATH_LENGTH,s+1), st=s+t; i < st; ++i){
         pd.path[i].pdf_f *= pd.eyePath[k-i].qi_wi;
-
+    }
     //backward:
-    for(int i=MIN_PATH_LENGTH, t1=t-1; i<t1; ++i)
+    for(int i=MIN_PATH_LENGTH, t1=t-1; i < t1; ++i){
         pd.path[k-i].pdf_b *= pd.eyePath[i].qi_wo;
-    for(int i=std::max(MIN_PATH_LENGTH,t+1), st=s+t; i<st; ++i)
+    }
+    for(int i = std::max(MIN_PATH_LENGTH, t+1), st = s+t; i < st; ++i){
         pd.path[k-i].pdf_b *= pd.lightPath[k-i].qi_wi;
+    }
     return true;
 }
 
@@ -727,13 +748,13 @@ CFLOAT biDirIntegrator_t::pathWeight(renderState_t &state, int s, int t, pathDat
     int k = s+t-1;
     for(int i=s; i<k; ++i)
     {
-        pr[i] = ( path[i-1].pdf_f * path[i].G ) / ( path[i+1].pdf_b * path[i+1].G );
+        pr[i] = ( path[i-1].pdf_f * path[i].G ) / ( path[i+1].pdf_b * path[i+1].G);
         p[i+1] = p[i] * pr[i];
     }
     // "backward" weights (towards light), ratio pr_i here is p_i / p_i+1
     for(int i=s-1; i>0; --i)
     {
-        pr[i] = ( path[i+1].pdf_b * path[i+1].G ) / ( path[i-1].pdf_f * path[i].G );
+        pr[i] = ( path[i+1].pdf_b * path[i+1].G ) / ( path[i-1].pdf_f * path[i].G);
         p[i] = p[i+1] * pr[i];
     }
     // do p_0/p_1...
@@ -741,6 +762,7 @@ CFLOAT biDirIntegrator_t::pathWeight(renderState_t &state, int s, int t, pathDat
     p[0] = p[1] * pr[0];
     // p_k+1/p_k is zero currently, hitting the camera lens in general should be very seldom anyway...
     p[k+1] = 0.f;
+
 #if !(_DO_LIGHTIMAGE)
     p[k] = 0.f; // cannot intersect camera yet...
 #endif
@@ -754,14 +776,21 @@ CFLOAT biDirIntegrator_t::pathWeight(renderState_t &state, int s, int t, pathDat
             p[i+1] = 0.f;
         }
     }
-    if(pd.singularL) p[0] = 0.f;
-    // correct p1 with direct lighting strategy:
-    else p[1] *= pd.pdf_illum / pd.pdf_emit; //test! workaround for incomplete pdf funcs of lights
+    if(pd.singularL){
+        p[0] = 0.f;
+        // correct p1 with direct lighting strategy:
+    } else {
+        p[1] *= pd.pdf_illum / pd.pdf_emit; //test! workaround for incomplete pdf funcs of lights
+    }
     // do MIS...maximum heuristic, particularly simple, if there's a more likely sample method, weight is zero, otherwise 1
     float weight = 1.f;
 
-    for(int i=s-1; i>=0; --i) if(p[i] > p[s]) weight=0.f;
-    for(int i=s+1; i<=k+1; ++i) if(p[i] > p[s]) weight=0.f;
+    for(int i = s-1; i >= 0; --i){
+        if(p[i] > p[s]) weight=0.f;
+    }
+    for(int i = s+1; i <= k+1; ++i){
+        if(p[i] > p[s]) weight=0.f;
+    }
 
     return weight;
 }
@@ -792,7 +821,7 @@ CFLOAT biDirIntegrator_t::pathWeight_0t(renderState_t &state, int t, pathData_t 
     float pr, p[2*MAX_PATH_LENGTH+1];
 
     p[0] = 1;
-    p[1] = path[0].pdf_A_0 / ( path[1].pdf_b * path[1].G );
+    p[1] = path[0].pdf_A_0 / ( path[1].pdf_b * path[1].G);
 
     int k = t-1;
     for(int i=1; i<k; ++i)
@@ -803,6 +832,7 @@ CFLOAT biDirIntegrator_t::pathWeight_0t(renderState_t &state, int t, pathData_t 
 
     // p_k+1/p_k is zero currently, hitting the camera lens in general should be very seldom anyway...
     p[k+1] = 0.f;
+
 #if !(_DO_LIGHTIMAGE)
     p[k] = 0.f; // cannot intersect camera yet...
 #endif
