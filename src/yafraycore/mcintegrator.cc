@@ -27,6 +27,10 @@
 #include <yafraycore/scr_halton.h>
 #include <yafraycore/spectrum.h>
 #include <utilities/mcqmc.h>
+#ifdef __clang__
+#define inline  // aka inline removal
+#endif
+
 // povman: for sss. TODO: need test
 #include <core_api/object3d.h>
 #include <core_api/primitive.h>

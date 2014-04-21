@@ -1,5 +1,8 @@
 #include <cassert>
 #include <yafraycore/meshtypes.h>
+#ifdef __clang__
+    #define inline  // aka inline removal
+#endif
 
 __BEGIN_YAFRAY
 

@@ -206,6 +206,12 @@ set(EMBED_FONT_QT OFF)
 # On *nix platforms:                                                           #
 # set(USER_RELEASE_OPTIMIZATION_FLAGS "-O3 -ffast-math")                       #
 # set(USER_DEBUG_OPTIMIZATION_FLAGS "-ggdb")                                   #
+
+if(APPLE)
+	#set(USER_RELEASE_OPTIMIZATION_FLAGS "-m64 -arch x86_64 -Ofast -ftree-vectorize -msse -msse2 -msse3 -mssse3 -F/Library/Frameworks -fvisibility=hidden -fvisibility-inlines-hidden -stdlib=libstdc++ -flto -fvectorize -funroll-loops") # CLANG 64bit
+	set(USER_RELEASE_OPTIMIZATION_FLAGS "-m64 -arch x86_64 -O3 -msse -msse2 -msse3 -mssse3 -F/Library/Frameworks -fvisibility=hidden -fvisibility-inlines-hidden -stdlib=libstdc++ -flto -fvectorize -funroll-loops") # CLANG 64bit
+endif(APPLE)
+
 # On windows platforms:                                                        #
 # set(USER_RELEASE_OPTIMIZATION_FLAGS "/Ot /Ox")                               #
 # set(USER_DEBUG_OPTIMIZATION_FLAGS "/Zi /GS /RTC1")                           #
@@ -278,7 +284,7 @@ set(EMBED_FONT_QT OFF)
 # Default: 2.6                                                                 #
 #                                                                              #
 
-#set(YAF_PY_VERSION 3.1)
+#set(YAF_PY_VERSION 3.3)
 
 ############################# Misc. Configurations #############################
 #                                                                              #
