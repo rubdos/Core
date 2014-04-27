@@ -53,6 +53,7 @@ typedef unsigned int objID_t;
 		the range is defined going from 400nm (0.0) to 700nm (1.0)
 		although the widest range humans can perceive is ofteb given 380-780nm.
 */
+// test from clang warning
 struct YAFRAYCORE_EXPORT renderState_t
 {
 	renderState_t():raylevel(0), currentPass(0), pixelSample(0), rayDivision(1), rayOffset(0), dc1(0), dc2(0),

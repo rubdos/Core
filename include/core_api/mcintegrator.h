@@ -58,8 +58,10 @@ protected:
 	virtual color_t estimateSSSMaps(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo ) const;
 	//
     virtual color_t estimateSSSSingleScattering(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const;
+
 	// povman: used by all integrators: directlight, photonmap and pathtracer
     virtual color_t estimateSSSSingleSImportantSampling(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const;
+
 	//
     virtual color_t getTranslucentInScatter(renderState_t& state, ray_t& stepRay, float currentStep) const;
 

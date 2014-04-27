@@ -998,12 +998,10 @@ integrator_t* photonIntegrator_t::factory(paraMap_t &params, renderEnvironment_t
 
 extern "C"
 {
-
 	YAFRAYPLUGIN_EXPORT void registerPlugin(renderEnvironment_t &render)
 	{
 		render.registerFactory("photonmapping", photonIntegrator_t::factory);
 	}
-
 }
 
 __END_YAFRAY
