@@ -19,9 +19,9 @@
 #include <yafraycore/scr_halton.h>
 #include <yafraycore/hashgrid.h>
 
-// povman: fix for use MSVC++ 2008. Copy from gcc 'stdint.h' header
-#ifdef _MSC_VER
-typedef long long int64_t;
+// povman: fix for MSVC++ and Mingw32 compilers
+#if defined( _MSC_VER ) || defined(__MINGW32__)
+    typedef long long int64_t;
 #endif
 
 __BEGIN_YAFRAY
@@ -32,7 +32,6 @@ typedef struct _HitPoint // actually are per-pixel variable, use to record the s
 	int64_t accPhotonCount; // record the total photon this pixel gathered
 	colorA_t accPhotonFlux; // accumulated flux
 	colorA_t constantRandiance; // record the direct light for this pixel
-
 	bool radiusSetted; // used by IRE to direct whether the initial radius is set or not.
 } HitPoint;
 
@@ -43,7 +42,7 @@ typedef struct _GatherInfo
 	colorA_t photonFlux;   // the unnormalized flux of photons that the gather ray collected
 	colorA_t constantRandiance; // the radiance from when the gather ray hit the lightsource
 
-	_GatherInfo(): photonCount(0), photonFlux(0.f),constantRandiance(0.f) {}
+	_GatherInfo(): photonCount(0), photonFlux(0.f), constantRandiance(0.f) {}
 
 	_GatherInfo & operator +=(const _GatherInfo &g)
 	{
