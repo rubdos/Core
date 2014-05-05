@@ -21,7 +21,7 @@
 
 // povman: fix for MSVC++ and Mingw32 compilers
 #if defined( _MSC_VER ) || defined(__MINGW32__)
-    typedef long long int64_t;
+typedef long long int64_t;
 #endif
 
 __BEGIN_YAFRAY
