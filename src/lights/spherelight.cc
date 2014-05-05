@@ -103,7 +103,7 @@ bool sphereLight_t::illumSample(const surfacePoint_t &sp, lSample_t &s, ray_t &w
 {
 	vector3d_t cdir = center - sp.P;
 	PFLOAT dist_sqr = cdir.lengthSqr();
-	if(dist_sqr <= square_radius) return false; //only emit light on the outside!
+    if(dist_sqr <= square_radius) return false; //only emit light on the outside!
 	
 	PFLOAT dist = fSqrt(dist_sqr);
 	PFLOAT idist_sqr = 1.f/(dist_sqr);
@@ -152,8 +152,8 @@ float sphereLight_t::illumPdf(const surfacePoint_t &sp, const surfacePoint_t &sp
 {
 	vector3d_t cdir = center - sp.P;
 	PFLOAT dist_sqr = cdir.lengthSqr();
-	if(dist_sqr <= square_radius) return 0.f; //only emit light on the outside!
-	PFLOAT idist_sqr = 1.f/(dist_sqr);
+    if(dist_sqr <= square_radius) return 0.f; //only emit light on the outside!
+    PFLOAT idist_sqr = 1.f/(dist_sqr);
 	PFLOAT cosAlpha = fSqrt(1.f - square_radius * idist_sqr);
 	return 1.f / (2.f * (1.f - cosAlpha));
 }
@@ -209,7 +209,7 @@ light_t *sphereLight_t::factory(paraMap_t &params,renderEnvironment_t &render)
 	
 	sphereLight_t *light = new sphereLight_t(from, radius, color, power, samples);
 	light->objID = (unsigned int)object;
-	return light;
+    return light;
 }
 
 extern "C"
