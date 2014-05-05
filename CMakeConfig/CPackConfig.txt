@@ -17,7 +17,7 @@ if (BLENDER_ADDON)
     install(DIRECTORY blender_exporter/ DESTINATION .)
 
     set(CPACK_GENERATOR "ZIP")
-    set(CPACK_PACKAGE_INSTALL_DIRECTORY "bounty")
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "thebounty")
     set(CPACK_PACKAGE_FILE_NAME "TheBounty")
 endif (BLENDER_ADDON)
 
