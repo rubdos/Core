@@ -315,7 +315,11 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 
 		sL = float(curr) * invDiffPhotons; // Does sL also need more random for each pass?
 		int lightNum = lightPowerD->DSample(sL, &lightNumPdf);
-		if(lightNum >= numDLights){ Y_ERROR << integratorName << ": lightPDF sample error! "<<sL<<"/"<<lightNum<<"... stopping now.\n"; delete lightPowerD; return; }
+		if(lightNum >= numDLights){
+            Y_ERROR << integratorName << ": lightPDF sample error! "<<sL<<"/"<<lightNum<<"... stopping now.\n"; 
+            delete lightPowerD; 
+            return; 
+        }
 
 		pcol = tmplights[lightNum]->emitPhoton(s1, s2, s3, s4, ray, lightPdf);
 		ray.tmin = MIN_RAYDIST;
@@ -480,14 +484,16 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 	color_t col(0.0);
 	GatherInfo gInfo;
 
-	CFLOAT alpha;
+	//CFLOAT alpha;
+    CFLOAT alpha=0.0;
 	surfacePoint_t sp;
 
 	void *o_udat = state.userdata;
 	bool oldIncludeLights = state.includeLights;
 
-	if(transpBackground) alpha=0.0;
-	else alpha=1.0;
+	if(!transpBackground) alpha=1.0;
+	//if(transpBackground) alpha=0.0;
+	//else alpha=1.0;
 
 	if(scene->intersect(ray, sp))
 	{
@@ -500,7 +506,7 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 		}
 
 		BSDF_t bsdfs;
-		vector3d_t N_nobump = sp.N;
+		vector3d_t N_nobump = sp.N; //UNUSED!!
 		vector3d_t wo = -ray.dir;
 		const material_t *material = sp.material;
 		material->initBSDF(state, sp, bsdfs);
@@ -516,24 +522,27 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 		// estimate radiance using photon map
 		foundPhoton_t *gathered = new foundPhoton_t[nMaxGather];
 
-		//if PM_IRE is on. we should estimate the initial radius using the photonMaps. (PM_IRE is only for the first pass, so not consume much time)
+		//if PM_IRE is on. we should estimate the initial radius using the photonMaps. 
+        //(PM_IRE is only for the first pass, so not consume much time)
 		if(PM_IRE && !hp.radiusSetted) // "waste" two gather here as it has two maps now. This make the logic simple.
 		{
 			PFLOAT radius_1 = dsRadius * dsRadius;
 			PFLOAT radius_2 = radius_1;
 			int nGathered_1 = 0, nGathered_2 = 0;
 
-			if(diffuseMap.nPhotons() > 0)
+            if(diffuseMap.nPhotons() > 0){
 				nGathered_1 = diffuseMap.gather(sp.P, gathered, nSearch, radius_1);
-			if(causticMap.nPhotons() > 0)
+            }
+            if(causticMap.nPhotons() > 0){
 				nGathered_2 = causticMap.gather(sp.P, gathered, nSearch, radius_2);
+            }
 			if(nGathered_1 > 0 || nGathered_2 >0) // it none photon gathered, we just skip.
 			{
-				if(radius_1 < radius_2) // we choose the smaller one to be the initial radius.
+                if(radius_1 < radius_2){ // we choose the smaller one to be the initial radius.
 					hp.radius2 = radius_1;
-				else
+                } else {
 					hp.radius2 = radius_2;
-
+                }
 				hp.radiusSetted = true;
 			}
 		}
@@ -599,8 +608,8 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 					{
 						vector3d_t pdir = gathered[i].photon->direction();
 						gInfo.photonCount++;
-						surfCol = material->eval(state, sp, wo, pdir, BSDF_ALL); // seems could speed up using rho, (something pbrt made)
-						gInfo.photonFlux += surfCol * gathered[i].photon->color();// * std::fabs(sp.N*pdir); //< wrong!?
+						surfCol = material->eval(state, sp, wo, pdir, BSDF_ALL);    // seems could speed up using rho, (something pbrt made)
+						gInfo.photonFlux += surfCol * gathered[i].photon->color();  // * std::fabs(sp.N*pdir); //< wrong!?
 						//color_t  flux= surfCol * gathered[i].photon->color();// * std::fabs(sp.N*pdir); //< wrong!?
 
 						////start refine here
@@ -801,12 +810,19 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 		}
 		--state.raylevel;
 
-		if(transpRefractedBackground)
+		//povman: refine code
+        if(transpRefractedBackground && transpBackground)
+		{
+			alpha = material->getAlpha(state, sp, wo);
+		}
+        else alpha = 1.0;
+
+        /*if(transpRefractedBackground)
 		{
 			CFLOAT m_alpha = material->getAlpha(state, sp, wo);
 			alpha = m_alpha + (1.f-m_alpha)*alpha;
 		}
-		else alpha = 1.0;
+		else alpha = 1.0;*/
 	}
 
 	else //nothing hit, return background
@@ -834,7 +850,7 @@ void SPPM::initializePPM()
 	bound_t bBox = scene->getSceneBound(); // Now using Scene Bound, this could get a bigger initial radius, and need more tests
 
 	// initialize SPPM statistics
-	float initialRadius = ((bBox.longX() + bBox.longY() + bBox.longZ()) / 3.f) / ((camera->resX() + camera->resY()) / 2.0f) * 2.f ;
+    float initialRadius = ((bBox.longX() + bBox.longY() + bBox.longZ()) / 3.f) / ((camera->resX() + camera->resY()) / 2.0f) * 2.f ;
 	initialRadius = std::min(initialRadius, 1.f); //Fix the overflow bug
 	for(unsigned int i = 0; i < resolution; i++)
 	{
@@ -882,7 +898,7 @@ integrator_t* SPPM::factory(paraMap_t &params, renderEnvironment_t &render)
 	params.getParam("bg_transp", bg_transp);
 	params.getParam("bg_transp_refract", bg_transp_refract);
 
-	SPPM* ite = new SPPM(numPhotons, _passNum,transpShad, shadowDepth);
+	SPPM* ite = new SPPM(numPhotons, _passNum, transpShad, shadowDepth);
 	ite->rDepth = raydepth;
 	ite->maxBounces = bounces;
 	ite->initialFactor = times;
