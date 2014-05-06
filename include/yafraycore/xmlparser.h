@@ -37,7 +37,7 @@ class xmlParser_t
 		void setParam(const std::string &name, parameter_t &param){ (*cparams)[name] = param; }
 		int currLevel() const{ return level; }
 		int stateLevel() const { return current ? current->level : -1; }
-		
+
 		renderEnvironment_t *env;
 		scene_t *scene;
 		paraMap_t params, &render;
@@ -63,6 +63,12 @@ void endEl_parammap(xmlParser_t &p, const char *element);
 void startEl_paramlist(xmlParser_t &p, const char *element, const char **attrs);
 void endEl_paramlist(xmlParser_t &p, const char *element);
 void endEl_render(xmlParser_t &p, const char *element);
+//-----------------------------------------------------------------
+// povman: test to add support for read 'curvemesh' from xml files
+//-----------------------------------------------------------------
+void startEl_curve(xmlParser_t &p, const char *element, const char **attrs);
+void endEl_curve(xmlParser_t &p, const char *element);
+
 
 #endif // HAVE_XML
 
