@@ -138,7 +138,7 @@ struct foundPhoton_t
 class YAFRAYCORE_EXPORT photonMap_t
 {
 public:
-    // povman: expand constructor and destructor for add phtree
+    // povman: for SSS, expand constructor and destructor for add phtree
 
     //photonMap_t(): paths(0), updated(false), searchRadius(1.), tree(0){ }
     photonMap_t(): paths(0), updated(false), searchRadius(1.), tree(0), phTree(0){ }
@@ -154,7 +154,7 @@ public:
     void pushPhoton(photon_t &p) { photons.push_back(p); updated=false; }
     void swapVector(std::vector<photon_t> &vec) { photons.swap(vec); updated=false; }
     void updateTree();
-    // povman: expand function clear for add phtree
+    // povman: for SSS, expand function clear for add phTree
     //void clear(){ photons.clear(); delete tree; tree=0; updated=false; }
     void clear(){ photons.clear(); delete tree; tree=0; delete phTree; phTree=0; updated=false; }
     // end

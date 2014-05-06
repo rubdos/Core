@@ -46,16 +46,19 @@ photonGather_t::photonGather_t(u_int32 mp, const point3d_t &P): p(P)
 void photonGather_t::operator()(const photon_t *photon, PFLOAT dist2, PFLOAT &maxDistSquared) const
 {
 	// Do usual photon heap management
-	if (foundPhotons < nLookup) {
+	if (foundPhotons < nLookup)
+    {
 		// Add photon to unordered array of photons
 		photons[foundPhotons++] = foundPhoton_t(photon, dist2);
-		if (foundPhotons == nLookup) {
+		if (foundPhotons == nLookup)
+        {
             std::make_heap(&photons[0], &photons[nLookup]);
 			maxDistSquared = photons[0].distSquare;
 		}
 	}
-	else {
-		// Remove most distant photon from heap and add new photon
+	else 
+    {
+        // Remove most distant photon from heap and add new photon
 		std::pop_heap(&photons[0], &photons[nLookup]);
 		photons[nLookup-1] = foundPhoton_t(photon, dist2);
 		std::push_heap(&photons[0], &photons[nLookup]);

@@ -163,10 +163,10 @@ colorA_t directLighting_t::integrate(renderState_t &state, diffRay_t &ray) const
             */
         }
         // povman: in under function call, alpha values is re-asigned
-        // so.. the actual alpha value is ignored
+        // so.. the actual alpha value is ignored?
         recursiveRaytrace(state, ray, bsdfs, sp, wo, col, alpha);
 
-        if(transpRefractedBackground)
+        if(transpRefractedBackground && transpBackground)
         {
             //float m_alpha = material->getAlpha(state, sp, wo);
             //alpha = m_alpha + (1.f - m_alpha) * alpha;
@@ -176,9 +176,7 @@ colorA_t directLighting_t::integrate(renderState_t &state, diffRay_t &ray) const
             // case 2, transpBackground = true, so alpha = 0.0:
             //      m_alpha + (1.f - m_alpha) * alpha = m_alpha, always..
             // only if transpBackground = true, request alpha value from material is used
-            if (transpBackground){
-                alpha = material->getAlpha(state, sp, wo); 
-            }
+            alpha = material->getAlpha(state, sp, wo); 
         } 
         else 
         {

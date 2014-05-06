@@ -184,8 +184,14 @@ void shinyDiffuseMat_t::initOrenNayar(double sigma)
  */
 CFLOAT shinyDiffuseMat_t::OrenNayar(const vector3d_t &wi, const vector3d_t &wo, const vector3d_t &N) const
 {
-    PFLOAT cos_ti = std::max(-1.f,std::min(1.f,N*wi));
-    PFLOAT cos_to = std::max(-1.f,std::min(1.f,N*wo));
+    //PFLOAT cos_ti = std::max(-1.f,std::min(1.f,N*wi));
+    //PFLOAT cos_to = std::max(-1.f,std::min(1.f,N*wo));
+    // from subcomandante patch: 
+    // https://github.com/subcomandante/Core/commit/3c8b097c1329e3b93ea5907ed64e7518d307ed6f
+    // applied control minim here, and remove few lines under..
+    PFLOAT cos_ti = std::max(1e-8f, std::min(1.f,N*wi));
+    PFLOAT cos_to = std::max(1e-8f, std::min(1.f,N*wo));
+    //end
     CFLOAT maxcos_f = 0.f;
 
     if(cos_ti < 0.9999f && cos_to < 0.9999f)
@@ -200,12 +206,14 @@ CFLOAT shinyDiffuseMat_t::OrenNayar(const vector3d_t &wi, const vector3d_t &wo, 
     if(cos_to >= cos_ti)
     {
         sin_alpha = fSqrt(1.f - cos_ti*cos_ti);
-        tan_beta = fSqrt(1.f - cos_to*cos_to) / ((cos_to == 0.f)?1e-8f:cos_to); // white (black on windows) dots fix for oren-nayar, could happen with bad normals
+        tan_beta = fSqrt(1.f - cos_to*cos_to) / cos_to;
+        //tan_beta = fSqrt(1.f - cos_to*cos_to) / ((cos_to == 0.f)?1e-8f:cos_to); // white (black on windows) dots fix for oren-nayar, could happen with bad normals
     }
     else
     {
         sin_alpha = fSqrt(1.f - cos_to*cos_to);
-        tan_beta = fSqrt(1.f - cos_ti*cos_ti) / ((cos_ti == 0.f)?1e-8f:cos_ti); // white (black on windows) dots fix for oren-nayar, could happen with bad normals
+        tan_beta = fSqrt(1.f - cos_ti*cos_ti) / cos_ti;
+        //tan_beta = fSqrt(1.f - cos_ti*cos_ti) / ((cos_ti == 0.f)?1e-8f:cos_ti); // white (black on windows) dots fix for oren-nayar, could happen with bad normals
     }
 
     return mOrenNayar_A + mOrenNayar_B * maxcos_f * sin_alpha * tan_beta;

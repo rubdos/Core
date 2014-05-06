@@ -52,30 +52,30 @@ DebugIntegrator::DebugIntegrator(SurfaceProperties dt)
 	debugType = dt;
 	integratorName = "DebugIntegrator";
 	integratorShortName = "DBG";
-	switch(dt)
-	{
-		case N:
-		settings = "N";
-		break;
-		case dPdU:
-		settings = "dPdU";
-		break;
-		case dPdV:
-		settings = "dPdV";
-		break;
-		case NU:
-		settings = "NU";
-		break;
-		case NV:
-		settings = "NV";
-		break;
-		case dSdU:
-		settings = "dSdU";
-		break;
-		case dSdV:
-		settings = "dSdV";
-		break;
-	}
+    switch(dt)
+    {
+    case N:
+        settings = "N";
+        break;
+    case dPdU:
+        settings = "dPdU";
+        break;
+    case dPdV:
+        settings = "dPdV";
+        break;
+    case NU:
+        settings = "NU";
+        break;
+    case NV:
+        settings = "NV";
+        break;
+    case dSdU:
+        settings = "dSdU";
+        break;
+    case dSdV:
+        settings = "dSdV";
+        break;
+    }
 }
 
 bool DebugIntegrator::preprocess()
