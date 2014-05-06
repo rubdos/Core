@@ -1,21 +1,21 @@
 /****************************************************************************
- * 			xmlparser.cc: a libXML based parser for YafRay scenes
- *      This is part of the yafray package
- *      Copyright (C) 2006  Mathias Wein
+ *    xmlparser.cc: a libXML based parser for YafRay scenes
+ *    This is part of the yafray package
+ *    Copyright (C) 2006  Mathias Wein
  *
- *      This library is free software; you can redistribute it and/or
- *      modify it under the terms of the GNU Lesser General Public
- *      License as published by the Free Software Foundation; either
- *      version 2.1 of the License, or (at your option) any later version.
+ *    This library is free software; you can redistribute it and/or
+ *    modify it under the terms of the GNU Lesser General Public
+ *    License as published by the Free Software Foundation; either
+ *    version 2.1 of the License, or (at your option) any later version.
  *
- *      This library is distributed in the hope that it will be useful,
- *      but WITHOUT ANY WARRANTY; without even the implied warranty of
- *      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *      Lesser General Public License for more details.
+ *    This library is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    Lesser General Public License for more details.
  *
- *      You should have received a copy of the GNU Lesser General Public
- *      License along with this library; if not, write to the Free Software
- *      Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *    You should have received a copy of the GNU Lesser General Public
+ *    License along with this library; if not, write to the Free Software
+ *    Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
 #include <yafraycore/xmlparser.h>
@@ -29,7 +29,7 @@
 
 __BEGIN_YAFRAY
 
-#if HAVE_XML
+#if defined HAVE_XML
 void startDocument(void *user_data)
 {
 	//Empty
@@ -52,7 +52,7 @@ void endElement(void *user_data, const xmlChar *name)
 	parser.endElement((const char *)name);
 }
 
-static void my_warning(void *user_data, const char *msg, ...) 
+static void my_warning(void *user_data, const char *msg, ...)
 {
     va_list args;
 
@@ -61,7 +61,7 @@ static void my_warning(void *user_data, const char *msg, ...)
     va_end(args);
 }
 
-static void my_error(void *user_data, const char *msg, ...) 
+static void my_error(void *user_data, const char *msg, ...)
 {
     va_list args;
 
@@ -70,7 +70,7 @@ static void my_error(void *user_data, const char *msg, ...)
     va_end(args);
 }
 
-static void my_fatalError(void *user_data, const char *msg, ...) 
+static void my_fatalError(void *user_data, const char *msg, ...)
 {
     va_list args;
 
@@ -110,7 +110,7 @@ static xmlSAXHandler my_handler =
 
 bool parse_xml_file(const char *filename, scene_t *scene, renderEnvironment_t *env, paraMap_t &render)
 {
-#if HAVE_XML
+#if defined HAVE_XML
 	xmlParser_t parser(env, scene, render);
 	if (xmlSAXUserParseFile(&my_handler, &parser, filename) < 0)
 	{
@@ -124,7 +124,7 @@ bool parse_xml_file(const char *filename, scene_t *scene, renderEnvironment_t *e
 #endif
 }
 
-#if HAVE_XML
+#if defined HAVE_XML
 /*=============================================================
 / parser functions
 =============================================================*/
@@ -240,14 +240,14 @@ void parseParam(const char **attrs, parameter_t &param)
 			case 'x': p.x = atof(attrs[n+1]); type = TYPE_POINT; break;
 			case 'y': p.y = atof(attrs[n+1]); type = TYPE_POINT; break;
 			case 'z': p.z = atof(attrs[n+1]); type = TYPE_POINT; break;
-			
+
 			case 'r': c.R = (CFLOAT)atof(attrs[n+1]); type = TYPE_COLOR; break;
 			case 'g': c.G = (CFLOAT)atof(attrs[n+1]); type = TYPE_COLOR; break;
 			case 'b': c.B = (CFLOAT)atof(attrs[n+1]); type = TYPE_COLOR; break;
 			case 'a': c.A = (CFLOAT)atof(attrs[n+1]); type = TYPE_COLOR; break;
 		}
 	}
-	
+
 	switch(type)
 	{
 		case TYPE_POINT: param = parameter_t(p); break;
@@ -260,10 +260,14 @@ void parseParam(const char **attrs, parameter_t &param)
 =============================================================*/
 
 void endEl_dummy(xmlParser_t &parser, const char *element)
-{	parser.popState();	}
+{
+	parser.popState();
+}
 
 void startEl_dummy(xmlParser_t &parser, const char *element, const char **attrs)
-{	parser.pushState(startEl_dummy, endEl_dummy);	}
+{
+	parser.pushState(startEl_dummy, endEl_dummy);
+}
 
 void startEl_document(xmlParser_t &parser, const char *element, const char **attrs)
 {
@@ -297,6 +301,16 @@ struct mesh_dat_t
 	objID_t ID;
 	const material_t *mat;
 };
+//------------------------------
+// povman: add struct for curve
+//------------------------------
+struct curve_dat_t
+{
+	curve_dat_t(): ID(0), mat(0), strandStart(0), strandEnd(0), strandShape(0) {};
+	objID_t ID;
+	const material_t *mat;
+	float strandStart, strandEnd, strandShape;
+};
 
 // scene-state, i.e. expect only primary elements
 // such as light, material, texture, object, integrator, render...
@@ -312,7 +326,10 @@ void startEl_scene(xmlParser_t &parser, const char *element, const char **attrs)
 			Y_ERROR << "XMLParser: No attributes for scene element given!" << yendl;
 			return;
 		}
-		else if(!strcmp(attrs[0], "name")) name = new std::string(attrs[1]);
+		else if(!strcmp(attrs[0], "name"))
+		{
+			name = new std::string(attrs[1]);
+		}
 		else
 		{
 			Y_ERROR << "XMLParser: Attribute for scene element does not match 'name'!" << yendl;
@@ -340,7 +357,7 @@ void startEl_scene(xmlParser_t &parser, const char *element, const char **attrs)
 		// Get a new object ID if we did not get one
 		if(id == -1) md->ID = parser.scene->getNextFreeID();
 		else md->ID = id;
-		
+
 		if(!parser.scene->startTriMesh(md->ID, vertices, triangles, md->has_orco, md->has_uv, type))
 		{
 			Y_ERROR << "XMLParser: Invalid scene state on startTriMesh()!" << yendl;
@@ -377,9 +394,41 @@ void startEl_scene(xmlParser_t &parser, const char *element, const char **attrs)
 			std::string name(attrs[n]);
 			if(name == "base_object_id") *base_object_id = atoi(attrs[n+1]);
 		}
-		parser.pushState(startEl_instance,endEl_instance, base_object_id);	
+		parser.pushState(startEl_instance,endEl_instance, base_object_id);
 	}
-	else Y_WARNING << "XMLParser: Skipping unrecognized scene element" << yendl;
+	//----------------------------------------
+    // povman: add support for curve
+    //----------------------------------------
+	else if(el == "curve")
+	{
+		curve_dat_t *cvd = new curve_dat_t();
+		int vertex = 0, idc = -1;
+		// attribute's loop
+		for(int n=0; attrs[n]; ++n)
+		{
+			std::string name(attrs[n]);
+			if(name == "vertices") vertex = atoi(attrs[n+1]);
+			else if(name == "id" ) idc = atoi(attrs[n+1]);
+		}
+		parser.pushState(startEl_curve, endEl_curve, cvd);
+		if(!parser.scene->startGeometry()) Y_ERROR << "XMLParser: Invalid scene state on startGeometry()!" << yendl;
+
+		// Get a new object ID if we did not get one
+		if(idc == -1) cvd->ID = parser.scene->getNextFreeID();
+		else cvd->ID = idc;
+
+		if(!parser.scene->startCurveMesh(cvd->ID, vertex))
+		{
+			Y_ERROR << "XMLParser: Invalid scene state on startTriMesh()!" << yendl;
+		}
+	}
+	//------------------
+	// end. Test OK!!
+	//------------------
+	else
+	{
+		Y_WARNING << "XMLParser: Skipping unrecognized scene element" << yendl;
+	}
 }
 
 void endEl_scene(xmlParser_t &parser, const char *element)
@@ -390,6 +439,61 @@ void endEl_scene(xmlParser_t &parser, const char *element)
 		parser.popState();
 	}
 }
+
+//---------------------------------------------
+// povman: test to add support for read curve
+//---------------------------------------------
+void startEl_curve(xmlParser_t &parser, const char *element, const char **attrs)
+{
+	std::string el(element);
+	curve_dat_t *dat = (curve_dat_t *)parser.stateData();
+
+	if(el == "p")
+	{
+		point3d_t p, op;
+		if(!parsePoint(attrs, p, op)) return;
+		parser.scene->addVertex(p);
+	}
+	else if(el == "strand_start")
+	{
+		dat->strandStart = atof(attrs[1]);
+	}
+	else if(el == "strand_end")
+	{
+		dat->strandEnd = atof(attrs[1]);
+	}
+	else if(el == "strand_shape")
+	{
+		dat->strandShape = atof(attrs[1]);
+
+	}
+	else if(el == "set_material")
+	{
+		std::string mat_name(attrs[1]);
+		dat->mat = parser.env->getMaterial(mat_name);
+		if(!dat->mat) Y_WARNING << "XMLParser: Unknown material!" << yendl;
+	}
+}
+void endEl_curve(xmlParser_t &parser, const char *element)
+{
+	if(std::string(element) == "curve")
+	{
+		curve_dat_t *cd = (curve_dat_t *)parser.stateData();
+		if(!parser.scene->endCurveMesh(cd->mat, cd->strandStart, cd->strandEnd, cd->strandShape))
+		{
+			Y_WARNING << "XMLParser: Invalid scene state on endTriMesh()!" << yendl;
+		}
+		if(!parser.scene->endGeometry()){
+			Y_WARNING << "XMLParser: Invalid scene state on endGeometry()!" << yendl;
+		}
+		delete cd;
+		parser.popState();
+	}
+}
+//-----------------
+// end. Test OK!!
+//-----------------
+
 
 // mesh-state, i.e. expect only points (vertices), faces and material settings
 // since we're supposed to be inside a mesh block, exit state on "mesh" element
@@ -476,22 +580,22 @@ void startEl_instance(xmlParser_t &parser, const char *element, const char **att
 		for(int n=0; attrs[n]; ++n)
 		{
 			std::string name(attrs[n]);
-			if(name ==  "m00") m[0][0] = atof(attrs[n+1]); 
-			else if(name ==  "m01") m[0][1] = atof(attrs[n+1]); 
-			else if(name ==  "m02") m[0][2] = atof(attrs[n+1]); 
-			else if(name ==  "m03") m[0][3] = atof(attrs[n+1]); 
-			else if(name ==  "m10") m[1][0] = atof(attrs[n+1]); 
-			else if(name ==  "m11") m[1][1] = atof(attrs[n+1]); 
-			else if(name ==  "m12") m[1][2] = atof(attrs[n+1]); 
-			else if(name ==  "m13") m[1][3] = atof(attrs[n+1]); 
-			else if(name ==  "m20") m[2][0] = atof(attrs[n+1]); 
-			else if(name ==  "m21") m[2][1] = atof(attrs[n+1]); 
-			else if(name ==  "m22") m[2][2] = atof(attrs[n+1]); 
-			else if(name ==  "m23") m[2][3] = atof(attrs[n+1]); 
-			else if(name ==  "m30") m[3][0] = atof(attrs[n+1]); 
-			else if(name ==  "m31") m[3][1] = atof(attrs[n+1]); 
-			else if(name ==  "m32") m[3][2] = atof(attrs[n+1]); 
-			else if(name ==  "m33") m[3][3] = atof(attrs[n+1]); 
+			if(name ==  "m00") m[0][0] = atof(attrs[n+1]);
+			else if(name ==  "m01") m[0][1] = atof(attrs[n+1]);
+			else if(name ==  "m02") m[0][2] = atof(attrs[n+1]);
+			else if(name ==  "m03") m[0][3] = atof(attrs[n+1]);
+			else if(name ==  "m10") m[1][0] = atof(attrs[n+1]);
+			else if(name ==  "m11") m[1][1] = atof(attrs[n+1]);
+			else if(name ==  "m12") m[1][2] = atof(attrs[n+1]);
+			else if(name ==  "m13") m[1][3] = atof(attrs[n+1]);
+			else if(name ==  "m20") m[2][0] = atof(attrs[n+1]);
+			else if(name ==  "m21") m[2][1] = atof(attrs[n+1]);
+			else if(name ==  "m22") m[2][2] = atof(attrs[n+1]);
+			else if(name ==  "m23") m[2][3] = atof(attrs[n+1]);
+			else if(name ==  "m30") m[3][0] = atof(attrs[n+1]);
+			else if(name ==  "m31") m[3][1] = atof(attrs[n+1]);
+			else if(name ==  "m32") m[3][2] = atof(attrs[n+1]);
+			else if(name ==  "m33") m[3][3] = atof(attrs[n+1]);
 		}
 		matrix4x4_t *m4 = new matrix4x4_t(m);
 		parser.scene->addInstance(boi,*m4);
@@ -526,7 +630,7 @@ void startEl_parammap(xmlParser_t &parser, const char *element, const char **att
 
 void endEl_parammap(xmlParser_t &p, const char *element)
 {
-	bool exit_state= (p.currLevel() == p.stateLevel());	
+	bool exit_state= (p.currLevel() == p.stateLevel());
 	if(exit_state)
 	{
 		std::string el(element);
@@ -562,7 +666,7 @@ void endEl_parammap(xmlParser_t &p, const char *element)
 			}
 			else Y_WARNING << "XMLParser: Unexpected end-tag of scene element!" << yendl;
 		}
-		
+
 		if(name) delete name;
 		p.popState(); p.params.clear(); p.eparams.clear();
 	}
