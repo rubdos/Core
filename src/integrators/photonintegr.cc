@@ -527,7 +527,7 @@ bool photonIntegrator_t::preprocess()
 	{
         //Y_INFO << "SSSMap : " << SSSMaps.size() << yendl;
         //createSSSMaps();
-        // prepass        
+        // prepass
         createSSSMapsByPhotonTracing();
         // povman:add text to banner info
 		set << "SSS shoot:" << nSSSPhotons << " photons. ";
@@ -819,7 +819,7 @@ colorA_t photonIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) con
 			state.includeLights = true;
 		}
 		BSDF_t bsdfs;
-		vector3d_t N_nobump = sp.N;
+		vector3d_t N_nobump = sp.N; // unused
 		vector3d_t wo = -ray.dir;
 		const material_t *material = sp.material;
 		material->initBSDF(state, sp, bsdfs);
@@ -939,7 +939,7 @@ integrator_t* photonIntegrator_t::factory(paraMap_t &params, renderEnvironment_t
 	bool bg_transp_refract = true;
 
 	// SSS
-    bool useSSS=false;	
+    bool useSSS=false;
 	int sssdepth = 10, sssPhotons = 200000;
 	int singleSSamples = 128;
 	float sScale = 40.f;

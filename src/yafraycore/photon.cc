@@ -1,4 +1,19 @@
-
+/****************************************************************************
+ *
+ *    This library is free software; you can redistribute it and/or
+ *    modify it under the terms of the GNU Lesser General Public
+ *    License as published by the Free Software Foundation; either
+ *    version 2.1 of the License, or (at your option) any later version.
+ *
+ *    This library is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    Lesser General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Lesser General Public
+ *    License along with this library; if not, write to the Free Software
+ *    Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 #include <yafraycore/photon.h>
 
 __BEGIN_YAFRAY
@@ -47,7 +62,8 @@ void photonGather_t::operator()(const photon_t *photon, PFLOAT dist2, PFLOAT &ma
 		maxDistSquared = photons[0].distSquare;
 	}
 }
-// povman: add update tree for photonKdTree
+// povman: add update tree for photonKdTree.
+// Also is possible expand exist function, but this mode is more 'cleaned'
 void photonMap_t::updatePhTree()
 {
     if(phTree) delete phTree;
@@ -111,7 +127,7 @@ void photonMap_t::getAllPhotons(const point3d_t& woP, std::vector<const photon_t
 
 int photonMap_t::numberOfPhotonInDisc(const point3d_t &p, PFLOAT scale, PFLOAT dist) const
 {
-	return phTree->PhotonNumInDisc(p, scale, dist); // povmansss
+	return phTree->PhotonNumInDisc(p, scale, dist); // povman sss
 }
 // end add
 

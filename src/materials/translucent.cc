@@ -1,22 +1,22 @@
 /****************************************************************************
- *      translucent.cc: translucent materials
- *      This is part of the yafray package
- *      Copyright (C) 2010  Ronnie
- *      Copyright (C) 2014  Pedro Alcaide
+ *    translucent.cc: translucent materials
+ *    This is part of the yafray package
+ *    Copyright (C) 2010  Ronnie
+ *    Copyright (C) 2014  Pedro Alcaide
  *
- *      This library is free software; you can redistribute it and/or
- *      modify it under the terms of the GNU Lesser General Public
- *      License as published by the Free Software Foundation; either
- *      version 2.1 of the License, or (at your option) any later version.
+ *    This library is free software; you can redistribute it and/or
+ *    modify it under the terms of the GNU Lesser General Public
+ *    License as published by the Free Software Foundation; either
+ *    version 2.1 of the License, or (at your option) any later version.
  *
- *      This library is distributed in the hope that it will be useful,
- *      but WITHOUT ANY WARRANTY; without even the implied warranty of
- *      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *      Lesser General Public License for more details.
+ *    This library is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    Lesser General Public License for more details.
  *
- *      You should have received a copy of the GNU Lesser General Public
- *      License along with this library; if not, write to the Free Software
- *      Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *    You should have received a copy of the GNU Lesser General Public
+ *    License along with this library; if not, write to the Free Software
+ *    Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
 //#include <core_api/material.h>
@@ -46,17 +46,17 @@ class translucentMat_t: public nodeMaterial_t
 {
 public:
     translucentMat_t(
-        color_t diffuseC,   //! diffuse color 
-        color_t specC,      //! specular color 
-        color_t glossyC,    //! glossy color 
-        color_t siga,       //! sigma A color, reference to absorption or subsurface color 
-        color_t sigs,       //! sigma S color, reference to scatter color 
-        float sigs_factor,  //! sigma S factor 
-        float ior,          //! index of refraction 
-        float _g,           //! phase function 
+        color_t diffuseC,   //! diffuse color
+        color_t specC,      //! specular color
+        color_t glossyC,    //! glossy color
+        color_t siga,       //! sigma A color, reference to absorption or subsurface color
+        color_t sigs,       //! sigma S color, reference to scatter color
+        float sigs_factor,  //! sigma S factor
+        float ior,          //! index of refraction
+        float _g,           //! phase function
         float mT,           //! transmittance
         float mD,           //! diffuse reflect (diffusity)
-        float mG,           //! glossy reflect (glossity)  
+        float mG,           //! glossy reflect (glossity)
         float exp);         //! fressnel exponent
 
     virtual ~translucentMat_t();
@@ -68,7 +68,7 @@ public:
     // povman: from material.h
     virtual color_t sample( const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, vector3d_t &wi, sample_t &s, float &W)const;
 
-    /*  UNUSED?? 
+    /*  UNUSED??
     virtual color_t sample(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo,
                       vector3d_t *const dir, color_t &tcol, sample_t &s, float *const W)const {return color_t(0.f);}
     */
@@ -111,10 +111,10 @@ translucentMat_t::translucentMat_t(color_t diffuseC, color_t specC, color_t glos
                                    float sigs_factor, float ior, float _g, float mT, float mD, float mG, float exp):
 diffuseCol(diffuseC), specRefCol(specC), gloss_color(glossyC), sigma_a(siga), sigma_s(sigs), sigmaS_Factor(sigs_factor),
 IOR(ior), g(_g), translucency(mT), diffusity(mD), glossity(mG), exponent(exp), diffuseS(0), glossyS(0), glossyRefS(0),
-bumpS(0), transpS(0), translS(0) 
+bumpS(0), transpS(0), translS(0)
 {
     // povman: it is consistent the 'arbitrary' use of '()'??
-    cFlags[C_TRANSLUCENT] = (BSDF_TRANSLUCENT); //(1) is used.. 
+    cFlags[C_TRANSLUCENT] = (BSDF_TRANSLUCENT); //(1) is used..
     if (glossity > 0)
     {
         cFlags[C_GLOSSY] = (BSDF_GLOSSY | BSDF_REFLECT); // (2) is used..
@@ -169,7 +169,7 @@ void translucentMat_t::initBSDF(const renderState_t &state, surfacePoint_t &sp, 
     bsdfTypes = bsdfFlags;
 }
 //-
-color_t translucentMat_t::eval(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, const vector3d_t &wl, BSDF_t bsdfs) const 
+color_t translucentMat_t::eval(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, const vector3d_t &wl, BSDF_t bsdfs) const
 {
     if( !(bsdfs & BSDF_DIFFUSE) || ((sp.Ng*wl)*(sp.Ng*wo)) < 0.f )
     {
@@ -197,7 +197,7 @@ color_t translucentMat_t::eval(const renderState_t &state, const surfacePoint_t 
         vector3d_t H = (wo + wl).normalize(); // half-angle
         float cos_wi_H = std::max(0.f, wl*H);
         float glossy;
-        
+
         //glossy = Blinn_D(H*N, exponent) * SchlickFresnel(cos_wi_H, dat->mGlossy) / ASDivisor(cos_wi_H, woN, wiN);
         glossy = mR*Blinn_D(H*N, exponent) * SchlickFresnel(cos_wi_H, dat->mGlossy) / ASDivisor(cos_wi_H, woN, wiN);
         //-
@@ -297,7 +297,7 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
         break;
     case C_DIFFUSE:
         // lambertian
-        default: 
+        default:
             //! Sample a cosine-weighted hemisphere given the coordinate system built by N, Ru, Rv.(sample_utils.h)
             wi = SampleCosHemisphere(N, sp.NU, sp.NV, s1, s.s2);
             cos_Ng_wi = sp.Ng*wi;
@@ -341,7 +341,7 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
                 s.pdf += Blinn_Pdf(Hs.z, cos_wo_H, exponent) * width[rcIndex[C_GLOSSY]];
                 glossy = Blinn_D(Hs.z, exponent) * SchlickFresnel(cos_wo_H, dat->mGlossy) / ASDivisor(cos_wo_H, woN, wiN);
             } // end ?
-            // povman test.. 
+            // povman test..
             // scolor = (CFLOAT)glossy*(1.f-Kt*dat->mTransl)*(glossyS ? glossyS->getColor(stack) : gloss_color);
             scolor = (float)glossy * (1.f-Kt*dat->mTransl)*(glossyS ? glossyS->getColor(stack) : gloss_color);
         }

@@ -152,7 +152,7 @@ bool SPPM::renderTile(renderArea_t &a, int n_samples, int offset, bool adaptive,
 				c_ray.time = rstate.time;
 				c_ray.hasDifferentials = true;
 				// col = T * L_o + L_v
-				diffRay_t c_ray_copy = c_ray;
+				diffRay_t c_ray_copy = c_ray; // unused
 
 				//for sppm progressive
 				int index = i*camera->resX() + j;
@@ -500,7 +500,7 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 		}
 
 		BSDF_t bsdfs;
-		vector3d_t N_nobump = sp.N;
+		vector3d_t N_nobump = sp.N; // unused
 		vector3d_t wo = -ray.dir;
 		const material_t *material = sp.material;
 		material->initBSDF(state, sp, bsdfs);
