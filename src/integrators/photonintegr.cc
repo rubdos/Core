@@ -53,12 +53,12 @@ class preGatherWorker_t: public yafthreads::thread_t
 
 void preGatherWorker_t::body()
 {
-	unsigned int start, end, total;
+	unsigned int start, endWork, total;
 
 	gdata->mutex.lock();
 	start = gdata->fetched;
 	total = gdata->rad_points.size();
-	end = gdata->fetched = std::min(total, start + 32);
+	endWork = gdata->fetched = std::min(total, start + 32);
 	gdata->mutex.unlock();
 
 	foundPhoton_t *gathered = new foundPhoton_t[nSearch];
@@ -69,7 +69,7 @@ void preGatherWorker_t::body()
 
 	while(start < total)
 	{
-		for(unsigned int n=start; n<end; ++n)
+		for(unsigned int n=start; n<endWork; ++n)
 		{
 			radius = dsRadius_2;//actually the square radius...
 			int nGathered = gdata->diffuseMap->gather(gdata->rad_points[n].pos, gathered, nSearch, radius);
@@ -95,7 +95,7 @@ void preGatherWorker_t::body()
 		}
 		gdata->mutex.lock();
 		start = gdata->fetched;
-		end = gdata->fetched = std::min(total, start + 32);
+		endWork = gdata->fetched = std::min(total, start + 32);
 		gdata->pbar->update(32);
 		gdata->mutex.unlock();
 	}
@@ -317,7 +317,7 @@ bool photonIntegrator_t::preprocess()
 			pSample_t sample(s5, s6, s7, BSDF_ALL, pcol, transm);
 
 			bool scattered = material->scatterPhoton(state, sp, wi, wo, sample);
-			if(!scattered) break; //photon was absorped.
+			if(!scattered) break; //photon was absorbed.
 
 			pcol = sample.color;
 
@@ -343,7 +343,7 @@ bool photonIntegrator_t::preprocess()
 	delete lightPowerD;
 
 	tmplights.clear();
-    // povman: search caustics lights..
+    // TODO: povman, investigate caustic lights..
 	for(int i=0;i<(int)lights.size();++i)
 	{
 		if(lights[i]->shootsCausticP())
@@ -352,7 +352,7 @@ bool photonIntegrator_t::preprocess()
 			tmplights.push_back(lights[i]);
 		}
 	}
-    // povman: if have.. proced
+    // povman: if have.. proceed
 	if(numCLights > 0)
 	{
 		done = false;
@@ -425,7 +425,7 @@ bool photonIntegrator_t::preprocess()
 			{
 				if(isnan(pcol.R) || isnan(pcol.G) || isnan(pcol.B))
 				{
-					Y_WARNING << integratorName << ": NaN  on photon color for light" << lightNum + 1 << "." << yendl;
+					Y_WARNING << integratorName << ": NaN on photon color for light" << lightNum + 1 << "." << yendl;
 					continue;
 				}
 
@@ -467,7 +467,7 @@ bool photonIntegrator_t::preprocess()
 				pSample_t sample(s5, s6, s7, BSDF_ALL, pcol, transm);
 
 				bool scattered = material->scatterPhoton(state, sp, wi, wo, sample);
-				if(!scattered) break; //photon was absorped.
+				if(!scattered) break; //photon was absorbed.
 
 				pcol = sample.color;
 

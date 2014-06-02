@@ -125,8 +125,8 @@ bool SPPM::renderTile(renderArea_t &a, int n_samples, int offset, bool adaptive,
 				rstate.setDefaults();
 				rstate.pixelSample = pass_offs+sample;
 				rstate.time = addMod1((PFLOAT)sample*d1, toff); //(0.5+(PFLOAT)sample)*d1;
-				// the (1/n, Larcher&Pillichshammer-Seq.) only gives good coverage when total sample count is known
-				// hence we use scrambled (Sobol, van-der-Corput) for multipass AA
+				// the (1/n, Larcher & Pillichshammer-Seq.) only gives good coverage when total sample count is known
+				// hence we use scrambled (Sobol, van-der-Corput) for multi-pass AA
 
 				dx = RI_vdC(rstate.pixelSample, rstate.samplingOffs);
 				dy = RI_S(rstate.pixelSample, rstate.samplingOffs);
@@ -163,12 +163,12 @@ bool SPPM::renderTile(renderArea_t &a, int n_samples, int offset, bool adaptive,
 
 				gInfo.constantRandiance *= scene->volIntegrator->transmittance(rstate, c_ray);
 				gInfo.constantRandiance += scene->volIntegrator->integrate(rstate, c_ray); // Now using it to simulate for volIntegrator not using PPM, need more tests
-				hp.constantRandiance += gInfo.constantRandiance; // accumalate the constant randiance for later useage.
+				hp.constantRandiance += gInfo.constantRandiance; // accumulate the constant radiance for later usage.
 
 				// progressive refinement
 				const float _alpha = 0.7f; // another common choice is 0.8, seems not changed much.
 
-				// The author's refine formular
+				// The author's refine formula
 				if(gInfo.photonCount > 0)
 				{
 					float g = std::min((hp.accPhotonCount + _alpha * gInfo.photonCount) / (hp.accPhotonCount + gInfo.photonCount), 1.0f);
@@ -316,9 +316,9 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 		sL = float(curr) * invDiffPhotons; // Does sL also need more random for each pass?
 		int lightNum = lightPowerD->DSample(sL, &lightNumPdf);
 		if(lightNum >= numDLights){
-            Y_ERROR << integratorName << ": lightPDF sample error! "<<sL<<"/"<<lightNum<<"... stopping now.\n"; 
-            delete lightPowerD; 
-            return; 
+            Y_ERROR << integratorName << ": lightPDF sample error! "<<sL<<"/"<<lightNum<<"... stopping now.\n";
+            delete lightPowerD;
+            return;
         }
 
 		pcol = tmplights[lightNum]->emitPhoton(s1, s2, s3, s4, ray, lightPdf);
@@ -522,7 +522,7 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 		// estimate radiance using photon map
 		foundPhoton_t *gathered = new foundPhoton_t[nMaxGather];
 
-		//if PM_IRE is on. we should estimate the initial radius using the photonMaps. 
+		//if PM_IRE is on. we should estimate the initial radius using the photonMaps.
         //(PM_IRE is only for the first pass, so not consume much time)
 		if(PM_IRE && !hp.radiusSetted) // "waste" two gather here as it has two maps now. This make the logic simple.
 		{

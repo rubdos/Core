@@ -112,12 +112,12 @@ bool directLighting_t::preprocess()
 colorA_t directLighting_t::integrate(renderState_t &state, diffRay_t &ray) const
 {
     color_t col(0.0);
-    float alpha = 0.0;
+    float alpha = 1.0;
     surfacePoint_t sp;
     void *o_udat = state.userdata;
     bool oldIncludeLights = state.includeLights;
 
-    if(!transpBackground) alpha = 1.0;
+    if(transpBackground) alpha = 0.0;
 
     // Shoot rays..
     if(scene->intersect(ray, sp))
@@ -142,7 +142,7 @@ colorA_t directLighting_t::integrate(renderState_t &state, diffRay_t &ray) const
         }
 
         // if have translucent SSS materials..
-        if (bsdfs & BSDF_TRANSLUCENT) 
+        if (bsdfs & BSDF_TRANSLUCENT)
         {
             // and use SSS photons is ON ..
             if (usePhotonSSS)
@@ -152,15 +152,19 @@ colorA_t directLighting_t::integrate(renderState_t &state, diffRay_t &ray) const
                 //col += estimateSSSSingleScatteringPhotons(state,sp,wo);
                 col += estimateSSSSingleSImportantSampling(state, sp, wo);
             }
-            /*
-            else
-            {
-            // povman: test for use singlescattering without using  SSS photon maps
-            // first result: some problems with blender 'material' preview, because to very slowly render preview.
-            // not good result with small parts of geometry
-            col += estimateSSSSingleScattering(state, sp, wo);
-            }
-            */
+
+            //else
+            //{
+                // povman: test for use singlescattering without using  SSS photon maps
+                // first result: some problems with blender 'material' preview, because to very slowly render preview.
+                // not good result with small parts of geometry
+                // col += estimateSSSSingleScattering(state, sp, wo);
+                // more.. testing:
+                //col += estimateSSSSingleScatteringPhotons(state,sp,wo);
+                // first result..Blender crash!!
+
+            //}
+
         }
         // povman: in under function call, alpha values is re-asigned
         // so.. the actual alpha value is ignored?
@@ -176,9 +180,9 @@ colorA_t directLighting_t::integrate(renderState_t &state, diffRay_t &ray) const
             // case 2, transpBackground = true, so alpha = 0.0:
             //      m_alpha + (1.f - m_alpha) * alpha = m_alpha, always..
             // only if transpBackground = true, request alpha value from material is used
-            alpha = material->getAlpha(state, sp, wo); 
-        } 
-        else 
+            alpha = material->getAlpha(state, sp, wo);
+        }
+        else
         {
             alpha = 1.0;
         }
