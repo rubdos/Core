@@ -2,7 +2,6 @@
  *    translucent.cc: translucent materials
  *    This is part of the yafray package
  *    Copyright (C) 2010  Ronnie
- *    Copyright (C) 2014  Pedro Alcaide
  *
  *    This library is free software; you can redistribute it and/or
  *    modify it under the terms of the GNU Lesser General Public
@@ -19,109 +18,26 @@
  *    Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-//#include <core_api/material.h>
-#include <core_api/environment.h> //
-#include <core_api/scene.h>
-#include <materials/maskmat.h>
-#include <materials/microfacet.h> //
-#include <yafraycore/spectrum.h>
-// povman add:
-#include <core_api/mcintegrator.h>
-//#include <yafraycore/nodematerial.h>
-//unused ??
-
-
-/*==========================
-translucent material class
-============================*/
+#include <materials/translucent.h>
 
 __BEGIN_YAFRAY
 
-#define C_TRANSLUCENT   0
-#define C_GLOSSY        1
-#define C_DIFFUSE       2
-
-// povman: move class declaration to header file??
-class translucentMat_t: public nodeMaterial_t
-{
-public:
-    translucentMat_t(
-        color_t diffuseC,   //! diffuse color
-        color_t specC,      //! specular color
-        color_t glossyC,    //! glossy color
-        color_t siga,       //! sigma A color, reference to absorption or subsurface color
-        color_t sigs,       //! sigma S color, reference to scatter color
-        float sigs_factor,  //! sigma S factor
-        float ior,          //! index of refraction
-        float _g,           //! phase function
-        float mT,           //! transmittance
-        float mD,           //! diffuse reflect (diffusity)
-        float mG,           //! glossy reflect (glossity)
-        float exp);         //! fressnel exponent
-
-    virtual ~translucentMat_t();
-
-    virtual void initBSDF(const renderState_t &state, surfacePoint_t &sp, unsigned int &bsdfTypes)const;
-
-    virtual color_t eval(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, const vector3d_t &wl, BSDF_t bsdfs)const;
-
-    // povman: from material.h
-    virtual color_t sample( const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, vector3d_t &wi, sample_t &s, float &W)const;
-
-    /*  UNUSED??
-    virtual color_t sample(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo,
-                      vector3d_t *const dir, color_t &tcol, sample_t &s, float *const W)const {return color_t(0.f);}
-    */
-    virtual color_t emit( const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo)const;
-
-    virtual float pdf( const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, const vector3d_t &wi, BSDF_t bsdfs)const;
-    //virtual void getSpecular(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo,
-    //                       bool &refl, bool &refr, vector3d_t *const dir, color_t *const col)const;
-    static material_t* factory(paraMap_t &params, std::list< paraMap_t > &eparans, renderEnvironment_t &env);
-
-protected:
-    shaderNode_t* diffuseS;     //!< shader node for diffuse color
-    shaderNode_t* glossyS;      //!< shader node for glossy color
-    shaderNode_t* glossyRefS;   //!< shader node for glossy reflecity
-    shaderNode_t* bumpS;        //!< shader node for bump mapping
-    shaderNode_t *transpS;      //!< shader node for sigmaA (color_t)
-    shaderNode_t *translS;      //!< shader node for sigmaS (color_t)
-
-    color_t diffuseCol;
-    color_t specRefCol;
-    color_t gloss_color;
-
-    float with_diffuse;
-    float translucency, diffusity, glossity;
-    float pDiffuse;
-    float exponent;
-    float sigmaS_Factor;
-
-    BSDF_t cFlags[3];
-    int nBSDF;
-
-    // parameters for translucent property
-    color_t sigma_s;
-    color_t sigma_a;
-    float   IOR;
-    float   g;
-};
-
-translucentMat_t::translucentMat_t(color_t diffuseC, color_t specC, color_t glossyC, color_t siga, color_t sigs,
+translucentMat_t::translucentMat_t( color_t diffuseC, color_t specC, color_t glossyC, color_t siga, color_t sigs,
                                    float sigs_factor, float ior, float _g, float mT, float mD, float mG, float exp):
-diffuseCol(diffuseC), specRefCol(specC), gloss_color(glossyC), sigma_a(siga), sigma_s(sigs), sigmaS_Factor(sigs_factor),
-IOR(ior), g(_g), translucency(mT), diffusity(mD), glossity(mG), exponent(exp), diffuseS(0), glossyS(0), glossyRefS(0),
-bumpS(0), transpS(0), translS(0)
+                                       diffuseCol(diffuseC), specRefCol(specC), gloss_color(glossyC), sigma_a(siga),
+                                       sigma_s(sigs), sigmaS_Factor(sigs_factor), IOR(ior), g(_g), translucency(mT),
+                                       diffusity(mD), glossity(mG), exponent(exp), diffuseS(0), glossyS(0), glossyRefS(0),
+                                       bumpS(0), transpS(0), translS(0)
 {
-    // povman: it is consistent the 'arbitrary' use of '()'??
-    cFlags[C_TRANSLUCENT] = (BSDF_TRANSLUCENT); //(1) is used..
+
+    cFlags[C_TRANSLUCENT] = (BSDF_TRANSLUCENT);
     if (glossity > 0)
     {
-        cFlags[C_GLOSSY] = (BSDF_GLOSSY | BSDF_REFLECT); // (2) is used..
+        cFlags[C_GLOSSY] = (BSDF_GLOSSY | BSDF_REFLECT);
 
         if(diffusity > 0)
         {
-            cFlags[C_DIFFUSE] = BSDF_DIFFUSE | BSDF_REFLECT; // (2) not used..
+            cFlags[C_DIFFUSE] = (BSDF_DIFFUSE | BSDF_REFLECT);
             with_diffuse = true;
             nBSDF = 3;
         }
@@ -136,7 +52,7 @@ bumpS(0), transpS(0), translS(0)
         cFlags[C_GLOSSY] = cFlags[C_DIFFUSE] = BSDF_NONE;
         nBSDF = 1;
     }
-    bsdfFlags = cFlags[C_TRANSLUCENT] | cFlags[C_GLOSSY] | cFlags[C_DIFFUSE]; // (3) not used..
+    bsdfFlags = (cFlags[C_TRANSLUCENT] | cFlags[C_GLOSSY] | cFlags[C_DIFFUSE]);
 }
 
 translucentMat_t::~translucentMat_t()
@@ -286,22 +202,22 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
     }
 
     color_t scolor(0.f);
-    switch(cIndex[pick])
-    {
+	switch(cIndex[pick])
+	{
     case C_TRANSLUCENT:
         // specular reflect
-        break;
+		break;
     case C_GLOSSY:
-        // glossy; compute sampled half-angle vector H for Blinn distribution (microfacet.h)
-        Blinn_Sample(Hs, s1, s.s2, exponent);
-        break;
-    case C_DIFFUSE:
+		// glossy; compute sampled half-angle vector H for Blinn distribution (microfacet.h)
+		Blinn_Sample(Hs, s1, s.s2, exponent);
+		break;
+	case C_DIFFUSE:
         // lambertian
-        default:
-            //! Sample a cosine-weighted hemisphere given the coordinate system built by N, Ru, Rv.(sample_utils.h)
-            wi = SampleCosHemisphere(N, sp.NU, sp.NV, s1, s.s2);
-            cos_Ng_wi = sp.Ng*wi;
-            if(cos_Ng_wo*cos_Ng_wi < 0) return color_t(0.f);
+		default:
+		//! Sample a cosine-weighted hemisphere given the coordinate system built by N, Ru, Rv.(sample_utils.h)
+		wi = SampleCosHemisphere(N, sp.NU, sp.NV, s1, s.s2);
+		cos_Ng_wi = sp.Ng*wi;
+		if(cos_Ng_wo*cos_Ng_wi < 0) return color_t(0.f);
     }
 
     wiN = std::fabs(wi * N);
