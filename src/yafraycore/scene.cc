@@ -155,11 +155,11 @@ bool scene_t::endCurveMesh(const material_t *mat, float strandStart, float stran
 		o = points[i];
 		if (strandShape < 0)
 		{
-			r = strandStart + pow((float)i/(n-1) ,1+strandShape) * ( strandEnd - strandStart );
+			r = strandStart + pow((float)i/(n-1), 1+strandShape) * ( strandEnd - strandStart );
 		}
 		else
 		{
-			r = strandStart + (1 - pow(((float)(n-i-1))/(n-1) ,1-strandShape)) * ( strandEnd - strandStart );
+			r = strandStart + (1 - pow(((float)(n-i-1))/(n-1), 1-strandShape)) * ( strandEnd - strandStart );
 		}
 		// Last point keep previous tangent plane
 		if (i<n-1)

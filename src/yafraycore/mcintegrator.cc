@@ -855,7 +855,7 @@ bool mcIntegrator_t::createSSSMaps()
             vector3d_t wi = -ray.dir, wo;
             material = hit->material;
             material->initBSDF(state, *hit, bsdfs);
-            // Translucent material 
+            // Translucent material
             if(bsdfs & BSDF_TRANSLUCENT)
             {
                 // if photon intersect with SSS material, add this photon to cooresponding object's SSSMap and absorb it
@@ -979,7 +979,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
     renderState_t state;
     unsigned char userdata[USER_DATA_SIZE+7];
     state.userdata = (void *)( &userdata[7] - ( ((size_t)&userdata[7])&7 ) ); // pad userdata to 8 bytes
-    
+
     while(!done)
     {
         /* Issue solved in exporter way..*/
@@ -999,7 +999,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
         int lightNum = lightPowerD->DSample(sL, &lightNumPdf);
         if(lightNum >= numLights)
         {
-            Y_ERROR << integratorName << ": lightPDF sample error! "<< sL <<"/"<< lightNum <<"  "<< curr <<"/"<< nPhotons << yendl;			
+            Y_ERROR << integratorName << ": lightPDF sample error! "<< sL <<"/"<< lightNum <<"  "<< curr <<"/"<< nPhotons << yendl;
             delete lightPowerD;
             return false;
         }
@@ -1345,14 +1345,14 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
 
     float gamma = acosf(dot(No, Ni));
 
-    float cosWiN = wi*Ni; 
+    float cosWiN = wi*Ni;
 
     float Kr_i, Kt_i, Kr_o, Kt_o;
     fresnel(wi, Ni, IOR, Kr_i, Kt_i);
     fresnel(wo, No, IOR, Kr_o, Kt_o);
 
     vector3d_t v = inPhoton.pos - sp.P;
-    // povman test 
+    // povman test
     static float mcScale = mcIntegrator_t::sssScale;
     // end
     float r  = v.length()* mcScale; //mcIntegrator_t::sssScale;
@@ -1373,20 +1373,20 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
     color_t z_r = 1.f / sig_t_ / mcScale ; //mcIntegrator_t::sssScale;
 
     /* Diffuse Fresnel reflectance */
-    float Fdr;    
-    // povman: optimized Fdr from Egan et al[1973]paper, based on IOR ratio values    
-    if (IOR < 1.0) 
+    float Fdr;
+    // povman: optimized Fdr from Egan et al[1973]paper, based on IOR ratio values
+    if (IOR < 1.0)
     {
         Fdr = -0.4399 + 0.7099 / IOR - 0.3319 / (IOR * IOR) + 0.0636 / (IOR * IOR * IOR);
-    } 
+    }
     else
     {
         // optimize with 'distributive property', by 'agedito'
         //Fdr = -1.4399f /(IOR*IOR)+ 0.7099f /IOR + 0.6681f + 0.0636f * IOR;
-        // http://en.wikipedia.org/wiki/Distributive_property    
-        Fdr = (-1.4399 / IOR + 0.7099) / IOR + 0.6681 + 0.0636 * IOR; 
+        // http://en.wikipedia.org/wiki/Distributive_property
+        Fdr = (-1.4399 / IOR + 0.7099) / IOR + 0.6681 + 0.0636 * IOR;
     }
-    
+
     /* Term of dipole boundary condition distance.
      * represents the change in fluence due to internal reflection at the surface */
     float A = (1 + Fdr)/(1 - Fdr);
@@ -1464,7 +1464,7 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
 
     rd *= (real + vir);
 
-    /* Paper[1], Equation[6] 
+    /* Paper[1], Equation[6]
      * M_1_PI_8 is equal to 0.125 * (1 / PI)
      */
     qd = z_r * (1 + sig_tr * dr) * colorExp(-1 * sig_tr * dr)* M_1_PI_8 /(dr * dr * dr) +
@@ -1563,7 +1563,7 @@ color_t mcIntegrator_t::estimateSSSMaps(renderState_t &state, surfacePoint_t &sp
     // sum all photon in translucent object
     std::vector<const photon_t*> photons;
     sssPhotonMap->getAllPhotons(sp.P, photons);
-    
+
     for (unsigned int i=0; i<photons.size(); i++)
     {
         //sum += dipole(*photons[i],sp,wo,IOR,0.f,sigma_s,sigma_a);
@@ -1967,7 +1967,7 @@ color_t mcIntegrator_t::getTranslucentInScatter(renderState_t& state, ray_t& ste
                     point3d_t exitP = outHit.P;
                     //float cosWi = fabs(outHit.N*outRay.dir);
                     float dist = (exitP - sp.P).length();//*cosWi/sqrtf((1.f-(1.f/(float)IOR)*(1.f/(float)IOR))*(1-cosWi*cosWi));
-                    
+
                     float Kr_i, Kt_i;
                     fresnel(outRay.dir, outHit.N, IOR, Kr_i, Kt_i);
 
@@ -2003,14 +2003,14 @@ color_t mcIntegrator_t::getTranslucentInScatter(renderState_t& state, ray_t& ste
     return inScatter;
 }
 
-//-
-/*
+//-uncomment for test on progress
+
 color_t mcIntegrator_t::estimateSSSSingleScatteringPhotons(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const
 {
     //-----------------------------
     // atm, this fuction is unused
     //-----------------------------
-    
+
     float stepSize = 1.f/sssScale;
     color_t singleS(0.0f);
 
@@ -2160,6 +2160,5 @@ color_t mcIntegrator_t::estimateSSSSingleScatteringPhotons(renderState_t &state,
 
     return singleS;
 }
-*/
 
 __END_YAFRAY
