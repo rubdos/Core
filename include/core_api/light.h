@@ -31,7 +31,7 @@ class light_t
 	public:
 		//! allow for preprocessing when scene loading has finished
 		virtual void init(scene_t &scene) {}
-		//! total energy emmitted during whole frame
+		//! total energy emitted during whole frame
 		virtual color_t totalEnergy() const = 0;
 		//! emit a photon
 		virtual color_t emitPhoton(float s1, float s2, float s3, float s4, ray_t &ray, float &ipdf) const = 0;
@@ -43,7 +43,7 @@ class light_t
 		//! illuminate a given surface point, generating sample s, fill in s.sp if not NULL; Set ray to test visibility by integrator
 		/*! fill in s.pdf, s.col and s.flags */
 		virtual bool illumSample(const surfacePoint_t &sp, lSample_t &s, ray_t &wi) const = 0;
-		//! illuminate a given surfance point; Set ray to test visibility by integrator. Only for dirac lights.
+		//! illuminate a given surface point; Set ray to test visibility by integrator. Only for dirac lights.
 		/*!	return false only if no light is emitted towards sp, e.g. outside cone angle of spot light	*/
 		virtual bool illuminate(const surfacePoint_t &sp, color_t &col, ray_t &wi) const = 0;
 		//! indicate whether the light can intersect with a ray (by the intersect function)
@@ -56,9 +56,9 @@ class light_t
 		//! get the pdf values for sampling point sp on the light and outgoing direction wo when emitting energy (emitSample, NOT illumSample)
 		/*! sp should've been generated from illumSample or emitSample, and may only be complete enough to call light functions! */
 		virtual void emitPdf(const surfacePoint_t &sp, const vector3d_t &wo, float &areaPdf, float &dirPdf, float &cos_wo) const { areaPdf=0.f; dirPdf=0.f; }
-		//! checks if the light can shoot caustic photons (photonmap integrator)
+		//! checks if the light can shoot caustic photons (photon map integrator)
 		virtual bool shootsCausticP() const { return true;}
-		//! checks if the light can shoot diffuse photons (photonmap integrator)
+		//! checks if the light can shoot diffuse photons (photon map integrator)
 		virtual bool shootsDiffuseP() const { return true;}
 		//! (preferred) number of samples for direct lighting
 		virtual int nSamples() const { return 8; }

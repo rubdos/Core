@@ -65,7 +65,8 @@ protected:
 	//
     virtual color_t getTranslucentInScatter(renderState_t& state, ray_t& stepRay, float currentStep) const;
 
-	//virtual color_t estimateSSSSingleScatteringPhotons(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const;
+	//uncomment for test in progress
+	virtual color_t estimateSSSSingleScatteringPhotons(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const;
     // sss end
 
 	int rDepth; //! Ray depth
@@ -92,26 +93,26 @@ protected:
 	std::vector<light_t*> lights; //! An array containing all the scene lights
 	bool transpBackground; //! Render background as transparent
 	bool transpRefractedBackground; //! Render refractions of background as transparent
-		
-    // SSS        
+
+    // SSS
 	bool usePhotonSSS; //! bool to use photon if have a SSS  scene material.
 
     // amount of shot photons
 	unsigned int nSSSPhotons;
-        
+
 	int nSSSDepth; // amount of bounces
-        
+
 	unsigned int nSingleScatterSamples; // amount of scatter samples.
-        
+
 	bool isDirectLight; // if use with directlight integrator
-         
+
 	std::map<const object3d_t*, photonMap_t*> SSSMaps; // Container of SSS photons for different objects
 
 public:
 	// factor of geometry scale ( if 1U != 1m)
     static float sssScale;
 };
-//SSS
+
 struct TranslucentData_t
 {
 	color_t difC;
