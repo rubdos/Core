@@ -117,31 +117,41 @@ inline float fLog2(float x)
 inline float asmSqrt(float n)
 {
     float r = n;
-#ifdef _MSC_VER
+// refine flags because x64 don't accept __asm, tested by 'paultron' on win7 x64 using MSVS 2013
+#if defined(_MSC_VER) && defined(_WIN32)
     __asm
     {
-		fld r
-		fsqrt
-		fstp r
+        fld r
+        fsqrt
+        fstp r
     }
-#elif defined __clang__
+// add explicit case for Clang compilers tested by 'jensverwiebe' & 'Sembei' on OSX x64 using Clang
+// also tested by 'povmaniac' on Ubuntu 12.04 amd64 using Clang
+#elif defined __clang__ 
     asm(
         "flds %0;"
-		"fsqrt;"
-		"fstps %0"
-		:"=m" (r)
-		:"m" (r)
-		);
+        "fsqrt;"
+        "fstps %0"
+        :"=m" (r)
+        :"m" (r)
+        );
 #elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
     asm(
-		"fld %0;"
-		"fsqrt;"
-		"fstp %0"
-		:"=m" (r)
-		:"m" (r)
-		);
+        "fld %0;"
+        "fsqrt;"
+        "fstp %0"
+        :"=m" (r)
+        :"m" (r)
+        );
 #else
-    r = fsqrt(n);
+    // this function is non defined, maybe is 'fSqrt' defined in this same file..?,
+    // but if fSqrt is used, a recursive flow is created, making on error of 'runtime stackoverflow',
+    // because if FAST_MATH is ON, fSqrt call this fuction 'inline float asmSqrt(float n)'
+    // temporary solution: use standar sqrt function declared on math.h. 
+    // TODO: make some test with black & white dots scenes
+
+    r = sqrt(n); // use standar sqrt
+
 #endif
     return r;
 }
