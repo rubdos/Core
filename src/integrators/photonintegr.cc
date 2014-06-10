@@ -819,7 +819,7 @@ colorA_t photonIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) con
 			state.includeLights = true;
 		}
 		BSDF_t bsdfs;
-		vector3d_t N_nobump = sp.N; // unused
+		//vector3d_t N_nobump = sp.N; // unused
 		vector3d_t wo = -ray.dir;
 		const material_t *material = sp.material;
 		material->initBSDF(state, sp, bsdfs);

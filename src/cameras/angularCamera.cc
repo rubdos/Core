@@ -1,22 +1,22 @@
-/****************************************************************************
+/*************************************************************************
  *
- * 			camera.cc: Camera implementation
- *      This is part of the yafray package
- *      Copyright (C) 2002  Alejandro Conty Estévez
+ * 	camera.cc: Camera implementation
+ *  This is part of the yafray package
+ *  Copyright (C) 2002  Alejandro Conty Estévez
  *
- *      This library is free software; you can redistribute it and/or
- *      modify it under the terms of the GNU Lesser General Public
- *      License as published by the Free Software Foundation; either
- *      version 2.1 of the License, or (at your option) any later version.
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
  *
- *      This library is distributed in the hope that it will be useful,
- *      but WITHOUT ANY WARRANTY; without even the implied warranty of
- *      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *      Lesser General Public License for more details.
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
  *
- *      You should have received a copy of the GNU Lesser General Public
- *      License along with this library; if not, write to the Free Software
- *      Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
 
@@ -90,11 +90,11 @@ camera_t* angularCam_t::factory(paraMap_t &params, renderEnvironment_t &render)
 	params.getParam("mirrored", mirrored);
     params.getParam("nearClip", nearClip);
     params.getParam("farClip", farClip);
-	
+
     angularCam_t *cam = new angularCam_t(from, to, up, resx, resy, aspect, angle, circular, nearClip, farClip);
 	if(mirrored) cam->vright *= -1.0;
 	cam->max_r = max_angle/angle;
-	
+
 	return cam;
 }
 
@@ -104,8 +104,8 @@ point3d_t angularCam_t::screenproject(const point3d_t &p) const
 	point3d_t s;
 	vector3d_t dir = vector3d_t(p) - vector3d_t(position);
 	dir.normalize();
-	
-	// project p to pixel plane:	
+
+	// project p to pixel plane:
 	PFLOAT dx = camX * dir;
 	PFLOAT dy = camY * dir;
 	PFLOAT dz = camZ * dir;
@@ -113,7 +113,7 @@ point3d_t angularCam_t::screenproject(const point3d_t &p) const
 	s.x = -dx / (4.0 * M_PI * dz);
 	s.y = -dy / (4.0 * M_PI * dz);
 	s.z = 0;
-	
+
 	return s;
 }
 

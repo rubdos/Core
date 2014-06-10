@@ -14,38 +14,38 @@ __BEGIN_YAFRAY
 class renderState_t;
 class pSample_t;
 
-class SkyVolume : public VolumeRegion {
-	public:
-	
-		SkyVolume(color_t sa, color_t ss, color_t le, point3d_t pmin, point3d_t pmax) {
-			bBox = bound_t(pmin, pmax);
-			s_a = color_t(0.f);
-			s_ray = sa;
-			s_ray.B /= 3.f;
-			s_mie = ss;
-			s_s = color_t(0.f);
-			l_e = le;
-			g = 0.f;
-			Y_INFO << "SkyVolume: Vol. [" << s_ray << ", " << s_mie << ", " << l_e << "]" << yendl;
-		}
-		
-		virtual float p(const vector3d_t &w_l, const vector3d_t &w_s);
+class SkyVolume : public VolumeRegion
+{
+public:
 
-		float phaseRayleigh(const vector3d_t &w_l, const vector3d_t &w_s);
-		float phaseMie(const vector3d_t &w_l, const vector3d_t &w_s);
+	SkyVolume(color_t sa, color_t ss, color_t le, point3d_t pmin, point3d_t pmax)
+	{
+		bBox = bound_t(pmin, pmax);
+		s_a = color_t(0.f);
+		s_ray = sa;
+		s_ray.B /= 3.f;
+		s_mie = ss;
+		s_s = color_t(0.f);
+		l_e = le;
+		g = 0.f;
+		Y_INFO << "SkyVolume: Vol. [" << s_ray << ", " << s_mie << ", " << l_e << "]" << yendl;
+	}
 
-		virtual color_t sigma_a(const point3d_t &p, const vector3d_t &v);
-		virtual color_t sigma_s(const point3d_t &p, const vector3d_t &v);
-		virtual color_t emission(const point3d_t &p, const vector3d_t &v);
-		virtual color_t tau(const ray_t &ray, float step, float offset);
-		
-		static VolumeRegion* factory(paraMap_t &params, renderEnvironment_t &render);
-	
-	protected:
-		color_t s_ray;
-		color_t s_mie;
-		
+	virtual float p(const vector3d_t &w_l, const vector3d_t &w_s);
 
+	float phaseRayleigh(const vector3d_t &w_l, const vector3d_t &w_s);
+	float phaseMie(const vector3d_t &w_l, const vector3d_t &w_s);
+
+	virtual color_t sigma_a(const point3d_t &p, const vector3d_t &v);
+	virtual color_t sigma_s(const point3d_t &p, const vector3d_t &v);
+	virtual color_t emission(const point3d_t &p, const vector3d_t &v);
+	virtual color_t tau(const ray_t &ray, float step, float offset);
+
+	static VolumeRegion* factory(paraMap_t &params, renderEnvironment_t &render);
+
+protected:
+	color_t s_ray;
+	color_t s_mie;
 };
 
 color_t SkyVolume::sigma_a(const point3d_t &p, const vector3d_t &v) {
@@ -62,22 +62,22 @@ color_t SkyVolume::sigma_s(const point3d_t &p, const vector3d_t &v) {
 
 color_t SkyVolume::tau(const ray_t &ray, float step, float offset) {
 	float t0 = -1, t1 = -1;
-	
+
 	// ray doesn't hit the BB
 	if (!intersect(ray, t0, t1)) {
 		return color_t(0.f);
 	}
-	
+
 	if (ray.tmax < t0 && ! (ray.tmax < 0)) return color_t(0.f);
-	
+
 	if (ray.tmax < t1 && ! (ray.tmax < 0)) t1 = ray.tmax;
-	
+
 	// t0 < 0 means, ray.from is in the volume
 	if (t0 < 0.f) t0 = 0.f;
-	
+
 	// distance travelled in the volume
 	float dist = t1 - t0;
-	
+
 	return (s_ray + s_mie) * dist;
 }
 
@@ -103,7 +103,7 @@ float SkyVolume::phaseMie(const vector3d_t &w_l, const vector3d_t &w_s) {
 	float kcostheta = k * (w_l * w_s);
 	return 1.f / (4.f * M_PI) * (1.f - k * k) / ((1.f - kcostheta) * (1.f - kcostheta)) * s_mie.energy();
 }
-	
+
 
 VolumeRegion* SkyVolume::factory(paraMap_t &params,renderEnvironment_t &render) {
 	float ss = .1f;
@@ -122,14 +122,14 @@ VolumeRegion* SkyVolume::factory(paraMap_t &params,renderEnvironment_t &render) 
 	params.getParam("maxX", max[0]);
 	params.getParam("maxY", max[1]);
 	params.getParam("maxZ", max[2]);
-	
+
 	SkyVolume *vol = new SkyVolume(color_t(sa), color_t(ss), color_t(le),
 						point3d_t(min[0], min[1], min[2]), point3d_t(max[0], max[1], max[2]));
 	return vol;
 }
 
 extern "C"
-{	
+{
 	YAFRAYPLUGIN_EXPORT void registerPlugin(renderEnvironment_t &render)
 	{
 		render.registerFactory("SkyVolume", SkyVolume::factory);

@@ -2,6 +2,7 @@
  *    translucent.cc: translucent materials
  *    This is part of the yafray package
  *    Copyright (C) 2010  Ronnie
+ *    Copyright (C) 2014  Pedro Alcaide
  *
  *    This library is free software; you can redistribute it and/or
  *    modify it under the terms of the GNU Lesser General Public
@@ -24,10 +25,10 @@ __BEGIN_YAFRAY
 
 translucentMat_t::translucentMat_t( color_t diffuseC, color_t specC, color_t glossyC, color_t siga, color_t sigs,
                                    float sigs_factor, float ior, float _g, float mT, float mD, float mG, float exp):
+                                       diffuseS(0), glossyS(0), glossyRefS(0), bumpS(0), transpS(0), translS(0),
                                        diffuseCol(diffuseC), specRefCol(specC), gloss_color(glossyC), sigma_a(siga),
                                        sigma_s(sigs), sigmaS_Factor(sigs_factor), IOR(ior), g(_g), translucency(mT),
-                                       diffusity(mD), glossity(mG), exponent(exp), diffuseS(0), glossyS(0), glossyRefS(0),
-                                       bumpS(0), transpS(0), translS(0)
+                                       diffusity(mD), glossity(mG), exponent(exp)
 {
 
     cFlags[C_TRANSLUCENT] = (BSDF_TRANSLUCENT);
@@ -80,7 +81,7 @@ void translucentMat_t::initBSDF(const renderState_t &state, surfacePoint_t &sp, 
     dat->mGlossy = glossyRefS ? glossyRefS->getScalar(stack) : this->glossity;
     dat->mTransl = this->translucency;
 
-    dat->pDiffuse = std::min(0.6f , 1.f - (dat->mGlossy/(dat->mGlossy + (1.f-dat->mGlossy)*dat->mDiffuse)) );
+    dat->pDiffuse = std::min(0.6f , 1.f - (dat->mGlossy/(dat->mGlossy + (1.f - dat->mGlossy)*dat->mDiffuse)) );
 
     bsdfTypes = bsdfFlags;
 }
@@ -149,7 +150,7 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
     int cIndex[3]; // entry values: 0 := specular part, 1 := glossy part, 2:= diffuse part;
     int rcIndex[3]; // reverse fmapping of cIndex, gives position of spec/glossy/diff in val/width array
     accumC[0] = Kt*dat->mTransl;
-    accumC[1] = (1.f - Kt*dat->mTransl)*(1.f - dat->pDiffuse); // povman: review pDiffuse
+    accumC[1] = (1.f - Kt*dat->mTransl)*(1.f - dat->pDiffuse); // povman TODO: review pDiffuse
     accumC[2] = (1.f - Kt*dat->mTransl)*(dat->pDiffuse);
 
     int nMatch = 0, pick = -1;
@@ -225,7 +226,9 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
 
     if(cIndex[pick] != C_TRANSLUCENT)
     {
-        // povman: if glossy reflect value is > 0.0
+        //-------------------------------
+        // if glossy reflection is > 0.0
+        //-------------------------------
         if(use[C_GLOSSY])
         {
             float glossy; //PFLOAT glossy;
@@ -251,17 +254,19 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
                 if(cos_Ng_wo*cos_Ng_wi < 0) return color_t(0.f);
             }
 
-            wiN = std::fabs(wi * N);
+            wiN = std::fabs(wi * N); // update..?
 
             { // povman: review this 'no-condition' bracet  ??
                 s.pdf += Blinn_Pdf(Hs.z, cos_wo_H, exponent) * width[rcIndex[C_GLOSSY]];
                 glossy = Blinn_D(Hs.z, exponent) * SchlickFresnel(cos_wo_H, dat->mGlossy) / ASDivisor(cos_wo_H, woN, wiN);
             } // end ?
-            // povman test..
+            // povman test: use std float instead defined CFLOAT..
             // scolor = (CFLOAT)glossy*(1.f-Kt*dat->mTransl)*(glossyS ? glossyS->getColor(stack) : gloss_color);
             scolor = (float)glossy * (1.f-Kt*dat->mTransl)*(glossyS ? glossyS->getColor(stack) : gloss_color);
         }
-        // povman: if diffuse reflect value is > 0.0
+        //---------------------------------
+        // If 'diffuse reflection' is > 0.0
+        //---------------------------------
         if(use[C_DIFFUSE])
         {
             scolor += (1.f-Kt*dat->mTransl)*diffuseReflect(wiN, woN, dat->mGlossy, dat->mDiffuse, (diffuseS ? diffuseS->getColor(stack) : diffuseCol));

@@ -152,7 +152,7 @@ bool SPPM::renderTile(renderArea_t &a, int n_samples, int offset, bool adaptive,
 				c_ray.time = rstate.time;
 				c_ray.hasDifferentials = true;
 				// col = T * L_o + L_v
-				diffRay_t c_ray_copy = c_ray; // unused
+				//diffRay_t c_ray_copy = c_ray; // unused
 
 				//for sppm progressive
 				int index = i*camera->resX() + j;
