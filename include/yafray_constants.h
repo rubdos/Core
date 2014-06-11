@@ -21,7 +21,7 @@
 #define __END_YAFRAY }
 
 #define PACKAGE "TheBounty"
-#define VERSION "0.1.6.0"
+#define VERSION "0.1.6"
 
 #if (__GNUC__ > 3)
         #define GCC_HASCLASSVISIBILITY
