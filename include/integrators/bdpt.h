@@ -27,6 +27,7 @@
 #include <integrators/integr_utils.h>
 #include <utilities/mcqmc.h>
 
+
 __BEGIN_YAFRAY
 
 /*  conventions:
@@ -130,10 +131,11 @@ protected:
     bool include_bg;    //!< determined on precrocess;
     int sDepth, rDepth, bounces;
 
-    // povman test -------
-    int maxPathLength;  //
-    int minPathLength;  //
-    //---------------- end
+    // povman test ---------------
+    int maxPathLength;          //
+    int minPathLength;          //
+    bool do_lightImage;         //
+    //---------------------------- end
 
     std::vector<light_t*> lights;
     //mutable std::vector<pathVertex_t> lightPath, eyePath;
