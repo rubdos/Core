@@ -1,4 +1,4 @@
-/**
+/*************************************************************************
  *	This file is part of the yafray package
  *  Copyright (C) 2002  Alejandro Conty Estévez
  *

@@ -37,31 +37,34 @@ __BEGIN_YAFRAY
 class renderState_t;
 class pSample_t;
 
-class NoiseVolume : public DensityVolume {
-	public:
+class NoiseVolume : public DensityVolume
+{
+public:
 
-		NoiseVolume(color_t sa, color_t ss, color_t le, float gg, float cov, float sharp, float dens,
-				point3d_t pmin, point3d_t pmax, int attgridScale, texture_t* noise) :
-			DensityVolume(sa, ss, le, gg, pmin, pmax, attgridScale) {
-			texDistNoise = noise;
-			cover = cov;
-			sharpness = sharp * sharp;
-			density = dens;
-		}
+	NoiseVolume(color_t sa, color_t ss, color_t le, float gg, float cov, float sharp, float dens,
+	            point3d_t pmin, point3d_t pmax, int attgridScale, texture_t* noise) :
+		DensityVolume(sa, ss, le, gg, pmin, pmax, attgridScale)
+	{
+		texDistNoise = noise;
+		cover = cov;
+		sharpness = sharp * sharp;
+		density = dens;
+	}
 
-		virtual float Density(point3d_t p);
+	virtual float Density(point3d_t p);
 
-		static VolumeRegion* factory(paraMap_t &params, renderEnvironment_t &render);
+	static VolumeRegion* factory(paraMap_t &params, renderEnvironment_t &render);
 
-	protected:
+protected:
 
-		texture_t* texDistNoise;
-		float cover;
-		float sharpness;
-		float density;
+	texture_t* texDistNoise;
+	float cover;
+	float sharpness;
+	float density;
 };
 
-float NoiseVolume::Density(const point3d_t p) {
+float NoiseVolume::Density(const point3d_t p)
+{
 	float d = texDistNoise->getColor(p * 0.1f).energy();
 
 	d = 1.0f / (1.0f + fExp(sharpness * (1.0f - cover - d)));
