@@ -13,8 +13,19 @@ __BEGIN_YAFRAY
 #define RAW_VMAP 3
 
 #define DIFFUSE_RATIO 0.387507688 //1.21739130434782608696 // (28 / 23)
-#define pdfDivisor(cos) ( 8.f * M_PI * (cos * 0.99f + 0.04f) )
-#define ASDivisor(cos1, cosI, cosO) ( 8.f * M_PI * ((cos1 * std::max(cosI, cosO)) * 0.99f + 0.04f) )
+//#define pdfDivisor(cos) ( 8.f * M_PI * (cos * 0.99f + 0.04f) )
+//#define ASDivisor(cos1, cosI, cosO) ( 8.f * M_PI * ((cos1 * std::max(cosI, cosO)) * 0.99f + 0.04f) )
+
+// povman test: convert defines to inline functions
+inline float pdfDivisor(float cos)
+{
+	return 8.f * M_PI * (cos * 0.99f + 0.04f);
+}
+
+inline float ASDivisor(float cos1, float cosI, float cosO)
+{
+	return ( 8.f * M_PI * ((cos1 * std::max(cosI, cosO)) * 0.99f + 0.04f) );
+}
 
 inline void sample_quadrant_aniso(vector3d_t &H, float s1, float s2, float e_u, float e_v)
 {
