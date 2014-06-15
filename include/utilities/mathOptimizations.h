@@ -68,7 +68,8 @@ __BEGIN_YAFRAY
 #define degToRad(deg) (deg * 0.01745329251994329576922)  // deg * PI / 180
 #define radToDeg(rad) (rad * 57.29577951308232087684636) // rad * 180 / PI
 
-//FIXME: All the overloaded double definitions have been added to fix the "white dots" problems and they seem to work fine. However several of them should be refined in the future to include constants with the correct precision for the doubles calculations.
+//FIXME: All the overloaded double definitions have been added to fix the "white dots" problems and they seem to work fine.
+//However several of them should be refined in the future to include constants with the correct precision for the doubles calculations.
 
 #define POLYEXP(x) (float)(x * (x * (x * (x * (x * 1.8775767e-3f + 8.9893397e-3f) + 5.5826318e-2f) + 2.4015361e-1f) + 6.9315308e-1f) + 9.9999994e-1f)
 #define POLYLOG(x) (float)(x * (x * (x * (x * (x * -3.4436006e-2f + 3.1821337e-1f) + -1.2315303f) + 2.5988452) + -3.3241990f) + 3.1157899f)
@@ -125,9 +126,9 @@ inline float asmSqrt(float n)
         fsqrt
         fstp r
     }
-// add explicit case for Clang compilers tested by 'jensverwiebe' & 'Sembei' on OSX x64 using Clang
-// also tested by 'povmaniac' on Ubuntu 12.04 amd64 using Clang
-#elif defined __clang__ 
+// add explicit case for Clang compilers tested by 'jensverwiebe' & 'Sembei' on OSX x64
+// also tested by 'povmaniac' on Ubuntu 12.04 amd64 using Clang 3.5
+#elif defined __clang__
     asm(
         "flds %0;"
         "fsqrt;"
@@ -147,10 +148,10 @@ inline float asmSqrt(float n)
     // this function is non defined, maybe is 'fSqrt' defined in this same file..?,
     // but if fSqrt is used, a recursive flow is created, making on error of 'runtime stackoverflow',
     // because if FAST_MATH is ON, fSqrt call this fuction 'inline float asmSqrt(float n)'
-    // temporary solution: use standar sqrt function declared on math.h. 
+    // temporary solution: use standar sqrt function declared on math.h.
     // TODO: make some test with black & white dots scenes
 
-    r = sqrt(n); // use standar sqrt
+    r = sqrt(n); // atm, is use for MSVC compilers under windows x64
 
 #endif
     return r;
