@@ -37,9 +37,12 @@ public:
 		//TODO: review code..
 		gridFileName = gridfile;
 		inputStream.open(gridFileName.c_str());
-		if(!inputStream) {
+		if(!inputStream)
+		{
 			Y_ERROR << "GridVolume: Error opening input stream" << yendl;
-		} else {
+		}
+		else
+		{
 			Y_INFO << "Processing density file: " << gridFileName.c_str() << yendl;
 		}
 
@@ -130,8 +133,14 @@ protected:
 	std::string gridFileName;
 };
 
-inline float min(float a, float b) { return (a > b) ? b : a; }
-inline float max(float a, float b) { return (a < b) ? b : a; }
+inline float min(float a, float b)
+{
+	return (a > b) ? b : a;
+}
+inline float max(float a, float b)
+{
+	return (a < b) ? b : a;
+}
 
 
 float GridVolume::Density(const point3d_t p)
@@ -190,7 +199,7 @@ VolumeRegion* GridVolume::factory(paraMap_t &params,renderEnvironment_t &render)
 	params.getParam("density_file", densityFile);
 
 	GridVolume *vol = new GridVolume(color_t(sa), color_t(ss), color_t(le), g,
-						point3d_t(min[0], min[1], min[2]), point3d_t(max[0], max[1], max[2]), densityFile);
+	                                 point3d_t(min[0], min[1], min[2]), point3d_t(max[0], max[1], max[2]), densityFile);
 
 	return vol;
 }
