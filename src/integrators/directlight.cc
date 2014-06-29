@@ -148,39 +148,26 @@ colorA_t directLighting_t::integrate(renderState_t &state, diffRay_t &ray) const
             if (usePhotonSSS)
             {
                 col += estimateSSSMaps(state, sp, wo);
+                col += estimateSSSSingleSImportantSampling(state, sp, wo);
                 //col += estimateSSSSingleScattering(state,sp,wo);
                 //col += estimateSSSSingleScatteringPhotons(state,sp,wo);
-                col += estimateSSSSingleSImportantSampling(state, sp, wo);
             }
-
-            //else
-            //{
-                // povman: test for use singlescattering without using  SSS photon maps
-                // first result: some problems with blender 'material' preview, because to very slowly render preview.
-                // not good result with small parts of geometry
-                // col += estimateSSSSingleScattering(state, sp, wo);
-                // more.. testing:
-                //col += estimateSSSSingleScatteringPhotons(state,sp,wo);
-                // first result..Blender crash!!
-
-            //}
-
         }
         // povman: in under function call, alpha values is re-asigned
         // so.. the actual alpha value is ignored?
         recursiveRaytrace(state, ray, bsdfs, sp, wo, col, alpha);
 
-        if(transpRefractedBackground && transpBackground)
+        if(transpRefractedBackground ) //&& transpBackground)
         {
-            //float m_alpha = material->getAlpha(state, sp, wo);
-            //alpha = m_alpha + (1.f - m_alpha) * alpha;
-            // povman review: this code is useless..
+            float m_alpha = material->getAlpha(state, sp, wo);
+            alpha = m_alpha + (1.f - m_alpha) * alpha;
+            /*// povman review: this code is useless..
             // case 1, transpBackground = false, so alpha = 1.0:
             //      m_alpha + (1.f - m_alpha) * alpha = alpha, m_alpha is always ignored...
             // case 2, transpBackground = true, so alpha = 0.0:
             //      m_alpha + (1.f - m_alpha) * alpha = m_alpha, always..
             // only if transpBackground = true, request alpha value from material is used
-            alpha = material->getAlpha(state, sp, wo);
+            alpha = material->getAlpha(state, sp, wo);*/
         }
         else
         {
@@ -262,7 +249,7 @@ integrator_t* directLighting_t::factory(paraMap_t &params, renderEnvironment_t &
     inte->isDirectLight = true;
     inte->sssScale = sScale;
 
-    Y_INFO << "The translucent scale is " << inte->sssScale << yendl;
+    //Y_INFO << "The translucent scale is " << inte->sssScale << yendl;
     // end
     return inte;
 }
