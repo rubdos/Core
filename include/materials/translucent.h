@@ -50,22 +50,24 @@ public:
         color_t glossyC,    //! glossy color
         color_t siga,       //! sigma A color, reference to absorption or subsurface color
         color_t sigs,       //! sigma S color, reference to scatter color
-        float sigs_factor,  //! sigma S factor
-        float ior,          //! index of refraction
-        float _g,           //! phase function
-        float mT,           //! transmittance
-        float mD,           //! diffuse reflect (diffusity)
-        float mG,           //! glossy reflect (glossity)
-        float exp);         //! fressnel exponent
+        float sigs_factor,	//! sigma S factor
+        float ior,         //! index of refraction
+        float _g,          //! phase function
+        float mT,          //! transmittance
+        float mD,          //! diffuse reflect (diffusity)
+        float mG,          //! glossy reflect (glossity)
+        float exp);        //! fressnel exponent
 
     virtual ~translucentMat_t();
 
     virtual void initBSDF(const renderState_t &state, surfacePoint_t &sp, unsigned int &bsdfTypes)const;
 
-    virtual color_t eval(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, const vector3d_t &wl, BSDF_t bsdfs)const;
+    virtual color_t eval(const renderState_t &state, const surfacePoint_t &sp,
+    		const vector3d_t &wo, const vector3d_t &wl, BSDF_t bsdfs)const;
 
     // povman: from material.h
-    virtual color_t sample( const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, vector3d_t &wi, sample_t &s, float &W)const;
+    virtual color_t sample( const renderState_t &state, const surfacePoint_t &sp,
+    		const vector3d_t &wo, vector3d_t &wi, sample_t &s, float &W)const;
 
     /*  UNUSED??
     virtual color_t sample(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo,
@@ -73,7 +75,8 @@ public:
     */
     virtual color_t emit( const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo)const;
 
-    virtual float pdf( const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, const vector3d_t &wi, BSDF_t bsdfs)const;
+    virtual float pdf( const renderState_t &state, const surfacePoint_t &sp,
+    		const vector3d_t &wo, const vector3d_t &wi, BSDF_t bsdfs)const;
     //virtual void getSpecular(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo,
     //                       bool &refl, bool &refr, vector3d_t *const dir, color_t *const col)const;
     static material_t* factory(paraMap_t &params, std::list< paraMap_t > &eparans, renderEnvironment_t &env);

@@ -28,7 +28,7 @@ translucentMat_t::translucentMat_t( color_t diffuseC, color_t specC, color_t glo
                                        diffuseS(0), glossyS(0), glossyRefS(0), bumpS(0), transpS(0), translS(0),
                                        diffuseCol(diffuseC), specRefCol(specC), gloss_color(glossyC), sigma_a(siga),
                                        sigma_s(sigs), sigmaS_Factor(sigs_factor), IOR(ior), g(_g), translucency(mT),
-                                       diffusity(mD), glossity(mG), exponent(exp)
+                                       diffusity(mD), glossity(mG), exponent(exp), pDiffuse(0.0)
 {
 
     cFlags[C_TRANSLUCENT] = (BSDF_TRANSLUCENT);
@@ -106,7 +106,7 @@ color_t translucentMat_t::eval(const renderState_t &state, const surfacePoint_t 
     float Kr, Kt;
     fresnel(wl, N, IOR, Kr, Kt);
 
-    float mR = (1.0f - Kt*dat->mTransl);
+    float mR = (1.0f - Kt * dat->mTransl);
 
     // povman: if glossy_reflect value is > 0.0..
     if(bsdfs & BSDF_GLOSSY)
@@ -116,7 +116,7 @@ color_t translucentMat_t::eval(const renderState_t &state, const surfacePoint_t 
         float glossy;
 
         //glossy = Blinn_D(H*N, exponent) * SchlickFresnel(cos_wi_H, dat->mGlossy) / ASDivisor(cos_wi_H, woN, wiN);
-        glossy = mR*Blinn_D(H*N, exponent) * SchlickFresnel(cos_wi_H, dat->mGlossy) / ASDivisor(cos_wi_H, woN, wiN);
+        glossy = mR * Blinn_D(H*N, exponent) * SchlickFresnel(cos_wi_H, dat->mGlossy) / ASDivisor(cos_wi_H, woN, wiN);
         //-
         col = glossy*(glossyS ? glossyS->getColor(stack) : gloss_color); //col = glossy*gloss_color;
     }
@@ -130,14 +130,15 @@ color_t translucentMat_t::eval(const renderState_t &state, const surfacePoint_t 
     return col;
 }
 
-color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, vector3d_t &wi, sample_t &s, float &W)const
+color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_t &sp,
+		const vector3d_t &wo, vector3d_t &wi, sample_t &samp, float &W)const
 {
     TranslucentData_t *dat = (TranslucentData_t *)state.userdata;
     float cos_Ng_wo = sp.Ng*wo;
     float cos_Ng_wi;
     vector3d_t N = FACE_FORWARD(sp.Ng, sp.N, wo);
     vector3d_t Hs(0.f);
-    s.pdf = 0.f;
+    samp.pdf = 0.f;
     float Kr, Kt;
     float wiN = 0.f , woN = 0.f;
 
@@ -156,7 +157,7 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
     int nMatch = 0, pick = -1;
     for(int i = 0; i < nBSDF; ++i)
     {
-        if((s.flags & cFlags[i]) == cFlags[i])
+        if((samp.flags & cFlags[i]) == cFlags[i])
         {
             use[i] = true;
             width[nMatch] = accumC[i];
@@ -184,7 +185,7 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
         {
             val[i] *= inv_sum;
             width[i] *= inv_sum;
-            if((s.s1 <= val[i]) && (pick < 0)){
+            if((samp.s1 <= val[i]) && (pick < 0)){
                 pick = i;
             }
         }
@@ -195,11 +196,11 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
     float s1;
     if(pick>0)
     {
-        s1 = (s.s1 - val[pick-1]) / width[pick];
+        s1 = (samp.s1 - val[pick-1]) / width[pick];
     }
     else
     {
-        s1 = s.s1 / width[pick];
+        s1 = samp.s1 / width[pick];
     }
 
     color_t scolor(0.f);
@@ -210,15 +211,16 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
 		break;
     case C_GLOSSY:
 		// glossy; compute sampled half-angle vector H for Blinn distribution (microfacet.h)
-		Blinn_Sample(Hs, s1, s.s2, exponent);
+		Blinn_Sample(Hs, s1, samp.s2, exponent);
 		break;
 	case C_DIFFUSE:
         // lambertian
 		default:
 		//! Sample a cosine-weighted hemisphere given the coordinate system built by N, Ru, Rv.(sample_utils.h)
-		wi = SampleCosHemisphere(N, sp.NU, sp.NV, s1, s.s2);
+		wi = SampleCosHemisphere(N, sp.NU, sp.NV, s1, samp.s2);
 		cos_Ng_wi = sp.Ng*wi;
 		if(cos_Ng_wo*cos_Ng_wi < 0) return color_t(0.f);
+		break;
     }
 
     wiN = std::fabs(wi * N);
@@ -231,8 +233,8 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
         //-------------------------------
         if(use[C_GLOSSY])
         {
-            float glossy; //PFLOAT glossy;
-            float cos_wo_H; //PFLOAT cos_wo_H;
+            float glossy;	//PFLOAT glossy;
+            float cos_wo_H;//PFLOAT cos_wo_H;
             if(cIndex[pick] != C_GLOSSY)
             {
                 vector3d_t H = (wi+wo).normalize();
@@ -254,15 +256,11 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
                 if(cos_Ng_wo*cos_Ng_wi < 0) return color_t(0.f);
             }
 
-            wiN = std::fabs(wi * N); // update..?
+            wiN = std::fabs(wi * N);
 
-            { // povman: review this 'no-condition' bracet  ??
-                s.pdf += Blinn_Pdf(Hs.z, cos_wo_H, exponent) * width[rcIndex[C_GLOSSY]];
-                glossy = Blinn_D(Hs.z, exponent) * SchlickFresnel(cos_wo_H, dat->mGlossy) / ASDivisor(cos_wo_H, woN, wiN);
-            } // end ?
-            // povman test: use std float instead defined CFLOAT..
-            // scolor = (CFLOAT)glossy*(1.f-Kt*dat->mTransl)*(glossyS ? glossyS->getColor(stack) : gloss_color);
-            scolor = (float)glossy * (1.f-Kt*dat->mTransl)*(glossyS ? glossyS->getColor(stack) : gloss_color);
+            samp.pdf += Blinn_Pdf(Hs.z, cos_wo_H, exponent) * width[rcIndex[C_GLOSSY]];
+            glossy = Blinn_D(Hs.z, exponent) * SchlickFresnel(cos_wo_H, dat->mGlossy) / ASDivisor(cos_wo_H, woN, wiN);
+            scolor = (float)glossy * (1.f-Kt * dat->mTransl) * (glossyS ? glossyS->getColor(stack) : gloss_color);
         }
         //---------------------------------
         // If 'diffuse reflection' is > 0.0
@@ -270,10 +268,10 @@ color_t translucentMat_t::sample(const renderState_t &state, const surfacePoint_
         if(use[C_DIFFUSE])
         {
             scolor += (1.f-Kt*dat->mTransl)*diffuseReflect(wiN, woN, dat->mGlossy, dat->mDiffuse, (diffuseS ? diffuseS->getColor(stack) : diffuseCol));
-            s.pdf += wiN * width[rcIndex[C_DIFFUSE]];
+            samp.pdf += wiN * width[rcIndex[C_DIFFUSE]];
         }
     }
-    s.sampledFlags = cFlags[cIndex[pick]];
+    samp.sampledFlags = cFlags[cIndex[pick]];
 
     return scolor;
 }

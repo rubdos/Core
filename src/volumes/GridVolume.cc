@@ -80,19 +80,18 @@ public:
 		}
 		int sizePerVoxel = fileSize / (dim[0] * dim[1] * dim[2]);
 
-		Y_INFO << "GridVolume: "<< dim[0] << " " << dim[1] << " " << dim[2] << " " << fileSize << " " << sizePerVoxel << yendl;
+		Y_INFO << "GridVolume: "<< dim[0] <<" "<< dim[1] <<" "<< dim[2] <<" "<< fileSize <<" "<< sizePerVoxel << yendl;
 
 		sizeX = dim[0];
 		sizeY = dim[1];
 		sizeZ = dim[2];
 
-		/** povman: change to sizeof(float*) from sizeof(float) for fix crash on x64 system's.
-		*  atm work fine on Ubuntu 14.04 x64, but is need make more test with others OS
-		*/
-		// TODO:  find an better way for this function..
+		/* povman: change to sizeof(float*) from sizeof(float) for fix crash on x64 system's.
+		 * atm work fine on Ubuntu 14.04 x64, but is need make more test with others OS
+		 */
+		// TODO: find an better way for this function..
 
 		grid = (float***)malloc(sizeX * sizeof(float*));
-		//-
 		for (int x = 0; x < sizeX; ++x)
 		{
 			grid[x] = (float**)malloc(sizeY * sizeof(float*));
@@ -135,7 +134,7 @@ protected:
 	int sizeX, sizeY, sizeZ;
 };
 
-// povman: enlarge volumegrid update
+// test for expand class
 GridVolume::~GridVolume()
 {
 	Y_INFO << "GridVolume: Freeing grid data" << yendl;
@@ -151,15 +150,9 @@ GridVolume::~GridVolume()
 	free(grid);
 }
 
-inline float min(float a, float b)
-{
-	return (a > b) ? b : a;
-}
+inline float min(float a, float b){	return (a > b) ? b : a;}
 
-inline float max(float a, float b)
-{
-	return (a < b) ? b : a;
-}
+inline float max(float a, float b){	return (a < b) ? b : a;}
 
 
 float GridVolume::Density(const point3d_t p)
