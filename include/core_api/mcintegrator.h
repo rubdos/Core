@@ -57,7 +57,7 @@ protected:
 	/*! Estimates SSS photons for a given surface point of one specified objec*/
 	virtual color_t estimateSSSMaps(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo ) const;
 	//
-    virtual color_t estimateSSSSingleScattering(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const;
+    //virtual color_t estimateSSSSingleScattering(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const;
 
 	// povman: used by all integrators: directlight, photonmap and pathtracer
     virtual color_t estimateSSSSingleSImportantSampling(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const;
@@ -66,7 +66,7 @@ protected:
     virtual color_t getTranslucentInScatter(renderState_t& state, ray_t& stepRay, float currentStep) const;
 
 	//uncomment for test in progress
-	virtual color_t estimateSSSSingleScatteringPhotons(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const;
+	//virtual color_t estimateSSSSingleScatteringPhotons(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const;
     // sss end
 
 	int rDepth; //! Ray depth
@@ -110,7 +110,7 @@ protected:
 
 public:
 	// factor of geometry scale ( if 1U != 1m)
-    static float sssScale;
+    float sssScale;
 };
 
 struct TranslucentData_t

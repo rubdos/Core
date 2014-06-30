@@ -484,7 +484,7 @@ inline void mcIntegrator_t::recursiveRaytrace(renderState_t &state, diffRay_t &r
         }
 
         // glossy reflection with recursive raytracing:
-        if( bsdfs & BSDF_GLOSSY && state.raylevel < 20)
+        if( (bsdfs & BSDF_GLOSSY) && state.raylevel < 20)
         {
             state.includeLights = true;
             int gsam = 8;
@@ -584,7 +584,7 @@ inline void mcIntegrator_t::recursiveRaytrace(renderState_t &state, diffRay_t &r
         }
 
         //...perfect specular reflection/refraction with recursive raytracing...
-        if(bsdfs & (BSDF_SPECULAR | BSDF_FILTER) && state.raylevel < 20)
+        if((bsdfs & (BSDF_SPECULAR | BSDF_FILTER)) && state.raylevel < 20)
         {
             state.includeLights = true;
             bool reflect=false, refract=false;
@@ -727,7 +727,7 @@ vector3d_t SamplePhaseFunc(float s1, float s2, float g, const vector3d_t &wi)
 
     if (wi.y < 0)
     {
-        phi = M_2PI - phi; //povman: org. phi = 2*M_PI - phi;
+        phi = M_2PI - phi;
     }
 
     matrix4x4_t transMat = GetTransformMatrix(theta, phi);
@@ -743,16 +743,12 @@ vector3d_t SamplePhaseFunc(float s1, float s2, float g, const vector3d_t &wi)
     }
     //
     sPhi = s2*M_2PI;
-    //sPhi = s2*2*M_PI;
+    //
     matrix4x4_t rotateMat = GetTransformMatrix(sTheta, sPhi);
 
     dir = vector3d_t(0,0,1);
 
     dir = transMat*(rotateMat*dir);
-
-    /* for debug..
-    std::cout << sTheta << "  " << acos(dir*wi) << std::endl;
-    */
 
     return dir;
 }
@@ -934,13 +930,17 @@ bool mcIntegrator_t::createSSSMaps()
 
 */
 
-float mcIntegrator_t::sssScale = 10.f;
+//float mcIntegrator_t::sssScale = 10.f;
 
 //-
 bool mcIntegrator_t::createSSSMapsByPhotonTracing()
 {
-    // init and compute light pdf etc.
+	//for debug messages
+	int debug = 0;
+	//
+	// init and compute light pdf etc.
     ray_t ray;
+    float mciScale = this->sssScale;
     int maxBounces = this->nSSSDepth;
     unsigned int nPhotons=this->nSSSPhotons;
     int numLights = lights.size();
@@ -972,7 +972,10 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
 
     // prepare for shooting photons
     bool done=false;
-    unsigned int curr=0, scatteCount=0, inCount=0, absorbCount=0;
+    unsigned int curr=0; 		// for current while loop...
+    unsigned int scatteCount=0; // for Halton sampling ( unused ?)
+    unsigned int inCount=0;		// for shoot ray count
+    unsigned int absorbCount=0; // for absorption rays ( use only for message info..)
     surfacePoint_t sp1, sp2;
     surfacePoint_t *hit = &sp1;
     surfacePoint_t *hit2 = &sp2;
@@ -982,7 +985,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
 
     while(!done)
     {
-        /* Issue solved in exporter way..*/
+        /* Issue solved in exporter way.. but need review */
         if(scene->getSignals() & Y_SIG_ABORT){
             done = true;
             break; //.. and add break, with done seems don't work
@@ -996,6 +999,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
         //sL = RI_S(curr);
         //sL = float(curr) / float(nPhotons);
         sL = float(inCount) / float(nPhotons);
+        // sL = float(inCount / nPhotons);
         int lightNum = lightPowerD->DSample(sL, &lightNumPdf);
         if(lightNum >= numLights)
         {
@@ -1006,15 +1010,14 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
 
         // shot photon
         color_t pcol = lights[lightNum]->emitPhoton(s1, s2, s3, s4, ray, lightPdf);
-        //color_t pcol_t; //povman: unused?
         ray.tmin = MIN_RAYDIST;
         ray.tmax = -1.0;
-        pcol *= fNumLights*lightPdf/lightNumPdf; //remember that lightPdf is the inverse of th pdf, hence *=...
+        pcol *= fNumLights * lightPdf / lightNumPdf; //remember that lightPdf is the inverse of th pdf, hence *=...
         if(pcol.isBlack())
         {
             ++curr;
             //done = (curr >= nPhotons) ? true : false;
-            done = (inCount >= nPhotons) ? true : false;
+            done = (inCount >= nPhotons) ? true : false; // povman: sure??
             continue;
         }
 
@@ -1023,8 +1026,6 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
         int nBounces=0;
         const material_t *material = 0;
         const volumeHandler_t *vol = 0;
-
-        //bool isRefrectedOut = false;
 
         while( scene->intersect(ray, *hit2) )
         {
@@ -1036,9 +1037,10 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
             color_t transm(1.f);
             color_t vcol;
             // check for volumetric effects
+            // povman: atm don't work
             if(material)
             {
-                if((bsdfs&BSDF_VOLUMETRIC) && (vol=material->getVolumeHandler(hit->Ng * ray.dir < 0)))
+            	if((bsdfs & BSDF_VOLUMETRIC) && (vol=material->getVolumeHandler(hit->Ng * ray.dir < 0)))
                 {
                     vol->transmittance(state, ray, vcol);
                     transm = vcol;
@@ -1052,18 +1054,12 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
             // if the ray intersects with translucent objects.
             if(bsdfs & BSDF_TRANSLUCENT)
             {
-                /* povman: conserve this code for use in debug mode..
-                std::cout << "enter ray = " << curr << "  wi = " << wi  << std::endl;
-                if (isRefrectedOut) {
-                    std::cout << "In  curr=" << curr << "  wi = " << wi << "  N=" << hit->N << " from=" << ray.from << "   pcol=" << pcol << std::endl;
-                    isRefrectedOut = false;
-                }*/
-                /* request user data values from material UI */
-                color_t diffuseC; // diff color
-                color_t sigma_s;  // scatter color
-                color_t sigma_a;  // subsurface(absorption) color
-                float IOR; // index of refraction
-                float _g;  // average phase function
+                // request user data values from material UI
+                color_t diffuseC; 	// diff color
+                color_t sigma_s;  	// scatter color
+                color_t sigma_a;  	// subsurface(absorption) color
+                float IOR; 			// index of refraction
+                float _g;  			// average phase function
                 TranslucentData_t *dat = (TranslucentData_t*)state.userdata;
                 diffuseC = dat->difC;
                 sigma_a = dat->sig_a;
@@ -1076,29 +1072,27 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                 float sig_t_ = sig_a_ + (1.f-_g)*sig_s_;
                 float sig_t_1 = 1.f / sig_t_;
 
-                //Halton hal2(7);
-                //hal2.setStart(curr);
-
                 //std::cout << "random seed " << curr << std::endl;
-                // if photon intersect with SSS material, get the refracted direction and continue to trace this photon.
+                /* if photon intersect with SSS material, get the refracted direction and continue tracing photon.
+                */
                 if( refract(hit->N, wi, wo, IOR) )
                 {
-                    inCount++;
+                    inCount++; // only increment 'inCount' when the ray is refracted ??
                     if (inCount % pbStep == 0) pb->update();
 
                     const object3d_t* refObj = hit->object;
-                    bool refracOut = false;
+                    bool refracOut = false; // pero suponemos que es refractado hacia el interior..
                     //bool isStored = false;
 
                     // get the refracte try
                     float sc1 = ourRandom();//hal2.getNext();
                     float sc2, sc3;
-                    float scatteDist = -1.f*log(1-sc1)*sig_t_1/sssScale;
+                    float scatteDist = -1.f*log(1-sc1)*sig_t_1/mciScale;
                     //float scatteDist = 1.f/(sig_t_1*sssScale);
                     vector3d_t sdir = wo;
                     ray.from = hit->P;
                     ray.dir = wo;
-                    ray.tmin = MIN_RAYDIST/sssScale;
+                    ray.tmin = MIN_RAYDIST/mciScale;
                     ray.tmax = scatteDist;
                     // scatter point
                     point3d_t scattePt = ray.from + scatteDist*ray.dir;
@@ -1109,8 +1103,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                     np.sourcePos = scattePt;
                     np.sourceDepth = cosWo*scatteDist;
 
-                    //std::cout << "cosWo = " << cosWo << " scatterDist = " << scatteDist << "  depth = " << np.sourceDepth << std::endl;
-
+                    //
                     if(refObj)
                     {
                         //std::cout << curr <<" bounces:" << nBounces << std::endl;
@@ -1131,91 +1124,57 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                             SSSMaps[refObj] = sssPhotonMap;
                         }
                     }
-                    //std::cout << "first refracted = "<< curr <<"  wi = "<< wi <<"  N="<< hit->N <<" wo="<< wo <<"   pcol="<< pcol << std::endl;
+                    // use this value or set the max of scattering bounces before break 'while' loop..
+                    // TODO: review 'what make ' after last bounce,...
                     int scatNum = 0;
-                    while (!(refracOut = scene->intersect(ray, *hit2)))
+                    while (!(refracOut = scene->intersect(ray, *hit2))) // mientras sea refraction interior..
                     {
-                        //std::cout << "ray = "<< curr <<"  ray.dir = "<< ray.dir <<"  from="<< ray.from <<"  scatteDist="<< ray.tmax << std::endl;
                         // compute scatter point
                         point3d_t scattePt = ray.from + scatteDist * ray.dir;
-                        //pcol_t = pcol; // povman: unused ??.. comment for test
-                        pcol *= fExp(-1*sig_t_*scatteDist*sssScale); // power attenuation
+                        pcol *= fExp(-1 * sig_t_ * scatteDist * mciScale); // power attenuation
 
+                        // if color energy is under the limit, while break
                         if (pcol.energy() < 1e-6)  break;
 
-                        // roulette whether scatter or absorb
+                        // use russian roulette whether scatter or absorb
                         float s = ourRandom();
                         if (  s < sig_a_ * sig_t_1 )
                         {
-                            // absorbed, then break
-                            // std::cout << "absorbed" << std::endl;
+                            // is absorbed, add to absorbCount and break 'while'
                             absorbCount++;
                             break;
                         }
                         else
                         {
-                            /* povman: code comment by author....
-                            // scattered
-                            // store photon
-                            //std::cout << "scattered " << s << " " <<sig_a_*sig_t_1 << std::endl;
-                            //if (!isStored) {
-                                // store photon here
-                                //photon_t np(ray.dir, scattePt, pcol);
-
-                                float cosWo = ray.dir*(-1.f*hit->N);
-                                photon_t np(wi, hit->P, pcol_t);
-                                np.hitNormal = hit->N;
-                                np.sourcePos = scattePt;
-                                np.sourceDepth = cosWo*scatteDist;
-
-                                //std::cout << "cosWo = " << cosWo << " scatterDist = " << scatteDist << "  depth = " << np.sourceDepth << std::endl;
-
-                                if(refObj)
-                                {
-                                    //std::cout << curr <<" bounces:" << nBounces << std::endl;
-                                    std::map<const object3d_t*, photonMap_t*>::iterator it = SSSMaps.find(refObj);
-                                    if(it!=SSSMaps.end()){
-                                        // exist SSSMap for this object
-                                        SSSMaps[refObj]->pushPhoton(np);
-                                        SSSMaps[refObj]->setNumPaths(curr);
-                                    }
-                                    else {
-                                        // need create a new SSSMap for this object
-                                        //std::cout << "new translucent is " << bsdfs << "   " << hitObj << std::endl;
-                                        photonMap_t* sssMap_t = new photonMap_t();
-                                        sssMap_t->pushPhoton(np);
-                                        sssMap_t->setNumPaths(curr);
-                                        SSSMaps[refObj] = sssMap_t;
-                                    }
-                                }
-                                isStored = true;
-
-                                //break;
-                            }*/
-
                             // get the scatter direction
-                            sc2 = ourRandom(); // scrHalton(2, scatteCount);
-                            sc3 = ourRandom(); // scrHalton(3, scatteCount);
-                            //sdir = SampleSphere(sc2,sc3);
+                        	// use 'ourRandom' method, instead 'scrHalton'
+                            sc2 = ourRandom();
+                            sc3 = ourRandom();
                             sdir = SamplePhaseFunc(sc2, sc3, _g, ray.dir);
 
-                            sc1 = ourRandom(); // hal2.getNext();
-                            scatteDist = -1.f * log(1-sc1) * sig_t_1 / sssScale;
+                            sc1 = ourRandom();
+                            scatteDist = -1.f * log(1-sc1) * sig_t_1 / mciScale;
                             ray.from = scattePt;
                             ray.dir = sdir;
-                            ray.tmin = MIN_RAYDIST/sssScale;
+                            ray.tmin = MIN_RAYDIST/mciScale;
                             ray.tmax = scatteDist;
 
-                            scatteCount++;
+                            scatteCount++; // unused..
+                            // povman: test for break while using 'maxBounces' value
                             scatNum++;
-                            //if (scatNum >= nBounces) {
-                            //  break;
-                            //}
+                            if (scatNum >= maxBounces)
+                            {
+                            	break;
+                            	Y_INFO <<"Break scattering bounces.."<< yendl;
+                            }
                         }
                     }
                     //- compute Outside refraction
                     if (refracOut)
                     {
+                    	// povman test; its working..? yes.. always!
+                    	debug++;
+                    	if (debug == 1) Y_INFO << "DEBUG MODE: Inside refract outside." << yendl;
                         //std::cout <<"ray = "<< curr <<"  ray.dir = "<< ray.dir <<"  from="<< ray.from <<"  scatteDist="<< ray.tmax << std::endl;
                         // compute new direction and
                         std::swap(hit, hit2);
@@ -1232,10 +1191,10 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                             vector3d_t lastTransmit = hit->P - ray.from;
                             scatteDist = lastTransmit.length();
 
-                            pcol *= fExp(-1 * sig_t_ * scatteDist * sssScale);
+                            pcol *= fExp(-1 * sig_t_ * scatteDist * mciScale);
                             ray.from = hit->P;
                             ray.dir = wo;
-                            ray.tmin = MIN_RAYDIST/sssScale;
+                            ray.tmin = MIN_RAYDIST/mciScale;
                             ray.tmax = -1.0;
                             ++nBounces;
                             //if (!isStored) {
@@ -1262,16 +1221,13 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                     break;
                 }
             }
-            if (isDirectLight)
-            {
-                break;
-            }
+            if (isDirectLight) break;
 
             // need to break in the middle otherwise we scatter the photon and then discard it => redundant
             if(nBounces == maxBounces) break;
             // scatter photon
             int d5 = 3*nBounces + 5;
-            //int d6 = d5 + 1;
+            //use Halton if dim MUST NOT be larger than 50!*/
             if(d5 + 2 <= 50)
             {
                 s5 = scrHalton(d5, curr);
@@ -1285,8 +1241,10 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                 s7 = ourRandom();
             }
             pSample_t sample(s5, s6, s7, BSDF_ALL, pcol, transm);
-            bool scattered = material->scatterPhoton(state, *hit, wi, wo, sample); //povman: material.cc line 29.. or blend.cc line 359 ??
-            if(!scattered) break; //photon was absorped.
+            //bool scattered = material->scatterPhoton(state, *hit, wi, wo, sample);
+            //if(!scattered) break; //photon was absorped.
+            // povman: refine code proposal..
+            if(!material->scatterPhoton(state, *hit, wi, wo, sample)) break;
 
             //std::cout << curr << " not translucent objects:" << std::endl;
 
@@ -1296,7 +1254,8 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
             ray.tmin = MIN_RAYDIST;
             ray.tmax = -1.0;
             ++nBounces;
-        }
+        } // end while
+
         ++curr;
         //if(curr % pbStep == 0) pb->update();
         //done = (curr >= nPhotons) ? true : false;
@@ -1305,6 +1264,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
     }
     pb->done();
     pb->setTag("SSS photon map built.");
+    Y_INFO << integratorName << ": Done." << yendl;
     Y_INFO << integratorName <<": Shooting ["<< inCount <<"] SSS photons, absorbed ["<< absorbCount <<"]"<< yendl;
     delete lightPowerD;
     if(!intpb) delete pb;
@@ -1324,7 +1284,8 @@ void mcIntegrator_t::destorySSSMaps()
     SSSMaps.clear();
 }
 
-color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3d_t &wo, float IOR, float g, const color_t &sigmaS, const color_t &sigmaA )
+color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3d_t &wo,
+		float IOR, float g, const color_t &sigmaS, const color_t &sigmaA, float mciScale )
 {
     //pov: remember even, here is inside a loop
 
@@ -1343,7 +1304,7 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
     const vector3d_t No = sp.N;
     const vector3d_t Ni = inPhoton.hitNormal;
 
-    float gamma = acosf(dot(No, Ni));
+    float rGamma = acosf(dot(No, Ni));// change for collision name with gamma function
 
     float cosWiN = wi*Ni;
 
@@ -1352,10 +1313,8 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
     fresnel(wo, No, IOR, Kr_o, Kt_o);
 
     vector3d_t v = inPhoton.pos - sp.P;
-    // povman test
-    static float mcScale = mcIntegrator_t::sssScale;
-    // end
-    float r  = v.length()* mcScale; //mcIntegrator_t::sssScale;
+
+    float r  = v.length()* mciScale;
 
     /* Reduced scattering coefficient */
     color_t sig_s_ = (1.f - g)* sigmaS;
@@ -1370,9 +1329,9 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
     color_t sig_tr = colorSqrt(3 * sigmaA * sig_t_);
 
     /* the z-coordinates of the real source relative to the surface */
-    color_t z_r = 1.f / sig_t_ / mcScale ; //mcIntegrator_t::sssScale;
+    color_t z_r = 1.f / sig_t_ / mciScale;
 
-    /* Diffuse Fresnel reflectance */
+    /* Fresnel Diffuse reflectance */
     float Fdr;
     // povman: optimized Fdr from Egan et al[1973]paper, based on IOR ratio values
     if (IOR < 1.0)
@@ -1382,7 +1341,7 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
     else
     {
         // optimize with 'distributive property', by 'agedito'
-        //Fdr = -1.4399f /(IOR*IOR)+ 0.7099f /IOR + 0.6681f + 0.0636f * IOR;
+        // Fdr = -1.4399f /(IOR*IOR)+ 0.7099f /IOR + 0.6681f + 0.0636f * IOR;
         // http://en.wikipedia.org/wiki/Distributive_property
         Fdr = (-1.4399 / IOR + 0.7099) / IOR + 0.6681 + 0.0636 * IOR;
     }
@@ -1424,29 +1383,29 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
         refDir *= -1.f;
     }
 
-    point3d_t mInPosR = inPhoton.pos + 2*(((sp.P-inPhoton.pos)*refDir+0.66666667f*A/sig_t_.R/mcScale)*refDir);
-    point3d_t mInPosG = inPhoton.pos + 2*(((sp.P-inPhoton.pos)*refDir+0.66666667f*A/sig_t_.G/mcScale)*refDir);
-    point3d_t mInPosB = inPhoton.pos + 2*(((sp.P-inPhoton.pos)*refDir+0.66666667f*A/sig_t_.B/mcScale)*refDir);
+    point3d_t mInPosR = inPhoton.pos + 2*(((sp.P-inPhoton.pos)*refDir+0.66666667f*A/sig_t_.R/mciScale)*refDir);
+    point3d_t mInPosG = inPhoton.pos + 2*(((sp.P-inPhoton.pos)*refDir+0.66666667f*A/sig_t_.G/mciScale)*refDir);
+    point3d_t mInPosB = inPhoton.pos + 2*(((sp.P-inPhoton.pos)*refDir+0.66666667f*A/sig_t_.B/mciScale)*refDir);
 
     color_t mr;
-    mr.R = (sp.P-mInPosR).length()*mcScale;
-    mr.G = (sp.P-mInPosG).length()*mcScale;
-    mr.B = (sp.P-mInPosB).length()*mcScale;
+    mr.R = (sp.P-mInPosR).length()*mciScale;
+    mr.G = (sp.P-mInPosG).length()*mciScale;
+    mr.B = (sp.P-mInPosB).length()*mciScale;
 
     vector3d_t iToOR = ((sp.P-rSourcePosR)*refDir)*refDir;
     vector3d_t iToOG = ((sp.P-rSourcePosG)*refDir)*refDir;
     vector3d_t iToOB = ((sp.P-rSourcePosB)*refDir)*refDir;
 
     color_t xr;
-    xr.R = iToOR.length()* mcScale;
-    xr.G = iToOG.length()* mcScale;
-    xr.B = iToOB.length()* mcScale;
+    xr.R = iToOR.length()* mciScale;
+    xr.G = iToOG.length()* mciScale;
+    xr.B = iToOB.length()* mciScale;
 
     color_t xv = xr + 1.333333333f*A/sig_t_;
 
     /**/
-    z_r = z_r * mcScale;
-    z_v = z_v * mcScale;
+    z_r = z_r * mciScale;
+    z_v = z_v * mciScale;
 
     /* are the distances to each source from a point on the surface */
     color_t dr = colorSqrt(r*r + z_r*z_r);
@@ -1465,7 +1424,7 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
     rd *= (real + vir);
 
     /* Paper[1], Equation[6]
-     * M_1_PI_8 is equal to 0.125 * (1 / PI)
+     * M_1_PI_8 is the result of 0.125 * (1 / PI)
      */
     qd = z_r * (1 + sig_tr * dr) * colorExp(-1 * sig_tr * dr)* M_1_PI_8 /(dr * dr * dr) +
          z_v * (1 + sig_tr * dv) * colorExp(-1 * sig_tr * dv)* M_1_PI_8 /(dv * dv * dv) +
@@ -1479,9 +1438,9 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
 
     thickness += z_r;
 
-    thickness.R += fabs((sp.P - rSourcePosR)*No)* mcScale;
-    thickness.G += fabs((sp.P - rSourcePosG)*No)* mcScale;
-    thickness.B += fabs((sp.P - rSourcePosB)*No)* mcScale;
+    thickness.R += fabs((sp.P - rSourcePosR)*No)* mciScale;
+    thickness.G += fabs((sp.P - rSourcePosG)*No)* mciScale;
+    thickness.B += fabs((sp.P - rSourcePosB)*No)* mciScale;
 
     for (int i=-1*m_n; i<=m_n; i++)
     {
@@ -1500,15 +1459,15 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
     /* Equation[15], solved based in gamma value.
        where 'rd' is for dipole, 'qd' is for quadpole, and 'rm' for multipole.
     */
-    if (gamma <= M_PI_2 && gamma >=0) // ( 0 to 1.57)
+    if (rGamma <= M_PI_2 && rGamma >=0) // ( 0 to 1.57)
     {
-        result += M_2_PI*(M_PI_2-gamma)*rd;
-        result += M_2_PI*gamma*qd;
+        result += M_2_PI*(M_PI_2-rGamma)*rd;
+        result += M_2_PI*rGamma*qd;
     }
-    else if ( gamma > M_PI_2 && gamma <= M_PI ) // (1.57 to 3.14)
+    else if ( rGamma > M_PI_2 && rGamma <= M_PI ) // (1.57 to 3.14)
     {
-        result += M_2_PI*(M_PI - gamma)*qd;
-        result += M_2_PI*(gamma - M_PI_2)*rm;
+        result += M_2_PI*(M_PI - rGamma)*qd;
+        result += M_2_PI*(rGamma - M_PI_2)*rm;
     }
     else //(>> 3.14)
     {
@@ -1537,7 +1496,7 @@ color_t mcIntegrator_t::estimateSSSMaps(renderState_t &state, surfacePoint_t &sp
     it = SSSMaps.begin();
     while (it!=SSSMaps.end())
     {
-        photonSum += it->second->nPhotons(); // seems died here??
+        photonSum += it->second->nPhotons();
         it++;
     }
     */
@@ -1563,18 +1522,14 @@ color_t mcIntegrator_t::estimateSSSMaps(renderState_t &state, surfacePoint_t &sp
     // sum all photon in translucent object
     std::vector<const photon_t*> photons;
     sssPhotonMap->getAllPhotons(sp.P, photons);
+    //
+    float mciScale = sssScale;
 
     for (unsigned int i=0; i<photons.size(); i++)
     {
-        //sum += dipole(*photons[i],sp,wo,IOR,0.f,sigma_s,sigma_a);
-        //sum += dipole2(*photons[i],sp,wo,IOR,0.f,sigma_s,sigma_a);
-        //sum += dipole3(*photons[i],sp,wo,IOR,0.f,sigma_s,sigma_a);
-        //sum += dipoleAdnQuadpole(*photons[i],sp,wo,IOR,0.f,sigma_s,sigma_a);
-        //sum += dipoleAdnQuadpole2(*photons[i],sp,wo,IOR,0.f,sigma_s,sigma_a);
-        sum += RdQdRm(*photons[i], sp, wo, IOR, phaseAngle, sigma_s, sigma_a);
-
+        sum += RdQdRm(*photons[i], sp, wo, IOR, phaseAngle, sigma_s, sigma_a, mciScale);
     }
-    sum *= sssScale*sssScale/((float)sssPhotonMap->nPaths());
+    sum *= mciScale*mciScale/((float)sssPhotonMap->nPaths());
     sum *= diffuseC;
     sum *= mTransl;
 
@@ -1582,11 +1537,11 @@ color_t mcIntegrator_t::estimateSSSMaps(renderState_t &state, surfacePoint_t &sp
 
     return sum;
 }
-//-
+/*
 color_t mcIntegrator_t::estimateSSSSingleScattering(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const
 {
     //-----------------------------
-    // atm, this function is wip..
+    // atm, this function is unused
     //-----------------------------
 
     float stepSize = 0.1f/sssScale;
@@ -1686,12 +1641,12 @@ color_t mcIntegrator_t::estimateSSSSingleScattering(renderState_t &state, surfac
 
     return singleS;
 }
-
+*/
 //-
 color_t mcIntegrator_t::estimateSSSSingleSImportantSampling(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const
 {
     //------------------------------------------------
-    // use for directlight, photonmap and pathtracing.
+    // use for all scattering integrators modes.
     //------------------------------------------------
     //float stepSize = 0.1f/sssScale;
     int scatterSamples = this->nSingleScatterSamples;
@@ -1704,8 +1659,6 @@ color_t mcIntegrator_t::estimateSSSSingleSImportantSampling(renderState_t &state
     }
 
     float t0 = 1e10f, t1 = -1e10f;
-    //  std::cout << "entry point is " << sp.P << std::endl;
-    //  std::cout << "dir  is " << -1*wo << std::endl;
 
     // get the material data
     void *o_udat = state.userdata;
@@ -1791,14 +1744,6 @@ color_t mcIntegrator_t::estimateSSSSingleSImportantSampling(renderState_t &state
     color_t trTmp(1.f);
     color_t stepTau(0.f);
 
-    /* for debug..
-    if ((state.pixelNumber == 223580) || (state.pixelNumber == 223600) )
-    {
-        std::cout << state.pixelNumber << std::endl;
-        std::cout << "Normal = " << sp.N << std::endl;
-    }
-    */
-
     for (int stepSample = 0; stepSample < scatterSamples; stepSample++)
     {
         currentStep = stepSizes[stepSample];
@@ -1859,8 +1804,6 @@ color_t mcIntegrator_t::getTranslucentInScatter(renderState_t& state, ray_t& ste
         {
             if( (*liter)->illuminate(sp, lcol, lightRay) )
             {
-                //std::cout <<"\t\t the light ray is from "<< lightRay.from <<"  dir = "<< lightRay.dir << std::endl;
-
                 // get the exit point;
                 outRay.from = sp.P;
                 outRay.dir = lightRay.dir;
@@ -1870,8 +1813,6 @@ color_t mcIntegrator_t::getTranslucentInScatter(renderState_t& state, ray_t& ste
                 {
                     continue;
                 }
-                // get the material infomation
-
                 BSDF_t bsdfs;
                 const material_t *material = outHit.material;
                 material->initBSDF(state, outHit, bsdfs);
@@ -1892,8 +1833,6 @@ color_t mcIntegrator_t::getTranslucentInScatter(renderState_t& state, ray_t& ste
                 float Kr_i, Kt_i;
                 fresnel(outRay.dir, outHit.N, IOR, Kr_i, Kt_i);
 
-                //std::cout <<"\t\t the light ray hit point is "<< outHit.P <<" and real dist = "<< (exitP - sp.P).length() <<"  approximation = " << dist << std::endl;
-
                 // ...shadowed...
                 lightRay.from = exitP;
                 lightRay.tmin = YAF_SHADOW_BIAS; // < better add some _smart_ self-bias value...this is bad.
@@ -1909,11 +1848,7 @@ color_t mcIntegrator_t::getTranslucentInScatter(renderState_t& state, ray_t& ste
 
                     lightTr = colorExp(-1*lightstepTau);
 
-                    //std::cout << "\t\t tau = " << lightstepTau << " and light tau = " << lightTr << std::endl;//
-
                     inScatter += (lightTr * lcol * diffuseC * Kt_i) * phaseFunc(lightRay.dir, -1*stepRay.dir, _g);
-
-                    //std::cout << "\t\t lcol = " << lcol << " contribute= " << (lightTr * lcol * Kt_i) << std::endl;
                 }
             }
         } // end if diractLight
@@ -1936,8 +1871,6 @@ color_t mcIntegrator_t::getTranslucentInScatter(renderState_t& state, ray_t& ste
 
                 if((*liter)->illumSample(sp, ls, lightRay))
                 {
-                    //if ( state.pixelNumber == 489949 )
-                    //  std::cout << "\t sample " << i << " lightRay.tmax = " << lightRay.tmax << std::endl;
                     // get the exit point;
                     outRay.from = sp.P;
                     outRay.dir = lightRay.dir;
@@ -1961,12 +1894,13 @@ color_t mcIntegrator_t::getTranslucentInScatter(renderState_t& state, ray_t& ste
                     sigma_a = dat->sig_a;           // absorption
                     sigma_s = dat->sig_s;           // scattering
                     sigma_t = sigma_s + sigma_a;    // extincion coeficient
-                    IOR = dat->IOR;
-                    _g = dat->g;
+                    IOR = dat->IOR;					// index of refraction
+                    _g = dat->g;					// average phase function
 
                     point3d_t exitP = outHit.P;
                     //float cosWi = fabs(outHit.N*outRay.dir);
-                    float dist = (exitP - sp.P).length();//*cosWi/sqrtf((1.f-(1.f/(float)IOR)*(1.f/(float)IOR))*(1-cosWi*cosWi));
+                    float dist = (exitP - sp.P).length();
+                    //*cosWi/sqrtf((1.f-(1.f/(float)IOR)*(1.f/(float)IOR))*(1-cosWi*cosWi));
 
                     float Kr_i, Kt_i;
                     fresnel(outRay.dir, outHit.N, IOR, Kr_i, Kt_i);
@@ -1978,15 +1912,11 @@ color_t mcIntegrator_t::getTranslucentInScatter(renderState_t& state, ray_t& ste
                     if (lightRay.tmax < 0.f) lightRay.tmax = 1e10; // infinitely distant light
                     bool shadowed = scene->isShadowed(state, lightRay);
 
-                    /* for debug..
-                     * std::cout << "sample " << i << " isshadowed = " << shadowed << std::endl;
-                     * if ( state.pixelNumber == 489949 ) std::cout << "dist = " << dist << "   kt_i=" << Kt_i << std::endl;
-                     */
                     if(!shadowed)
                     {
                         ccol += ls.col / ls.pdf;
                         color_t lightstepTau = sigma_t * dist * sssScale;
-                        lightTr += colorExp(-1*lightstepTau)*Kt_i*phaseFunc(lightRay.dir, -1*stepRay.dir, _g);;
+                        lightTr += colorExp(-1 * lightstepTau) * Kt_i * phaseFunc(lightRay.dir, -1 * stepRay.dir, _g);;
                     }
                 }
             } // end of area light sample loop
@@ -1998,13 +1928,12 @@ color_t mcIntegrator_t::getTranslucentInScatter(renderState_t& state, ray_t& ste
     }
     inScatter *= phaseFunc(lightRay.dir, -1*stepRay.dir, _g);
 
-    //inScatter *= 30.f;
     state.userdata = o_udat;
     return inScatter;
 }
 
-//-uncomment for test on progress
 
+/*
 color_t mcIntegrator_t::estimateSSSSingleScatteringPhotons(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const
 {
     //-----------------------------
@@ -2160,5 +2089,5 @@ color_t mcIntegrator_t::estimateSSSSingleScatteringPhotons(renderState_t &state,
 
     return singleS;
 }
-
+*/
 __END_YAFRAY

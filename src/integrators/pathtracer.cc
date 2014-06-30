@@ -293,7 +293,7 @@ colorA_t pathIntegrator_t::integrate(renderState_t &state, diffRay_t &ray/*, sam
                         if(vol->transmittance(state, pRay, vcol)) throughput *= vcol;
                     }
 
-                    if (matBSDFs & BSDF_EMIT && caustic) lcol += p_mat->emit(state, *hit, pwo);
+                    if (matBSDFs & (BSDF_EMIT && caustic)) lcol += p_mat->emit(state, *hit, pwo);
 
                     pathCol += lcol*throughput;
                 }
