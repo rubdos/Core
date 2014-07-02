@@ -281,10 +281,11 @@ color_t translucentMat_t::emit(const renderState_t &state, const surfacePoint_t 
     return color_t(0.f);
 }
 
-float translucentMat_t::pdf(const renderState_t &state, const surfacePoint_t &sp, const vector3d_t &wo, const vector3d_t &wi, BSDF_t bsdfs)const
+float translucentMat_t::pdf(const renderState_t &state, const surfacePoint_t &sp,
+		const vector3d_t &wo, const vector3d_t &wi, BSDF_t bsdfs)const
 {
     TranslucentData_t *dat = (TranslucentData_t *)state.userdata;
-    if( ((sp.Ng * wo)*(sp.Ng * wi)) < 0.f ) return 0.f;
+    if( ((sp.Ng * wo) * (sp.Ng * wi)) < 0.f ) return 0.f;
     //-
     vector3d_t N = FACE_FORWARD(sp.Ng, sp.N, wo);
     float pdf = 0.f;
@@ -293,9 +294,9 @@ float translucentMat_t::pdf(const renderState_t &state, const surfacePoint_t &sp
     fresnel(wi, N, IOR, Kr, Kt);
 
     float accumC[3], sum=0.f, width;
-    accumC[0] = Kt*dat->mTransl;
-    accumC[1] = (1.f - Kt*dat->mTransl)*(1.f - dat->pDiffuse);
-    accumC[2] = (1.f - Kt*dat->mTransl)*(dat->pDiffuse);
+    accumC[0] = Kt * dat->mTransl;
+    accumC[1] = (1.f - Kt * dat->mTransl) * (1.f - dat->pDiffuse);
+    accumC[2] = (1.f - Kt * dat->mTransl) * (dat->pDiffuse);
 
     int nMatch=0;
     for(int i=0; i<nBSDF; ++i)
@@ -306,14 +307,14 @@ float translucentMat_t::pdf(const renderState_t &state, const surfacePoint_t &sp
             sum += width;
             if(i == C_GLOSSY)
             {
-                vector3d_t H = (wi+wo).normalize();
-                PFLOAT cos_wo_H = wo*H;
-                PFLOAT cos_N_H = N*H;
+                vector3d_t H = (wi + wo).normalize();
+                PFLOAT cos_wo_H = wo * H;
+                PFLOAT cos_N_H = N * H;
                 pdf += Blinn_Pdf(cos_N_H, cos_wo_H, exponent) * width;
             }
             else if(i == C_DIFFUSE)
             {
-                pdf += std::fabs(wi*N) * width;
+                pdf += std::fabs(wi * N) * width;
             }
             ++nMatch;
         }
