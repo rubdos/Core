@@ -144,7 +144,7 @@ env(e), showMask(showSamMask), tileSize(tSize), tilesOrder(tOrder), premultAlpha
 		case LANCZOS: ffunc = Lanczos2; break;
 		case GAUSS: ffunc = Gauss; filterw *= 2.f; break;
 		case BOX:
-		default:	ffunc = Box;
+		default:	ffunc = Box; break;
 	}
 
 	filterw = std::min(std::max(0.501f, filterw), 0.5f * MAX_FILTER_SIZE); // filter needs to cover at least the area of one pixel and no more than MAX_FILTER_SIZE/2
@@ -209,6 +209,7 @@ void imageFilm_t::initDepthMap()
 	if(!depthMap) depthMap = new gray2DImage_t(w, h);
 	else depthMap->clear();
 }
+
 void imageFilm_t::nextPass(bool adaptive_AA, std::string integratorName)
 {
 	int n_resample=0;
