@@ -596,7 +596,7 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 			}
 
 			// gather caustics photons
-			if(bsdfs & BSDF_DIFFUSE && causticMap.ready())
+			if((bsdfs & BSDF_DIFFUSE) && causticMap.ready())
 			{
 
 				radius2 = hp.radius2; //reset radius2 & nGathered
