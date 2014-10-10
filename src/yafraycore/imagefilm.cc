@@ -351,7 +351,7 @@ void imageFilm_t::finishArea(renderArea_t &a)
 			col.clampRGB0();
 
 			if(correctGamma) col.gammaAdjust(gamma);
-
+			// pov: review this code. Used in lines-> 420, 599, 124. Atm, premultAlpha is always ON?
 			if(premultAlpha) col.alphaPremultiply();
 
 			if(depthMap)

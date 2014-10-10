@@ -197,12 +197,6 @@ bool photonIntegrator_t::preprocess()
 	bool done=false;
 	unsigned int curr=0;
 
-	// for SSS.. unused?
-	//unsigned int scatteCount=0, inCount=0, absorbCount=0;
-	//surfacePoint_t sp1, sp2;
-	//surfacePoint_t *hit = &sp1, *hit2 = &sp2;
-	// end
-
 	// for radiance map:
 	preGatherData_t pgdat(&diffuseMap);
 
