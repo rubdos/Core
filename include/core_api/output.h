@@ -31,12 +31,12 @@ __BEGIN_YAFRAY
 
 class colorOutput_t
 {
-	public:
-		virtual ~colorOutput_t() {};
-		virtual bool putPixel(int x, int y, const float *c, bool alpha = true, bool depth = false, float z = 0.f)=0;
-		virtual void flush()=0;
-		virtual void flushArea(int x0, int y0, int x1, int y1)=0;
-		virtual void highliteArea(int x0, int y0, int x1, int y1){};
+public:
+	virtual ~colorOutput_t() {};
+	virtual bool putPixel(int x, int y, const float *c, bool alpha = true, bool depth = false, float z = 0.f)=0;
+	virtual void flush()=0;
+	virtual void flushArea(int x0, int y0, int x1, int y1)=0;
+	virtual void highliteArea(int x0, int y0, int x1, int y1){};
 };
 
 __END_YAFRAY
