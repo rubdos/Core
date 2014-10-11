@@ -60,9 +60,18 @@ __BEGIN_YAFRAY
 #define M_1_2PI     0.15915494309189533577 // 1 / (2 * PI)
 #define M_4_PI      1.27323954473516268615 // 4 / PI
 #define M_4_PI2     0.40528473456935108578 // 4 / PI ^ 2
-/* povman add */
+/* povman add for Autodesk plugins*/
 #define M_1_PI_4    0.07957747154594766788 //4441881686257 /* 1/(pi/4) */
 #define M_1_PI_8    0.03978873577297383394 //2220940843129 /* 1/(pi/8) */
+#if !defined(M_PI_2)
+#define M_PI_2		1.57079632679489661923  /* pi/2 */
+#endif
+#if !defined(M_PI)
+#define M_PI		3.14159265358979323846  /* pi */
+#endif
+#if !defined(M_1_PI)
+#define M_1_PI		0.31830988618379067154	/* 1/pi */
+#endif
 /* end */
 
 #define degToRad(deg) (deg * 0.01745329251994329576922)  // deg * PI / 180
@@ -118,8 +127,9 @@ inline float fLog2(float x)
 inline float asmSqrt(float n)
 {
     float r = n;
+
 // refine flags because x64 don't accept __asm, tested by 'paultron' on win7 x64 using MSVS 2013
-#if defined(_MSC_VER) && defined(_WIN32)
+#if defined(_MSC_VER) && !defined(_WIN64)
     __asm
     {
         fld r
