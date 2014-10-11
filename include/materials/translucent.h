@@ -21,7 +21,7 @@
 #ifndef TRANSLUCENT_H_
 #define TRANSLUCENT_H_
 
- // test review includes
+// test review includes
 #include <yafray_config.h>
 #include <yafraycore/nodematerial.h>
 #include <core_api/environment.h>
@@ -49,14 +49,14 @@ public:
         color_t specC,      //! specular color
         color_t glossyC,    //! glossy color
         color_t siga,       //! sigma A color, reference to absorption or subsurface color
-        color_t sigs,       //! sigma S color, reference to scatter color
+        color_t sigs,		//! sigma S color, reference to scatter color
         float sigs_factor,	//! sigma S factor
-        float ior,         //! index of refraction
-        float _g,          //! phase function
-        float mT,          //! transmittance
-        float mD,          //! diffuse reflect (diffusity)
-        float mG,          //! glossy reflect (glossity)
-        float exp);        //! fressnel exponent
+        float ior,			//! index of refraction
+        float _g,			//! phase function
+        float mT,			//! transmittance
+        float mD,			//! diffuse reflect (diffusity)
+        float mG,			//! glossy reflect (glossity)
+        float exp);			//! fressnel exponent
 
     virtual ~translucentMat_t();
 
