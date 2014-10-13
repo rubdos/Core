@@ -39,8 +39,9 @@ class GridVolume : public DensityVolume
 {
 public:
 
-	GridVolume(color_t sa, color_t ss, color_t le, float gg, point3d_t pmin, point3d_t pmax, std::string gridfile)
-	{
+	GridVolume(color_t sa, color_t ss, color_t le, float gg, point3d_t pmin, point3d_t pmax, int attgr, std::string gridfile)
+		: DensityVolume(sa, ss, le, gg, pmin, pmax, attgr) {
+		//-
 		bBox = bound_t(pmin, pmax);
 		s_a = sa;
 		s_s = ss;
@@ -53,13 +54,13 @@ public:
 		std::ifstream inputStream;
 
 		inputStream.open(gridfile.c_str());
-		if(!inputStream)
+		if (!inputStream)
 		{
-			Y_ERROR << "GridVolume: Error opening input stream" << yendl;
+			Y_ERROR << "GridVolume: Error opening density file" << yendl;
 		}
 		else
 		{
-			Y_INFO << "Processing density file: " << gridfile.c_str() << yendl;
+			Y_INFO << "GridVolume: Processing density file: " << gridfile.c_str() << yendl;
 		}
 
 		inputStream.seekg(0, std::ios_base::beg);
@@ -86,10 +87,9 @@ public:
 		sizeY = dim[1];
 		sizeZ = dim[2];
 
-		/* povman: change to sizeof(float*) from sizeof(float) for fix crash on x64 system's.
-		 * atm work fine on Ubuntu 14.04 x64, but is need make more test with others OS
-		 */
-		// TODO: find an better way for this function..
+		// povman: change to sizeof(float*) from sizeof(float) for fix crash on x64 system's.
+		// Test OK on Ubuntu 14.04 x64 and win7 x64..
+		// TODO: test with others OS's
 
 		grid = (float***)malloc(sizeX * sizeof(float*));
 		for (int x = 0; x < sizeX; ++x)
@@ -111,12 +111,12 @@ public:
 					int voxel = 0;
 					inputStream.read( (char*)&voxel, 1 );
 					grid[x][y][z] = voxel / 255.f;
-					/* povman: code commented by author..
-					float r = sizeX / 2.f;
-					float r2 = r*r;
-					float dist = sqrt((x-r)*(x-r) + (y-r)*(y-r) + (z-r)*(z-r));
-					grid[x][y][z] = (dist < r) ? 1.f-dist/r : 0.0f;
-					*/
+
+					// povman: distance based function (code commented by author..)
+					//float r = sizeX / 2.f;
+					//float r2 = r*r;
+					//float dist = sqrt((x-r)*(x-r) + (y-r)*(y-r) + (z-r)*(z-r));
+					//grid[x][y][z] = (dist < r) ? 1.f-dist/r : 0.0f;
 				}
 			}
 		}
@@ -195,6 +195,7 @@ VolumeRegion* GridVolume::factory(paraMap_t &params, renderEnvironment_t &render
 	float min[] = {0, 0, 0};
 	float max[] = {0, 0, 0};
 	std::string densityFile; // = NULL;
+	int attSc = 1;
 
 	params.getParam("sigma_s", ss);
 	params.getParam("sigma_a", sa);
@@ -206,10 +207,16 @@ VolumeRegion* GridVolume::factory(paraMap_t &params, renderEnvironment_t &render
 	params.getParam("maxX", max[0]);
 	params.getParam("maxY", max[1]);
 	params.getParam("maxZ", max[2]);
+	params.getParam("attgridScale", attSc);
+
 	params.getParam("density_file", densityFile);
 
-	GridVolume *vol = new GridVolume(color_t(sa), color_t(ss), color_t(le), g,
-	                                 point3d_t(min[0], min[1], min[2]), point3d_t(max[0], max[1], max[2]), densityFile);
+	GridVolume *vol = new GridVolume(
+		color_t(sa), color_t(ss), color_t(le), g,
+	    point3d_t(min[0], min[1], min[2]), 
+		point3d_t(max[0], max[1], max[2]),
+		attSc,
+		densityFile);
 
 	return vol;
 }
