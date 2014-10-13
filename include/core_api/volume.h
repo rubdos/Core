@@ -74,10 +74,11 @@ class YAFRAYCORE_EXPORT VolumeRegion {
 	bool haveS_a, haveS_s, haveL_e;
 	float g;
 	// TODO: add transform for BB
+	std::string gridFile;
 };
 
 class YAFRAYCORE_EXPORT DensityVolume : public VolumeRegion {
-	public:
+public:
 	DensityVolume() {}
 	DensityVolume(color_t sa, color_t ss, color_t le, float gg, point3d_t pmin, point3d_t pmax, int attgridScale) :
 		VolumeRegion(sa, ss, le, gg, pmin, pmax, attgridScale) {}
