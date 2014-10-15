@@ -72,6 +72,7 @@ int main(int argc, char *argv[])
 	parse.setOption("v","version", true, "Displays this program's version.");
 	parse.setOption("h","help", true, "Displays this help text.");
 	parse.setOption("op","output-path", false, "Uses the path in <value> as rendered image output path.");
+	parse.setOption("o","output-file", false, "Uses the path in <value> as rendered image output filename.");
 	parse.setOption("f","format", false, "Sets the output image format, available formats are:\n\n" + formatString + "\n                                       Default: tga.\n");
 	parse.setOption("t","threads", false, "Overrides threads setting on the XML file, for auto selection use -1.");
 	parse.setOption("a","with-alpha", true, "Enables saving the image with alpha channel.");
@@ -105,6 +106,7 @@ int main(int argc, char *argv[])
 	bool alpha = parse.getFlag("a");
 	std::string format = parse.getOptionString("f");
 	std::string outputPath = parse.getOptionString("op");
+	std::string outputFilename = parse.getOptionString("o");
 	int threads = parse.getOptionInteger("t");
 	bool drawparams = parse.getFlag("dp");
 	bool nodrawparams = parse.getFlag("ndp");
@@ -133,7 +135,11 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 	
-	std::string outName = "yafray." + format;
+    std::string outName;
+    if(outputFilename.empty())
+        outName = "yafray." + format;
+    else
+        outName = outputFilename;
 	
 	if(files.size() > 1) outName = files[1] + "." + format;
 	
