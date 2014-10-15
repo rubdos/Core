@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 	cliParser_t parse(argc, argv, 2, 1, "You need to set at least a yafaray's valid XML file.");
 
 	parse.setAppName(xmlLoaderVersion,
-	"[OPTIONS]... <input xml file> [output filename]\n<input xml file> : A valid yafaray XML file\n[output filename] : The filename of the rendered image without extension.\n*Note: If output filename is ommited the name \"yafaray\" will be used instead.");
+		"[OPTIONS]... <input xml file> [output filename]\n<input xml file> : A valid yafaray XML file\n[output filename] : The filename of the rendered image without extension.\n*Note: If output filename is ommited the name \"yafaray\" will be used instead.");
 
 	parse.setOption("pp", "plugin-path", false, "Path to load plugins.");
 	parse.setOption("vl", "verbosity-level", false, "Set verbosity level, options are:\n                                       0 - MUTE (Prints nothing)\n                                       1 - ERROR (Prints only errors)\n                                       2 - WARNING (Prints only errors and warnings)\n                                       3 - INFO (Prints all messages)\n");
@@ -145,11 +145,15 @@ int main(int argc, char *argv[])
 		outName = outputFilename + "." + format;
 	}
 	
-    std::string outName;
-    if(outputFilename.empty())
-        outName = "yafray." + format;
-    else
-        outName = outputFilename;
+	std::string outName;
+	if (outputFilename.empty())
+	{
+		outName = "yafray." + format;
+	}
+	else
+	{
+		outName = outputFilename + "." + format;
+	}
 	
 	if(files.size() > 1) outName = files[1] + "." + format;
 	
