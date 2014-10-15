@@ -16,7 +16,7 @@
  *  Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
- #include <yafray_config.h>
+#include <yafray_config.h>
 
 #include <core_api/ray.h>
 #include <core_api/color.h>
@@ -40,7 +40,8 @@ class GridVolume : public DensityVolume
 public:
 
 	GridVolume(color_t sa, color_t ss, color_t le, float gg, point3d_t pmin, point3d_t pmax, int attgr, std::string gridfile)
-		: DensityVolume(sa, ss, le, gg, pmin, pmax, attgr) {
+		: DensityVolume(sa, ss, le, gg, pmin, pmax, attgr)
+	{
 		//-
 		bBox = bound_t(pmin, pmax);
 		s_a = sa;
@@ -74,24 +75,24 @@ public:
 		for (int i = 0; i < 3; ++i)
 		{
 			short i0 = 0, i1 = 0;
-			inputStream.read( (char*)&i0, 1 );
-			inputStream.read( (char*)&i1, 1 );
+			inputStream.read((char*)&i0, 1);
+			inputStream.read((char*)&i1, 1);
 			Y_INFO << "GridVolume: " << i0 << " " << i1 << yendl;
 			dim[i] = (((unsigned short)i0 << 8) | (unsigned short)i1);
 		}
 		int sizePerVoxel = fileSize / (dim[0] * dim[1] * dim[2]);
 
-		Y_INFO << "GridVolume: "<< dim[0] <<" "<< dim[1] <<" "<< dim[2] <<" "<< fileSize <<" "<< sizePerVoxel << yendl;
+		Y_INFO << "GridVolume: " << dim[0] << " " << dim[1] << " " << dim[2] << " " << fileSize << " " << sizePerVoxel << yendl;
 
 		sizeX = dim[0];
 		sizeY = dim[1];
 		sizeZ = dim[2];
 
 		// povman: change to sizeof(float*) from sizeof(float) for fix crash on x64 system's.
-		// Test OK on Ubuntu 14.04 x64 and win7 x64..
-		// TODO: test with others OS's
+		// Tested on Ubuntu 14.04 x64 and win7 x64.. TODO: test with others OS's		
 
 		grid = (float***)malloc(sizeX * sizeof(float*));
+
 		for (int x = 0; x < sizeX; ++x)
 		{
 			grid[x] = (float**)malloc(sizeY * sizeof(float*));
@@ -101,7 +102,7 @@ public:
 				grid[x][y] = (float*)malloc(sizeZ * sizeof(float*));
 			}
 		}
-		//--
+		//-
 		for (int z = 0; z < sizeZ; ++z)
 		{
 			for (int y = 0; y < sizeY; ++y)
@@ -109,14 +110,8 @@ public:
 				for (int x = 0; x < sizeX; ++x)
 				{
 					int voxel = 0;
-					inputStream.read( (char*)&voxel, 1 );
+					inputStream.read((char*)&voxel, 1);
 					grid[x][y][z] = voxel / 255.f;
-
-					// povman: distance based function (code commented by author..)
-					//float r = sizeX / 2.f;
-					//float r2 = r*r;
-					//float dist = sqrt((x-r)*(x-r) + (y-r)*(y-r) + (z-r)*(z-r));
-					//grid[x][y][z] = (dist < r) ? 1.f-dist/r : 0.0f;
 				}
 			}
 		}
@@ -134,7 +129,7 @@ protected:
 	int sizeX, sizeY, sizeZ;
 };
 
-// test for expand class
+// destructor
 GridVolume::~GridVolume()
 {
 	Y_INFO << "GridVolume: Freeing grid data" << yendl;
@@ -150,9 +145,9 @@ GridVolume::~GridVolume()
 	free(grid);
 }
 
-inline float min(float a, float b){	return (a > b) ? b : a;}
+inline float min(float a, float b){ return (a > b) ? b : a; }
 
-inline float max(float a, float b){	return (a < b) ? b : a;}
+inline float max(float a, float b){ return (a < b) ? b : a; }
 
 
 float GridVolume::Density(const point3d_t p)
@@ -173,10 +168,10 @@ float GridVolume::Density(const point3d_t p)
 	float yd = y - y0;
 	float zd = z - z0;
 
-	float i1 = grid[x0][y0][z0] * (1-zd) + grid[x0][y0][z1] * zd;
-	float i2 = grid[x0][y1][z0] * (1-zd) + grid[x0][y1][z1] * zd;
-	float j1 = grid[x1][y0][z0] * (1-zd) + grid[x1][y0][z1] * zd;
-	float j2 = grid[x1][y1][z0] * (1-zd) + grid[x1][y1][z1] * zd;
+	float i1 = grid[x0][y0][z0] * (1 - zd) + grid[x0][y0][z1] * zd;
+	float i2 = grid[x0][y1][z0] * (1 - zd) + grid[x0][y1][z1] * zd;
+	float j1 = grid[x1][y0][z0] * (1 - zd) + grid[x1][y0][z1] * zd;
+	float j2 = grid[x1][y1][z0] * (1 - zd) + grid[x1][y1][z1] * zd;
 
 	float w1 = i1 * (1 - yd) + i2 * yd;
 	float w2 = j1 * (1 - yd) + j2 * yd;
@@ -192,8 +187,8 @@ VolumeRegion* GridVolume::factory(paraMap_t &params, renderEnvironment_t &render
 	float sa = .1f;
 	float le = .0f;
 	float g = .0f;
-	float min[] = {0, 0, 0};
-	float max[] = {0, 0, 0};
+	float min[] = { 0, 0, 0 };
+	float max[] = { 0, 0, 0 };
 	std::string densityFile; // = NULL;
 	int attSc = 1;
 
@@ -213,7 +208,7 @@ VolumeRegion* GridVolume::factory(paraMap_t &params, renderEnvironment_t &render
 
 	GridVolume *vol = new GridVolume(
 		color_t(sa), color_t(ss), color_t(le), g,
-	    point3d_t(min[0], min[1], min[2]), 
+		point3d_t(min[0], min[1], min[2]),
 		point3d_t(max[0], max[1], max[2]),
 		attSc,
 		densityFile);
