@@ -506,7 +506,7 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 		}
 
 		BSDF_t bsdfs;
-		vector3d_t N_nobump = sp.N; //UNUSED!!
+		//vector3d_t N_nobump = sp.N; //UNUSED!!
 		vector3d_t wo = -ray.dir;
 		const material_t *material = sp.material;
 		material->initBSDF(state, sp, bsdfs);
@@ -811,9 +811,11 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 		--state.raylevel;
 
 		//povman: refine code
-        if(transpRefractedBackground && transpBackground)
+
+        if(transpRefractedBackground)
 		{
-			alpha = material->getAlpha(state, sp, wo);
+			CFLOAT m_alpha = material->getAlpha(state, sp, wo);
+			alpha = m_alpha + (1.f-m_alpha)*alpha;
 		}
         else alpha = 1.0;
 
