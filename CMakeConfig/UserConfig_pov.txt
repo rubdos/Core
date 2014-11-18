@@ -47,7 +47,7 @@ set(WITH_XML_LOADER ON)
 
 # Enable Qt Gui build. Default: ON
 
-set(WITH_QT ON)
+set(WITH_QT OFF)
 
 #------------------------------------------------------------------------------#
 # Options for some languages bindings
@@ -83,7 +83,7 @@ if(WITH_QT)
 	# Embed font for QT GUI (useful for some buggy QT installations)
 	set(EMBED_FONT_QT ON)
 	# Path to qmake executable. Need for QT interface, unused on Blender exporter.
-	set(YAF_USER_QT_BIN_DIR "C:/apps/Qt/4.8.4/bin")
+	#set(YAF_USER_QT_BIN_DIR "C:/apps/Qt/4.8.4/bin")
 endif()
 
 #------------------------------------------------------------------------------#
@@ -191,6 +191,9 @@ endif(MINGW)
 # set(USER_RELEASE_OPTIMIZATION_FLAGS "-O3 -ffast-math")
 # set(USER_DEBUG_OPTIMIZATION_FLAGS "-ggdb")
 #------------------------------------------------------------------------------#
+if(UNIX)
+	set(USER_RELEASE_OPTIMIZATION_FLAGS "-O3 -ffast-math -m64 -msse -msse2 -msse3")
+endif()
 # UPDATE: This is an specialized paret for OSX systems builds using Clang x64
 
 if(APPLE)
@@ -222,11 +225,11 @@ endif(APPLE)
 # Here you can set the paths to search for executables, you can leave blank
 # the ones you don't need.
 # Path to swig executable. Module from CMakeModules is use for search path
-if(WITH_YAF_PY_BINDINGS OR WITH_YAF_RUBY_BINDINGS)
+#if(WITH_YAF_PY_BINDINGS OR WITH_YAF_RUBY_BINDINGS)
 
-	set(YAF_USER_SWIG_BIN_DIR "C:/devs/swigwin30")
+#	set(YAF_USER_SWIG_BIN_DIR "C:/devs/swigwin30")
 	
-endif()
+#endif()
 
 #------------------------------------------------------------------------------#
 # EXTRA LINKING VARIABLES
@@ -254,9 +257,9 @@ endif()
 #------------------------------------------------------------------------------#
 # Use this variable to set extra defines that your build might require
 #------------------------------------------------------------------------------#
-
-set(YAF_USER_EXTRA_DEFS "-DOPENEXR_DLL -DMS_WIN64")
-
+if(WIN32)
+	set(YAF_USER_EXTRA_DEFS "-DOPENEXR_DLL")
+endif()
 #------------------------------------------------------------------------------#
 # REQUIRED PYTHON VERSIONS
 #------------------------------------------------------------------------------#
