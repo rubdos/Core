@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------#
-# UserConfig Template File for MSVC 2012 on Win 7 x64
+# UserConfig Template File for MSVC 2013 on Win 7 x64
 #------------------------------------------------------------------------------#
 # Copy this file as UserConfig.txt inside this directory to configure the
 # options and paths for your build.
@@ -19,7 +19,7 @@ set(YAF_USER_CONFIG ON)
 # wrapper on windows platforms.
 # NOTE: This option is ignored on *nix platforms. Default: OFF
 
-set(WITH_Pthreads OFF)
+set(WITH_Pthreads ON)
 
 # Build font rendering with FreeType. Default: ON
 
@@ -47,7 +47,7 @@ set(WITH_XML_LOADER ON)
 
 # Enable Qt Gui build. Default: ON
 
-set(WITH_QT ON)
+set(WITH_QT OFF)
 
 #------------------------------------------------------------------------------#
 # Options for some languages bindings
@@ -83,7 +83,7 @@ if(WITH_QT)
 	# Embed font for QT GUI (useful for some buggy QT installations)
 	set(EMBED_FONT_QT ON)
 	# Path to qmake executable. Need for QT interface, unused on Blender exporter.
-	set(YAF_USER_QT_BIN_DIR "C:/apps/Qt/4.8.4/bin")
+	set(YAF_USER_QT_BIN_DIR "C:/apps/Qt/4.7.1/bin")
 endif()
 
 #------------------------------------------------------------------------------#
@@ -97,7 +97,9 @@ endif()
 # Define intermediate folder for binaries inside the building folder.
 #------------------------------------------------------------------------------#
 set(USER_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/thebounty")
-set(CMAKE_INSTALL_PREFIX ${USER_INSTALL_PREFIX})
+#------------------------------------------------------------------------------#
+# Define folder for include inside yaf_revision.h, generated from Cmake
+set(CMAKE_INSTALL_PREFIX "$ENV{BOUNTY_ROOT}" ) #${USER_INSTALL_PREFIX})
 
 #------------------------------------------------------------------------------#
 # THE EXECUTABLES INSTALATION DIR
@@ -150,25 +152,27 @@ if(WITH_YAF_RUBY_BINDINGS)
 endif()
 
 #------------------------------------------------------------------------------#
-# USER INCLUDES AND LIBRARIES DIR PATHS
+# USER INCLUDES AND LIBRARIES DIR PATHS 
 #------------------------------------------------------------------------------#
 # More than one path can be set separated by spaces ie.
 # set(YAF_USER_INCLUDE_DIRS C:/include D:/mydev/include)
 if(MSVC)
 	# atm used for Autodesk exporters. Not need Python bindings.
-	set(DEPS C:/devs/deps/vc2012)
-	set(INC "${DEPS}/include")
-	set(LIBS "${DEPS}/lib")
+	set(DEPS C:/devs/deps/vc2013)
+	set(INC "${DEPS}/includes")
+	set(LIBS "${DEPS}/libs")
+	set(PYPATH "$ENV{PYTHONPATH}")
 	
 	set(YAF_USER_INCLUDE_DIRS 
 		"${INC}"
 		"${INC}/OpenEXR"
 		"${INC}/libxml2"
-		"${INC}/freetype"
-		"${INC}/python3.4")
+		"${INC}/freetype2"
+		"${PYTPATH}/include")
 		
 	set(YAF_USER_LIBRARY_DIRS 
-		"${LIBS}")
+		"${LIBS}"
+		"${PYTPATH}/libs")
 endif()
 
 if(MINGW)
@@ -297,7 +301,7 @@ endif()
 #------------------------------------------------------------------------------#
 # OPTIONS FOR CODE SPEED UP
 #------------------------------------------------------------------------------#
-# Options for building YafaRay with mathematical functions approximantions
+# Options for make builds with fast mathematical functions approximantions
 # Default: ON
 
 #set(FAST_MATH OFF)
