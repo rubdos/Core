@@ -32,7 +32,7 @@
 #endif
 
 // povman: for sss. TODO: need test
-#include <core_api/object3d.h>
+//#include <core_api/object3d.h>
 #include <core_api/primitive.h>
 // end
 
@@ -99,20 +99,21 @@ inline color_t mcIntegrator_t::doLightEstimation(renderState_t &state, light_t *
     }
     else // area light and suchlike
     {
-        Halton hal2(2);
-        Halton hal3(3);
-        int n = light->nSamples();
-        if(state.rayDivision > 1) n = std::max(1, n/state.rayDivision);
-        float invNS = 1.f / (float)n;
-        unsigned int offs = n * state.pixelSample + state.samplingOffs + l_offs;
-        bool canIntersect=light->canIntersect();
-        color_t ccol(0.0);
-        lSample_t ls;
+		Halton hal2(2);
+		Halton hal3(3);
+		// amount of samples from light options
+		int lnSamples = light->nSamples();
+		if (state.rayDivision > 1) lnSamples = std::max(1, lnSamples / state.rayDivision);
+		float invNS = 1.f / (float)lnSamples;
+		unsigned int offs = lnSamples * state.pixelSample + state.samplingOffs + l_offs;
+		bool canIntersect = light->canIntersect();
+		color_t ccol(0.0);
+		lSample_t ls;
 
         hal2.setStart(offs-1);
         hal3.setStart(offs-1);
 
-        for(int i=0; i<n; ++i)
+		for (int i = 0; i < lnSamples; ++i)
         {
             // ...get sample val...
             ls.s1 = hal2.getNext();
@@ -159,7 +160,7 @@ inline color_t mcIntegrator_t::doLightEstimation(renderState_t &state, light_t *
             hal2.setStart(offs-1);
             hal3.setStart(offs-1);
 
-            for(int i=0; i<n; ++i)
+            for(int i=0; i < lnSamples; ++i)
             {
                 ray_t bRay;
                 bRay.tmin = MIN_RAYDIST;

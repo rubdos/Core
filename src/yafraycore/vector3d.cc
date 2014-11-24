@@ -25,33 +25,33 @@
 
 __BEGIN_YAFRAY
 
-std::ostream & operator << (std::ostream &out,const vector3d_t &v)
+std::ostream & operator << (std::ostream &out, const vector3d_t &v)
 {
-	out<<"("<<v.x<<","<<v.y<<","<<v.z<<")";
+	out << "(" << v.x << "," << v.y << "," << v.z << ")";
 	return out;
 }
 
 
-std::ostream & operator << (std::ostream &out,const point3d_t &p)
+std::ostream & operator << (std::ostream &out, const point3d_t &p)
 {
-	out<<"("<<p.x<<","<<p.y<<","<<p.z<<")";
+	out << "(" << p.x << "," << p.y << "," << p.z << ")";
 	return out;
 }
 
 
-bool  operator == ( const vector3d_t &a,const vector3d_t &b)
+bool  operator == (const vector3d_t &a, const vector3d_t &b)
 {
-	if(a.x!=b.x) return false;
-	if(a.y!=b.y) return false;
-	if(a.z!=b.z) return false;
+	if (a.x != b.x) return false;
+	if (a.y != b.y) return false;
+	if (a.z != b.z) return false;
 	return true;
 }
 
-bool  operator != ( const vector3d_t &a,const vector3d_t &b)
+bool  operator != (const vector3d_t &a, const vector3d_t &b)
 {
-	if(a.x!=b.x) return true;
-	if(a.y!=b.y) return true;
-	if(a.z!=b.z) return true;
+	if (a.x != b.x) return true;
+	if (a.y != b.y) return true;
+	if (a.z != b.z) return true;
 	return false;
 }
 
@@ -83,15 +83,15 @@ bool  operator != ( const vector3d_t &a,const vector3d_t &b)
 				medium in which n points. E.g. "outside" is air, "inside" is water, the normal points outside,
 				IOR = eta_air / eta_water = 1.33
 */
-bool refract(const vector3d_t &n,const vector3d_t &wi, vector3d_t &wo, float IOR)
+bool refract(const vector3d_t &n, const vector3d_t &wi, vector3d_t &wo, float IOR)
 {
 	vector3d_t N=n,I,T;
 	float eta=IOR;
-	I=-wi;
+	I = -wi;
 	float cos_v_n = wi*n;
 	if((cos_v_n)<0)
 	{
-		N=-n;
+		N = -n;
 		cos_v_n = -cos_v_n;
 	}
 	else
@@ -112,44 +112,46 @@ void fresnel(const vector3d_t & I, const vector3d_t & n, float IOR, float &Kr, f
 	PFLOAT eta;
 	vector3d_t N;
 
-	if((I*n)<0) {
+	if ((I*n) < 0) {
 		//eta=1.0/IOR;
-		eta=IOR;
-		N=-n;
-	} else {
-		eta=IOR;
-		N=n;
+		eta = IOR;
+		N = -n;
+	}
+	else {
+		eta = IOR;
+		N = n;
 	}
 	PFLOAT c=I*N;
 	PFLOAT g = eta * eta + c * c - 1;
-    if(g <= 0){
-		g=0;
-    } else {
+	if (g <= 0){
+		g = 0;
+	}
+	else {
 		g = fSqrt(g);
-    }
-    //
-	PFLOAT aux=c*(g+c);
+	}
+	//
+	PFLOAT aux = c*(g + c);
 
-	Kr=( ( 0.5*(g-c)*(g-c) )/( (g+c)*(g+c) ) ) *
-        ( 1+ ((aux-1)*(aux-1))/( (aux+1)*(aux+1) ) );
-    //-
-    if(Kr<1.0){
-		Kt=1-Kr;
-    } else {
-		Kt=0;
-    }
+	Kr = ((0.5*(g - c)*(g - c)) / ((g + c)*(g + c))) *	(1 + ((aux - 1)*(aux - 1)) / ((aux + 1)*(aux + 1)));
+	//-
+	if (Kr < 1.0){
+		Kt = 1 - Kr;
+	}
+	else {
+		Kt = 0;
+	}
 }
 
 
 // 'Faster' Schlick fresnel approximation,
 void fast_fresnel(const vector3d_t & I, const vector3d_t & n, PFLOAT IORF,
-		CFLOAT &Kr, CFLOAT &Kt)
+	CFLOAT &Kr, CFLOAT &Kt)
 {
 	PFLOAT t = 1 - (I*n);
 	//t = (t<0)?0:((t>1)?1:t);
 	PFLOAT t2 = t*t;
 	Kr = IORF + (1 - IORF) * t2*t2*t;
-	Kt = 1-Kr;
+	Kt = 1 - Kr;
 }
 
 // P.Shirley's concentric disk algorithm, maps square to disk
