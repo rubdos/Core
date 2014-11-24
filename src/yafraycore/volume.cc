@@ -1,3 +1,19 @@
+/*****************************************************************************
+*	This library is free software; you can redistribute it and / or
+*   modify it under the terms of the GNU Lesser General Public
+*   License as published by the Free Software Foundation; either
+*   version 2.1 of the License, or(at your option) any later version.
+*
+*   This library is distributed in the hope that it will be useful,
+*	but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the GNU
+*   Lesser General Public License for more details.
+*
+*   You should have received a copy of the GNU Lesser General Public
+*   License along with this library; if not, write to the Free Software
+*   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111 - 1307 USA
+*/ 
+
 #include <core_api/volume.h>
 #include <core_api/ray.h>
 #include <core_api/color.h>
@@ -28,14 +44,13 @@ color_t DensityVolume::tau(const ray_t &ray, float stepSize, float offset)
 
 		color_t tauPrev(0.f);
 
-		bool adaptive = false;
+		bool adaptive = false; //(*)
 
 		while (pos < t1)
 		{
 			color_t tauTmp = sigma_t(ray.from + (ray.dir * pos), ray.dir);
 
-
-			if (adaptive)
+			if (adaptive) // povman: review this part... seems always 'false' (*)
 			{
 
 				float epsilon = 0.01f;
