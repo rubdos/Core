@@ -27,6 +27,9 @@
 #include "renderwidget.h"
 #include "events.h"
 #include <iostream>
+#if _MSC_VER == 1800
+#include <algorithm>
+#endif
 
 /*=====================================
 /	RenderWidget implementation

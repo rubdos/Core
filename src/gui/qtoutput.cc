@@ -24,6 +24,9 @@
 #include <QtCore/QCoreApplication>
 #include <iostream>
 #include <cstdlib>
+#if _MSC_VER == 1800
+#include <algorithm>
+#endif
 
 QtOutput::QtOutput(RenderWidget *render): renderBuffer(render)
 {
