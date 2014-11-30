@@ -134,16 +134,6 @@ int main(int argc, char *argv[])
 	{
 		return 0;
 	}
-
-	std::string outName;
-	if (outputFilename.empty())
-	{
-		outName = "yafray." + format;
-	}
-	else
-	{
-		outName = outputFilename + "." + format;
-	}
 	
 	std::string outName;
 	if (outputFilename.empty())

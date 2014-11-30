@@ -27,8 +27,8 @@
 #include <iostream>
 #include <utilities/mathOptimizations.h>
 
-using std::isinf;
-using std::isnan;
+//using std::isinf;
+//using std::isnan;
 
 #define COLOR_SIZE 3
 
