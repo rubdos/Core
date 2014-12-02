@@ -145,16 +145,6 @@ int main(int argc, char *argv[])
 		outName = outputFilename + "." + format;
 	}
 	
-	std::string outName;
-	if (outputFilename.empty())
-	{
-		outName = "yafray." + format;
-	}
-	else
-	{
-		outName = outputFilename + "." + format;
-	}
-	
 	if(files.size() > 1) outName = files[1] + "." + format;
 	
 	std::string xmlFile = files[0];
