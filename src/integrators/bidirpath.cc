@@ -250,7 +250,7 @@ colorA_t biDirIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) cons
         }
 
         // do bidir evalulation
-        // povman TODO: investigate this part. See papers and other implementation examples
+        // povman TODO: investigate about this part. See papers and other implementation examples
 
         //#if _DO_LIGHTIMAGE
         // povman: add 'do_lightImage' UI option here for evaluate
@@ -259,21 +259,24 @@ colorA_t biDirIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) cons
         // TEST! create a light image (t == 1)
         for(int s=2; s<=nLight; ++s)
         {
-            clear_path(pathData.path, s, 1);
-            if(!connectPathE(state, s, pathData)) continue;
-            check_path(pathData.path, s, 1);
-            CFLOAT wt = pathWeight(state, s, 1, pathData);
-            if(wt > 0.f)
+            // TEST! create a light image (t == 1)
+            for(int s=2; s<=nLight; ++s)
             {
-                color_t li_col = evalPathE(state, s, pathData);
-                if(li_col.isBlack()) continue;
-                PFLOAT ix, idx, iy, idy;
-                idx = std::modf(pathData.u, &ix);
-                idy = std::modf(pathData.v, &iy);
-                lightImage->addDensitySample(li_col, ix, iy, idx, idy);
+                clear_path(pathData.path, s, 1);
+                if(!connectPathE(state, s, pathData)) continue;
+                check_path(pathData.path, s, 1);
+                CFLOAT wt = pathWeight(state, s, 1, pathData);
+                if(wt > 0.f)
+                {
+                    color_t li_col = evalPathE(state, s, pathData);
+                    if(li_col.isBlack()) continue;
+                    PFLOAT ix, idx, iy, idy;
+                    idx = std::modf(pathData.u, &ix);
+                    idy = std::modf(pathData.v, &iy);
+                    lightImage->addDensitySample(li_col, ix, iy, idx, idy);
 
+                }
             }
-        }
         }
         //#endif
 
@@ -301,7 +304,7 @@ colorA_t biDirIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) cons
             color_t dcol;
             clear_path(pathData.path, 1, t);
             // will be overwritten from connectLPath...
-            bool o_singularL = pathData.singularL; 
+            bool o_singularL = pathData.singularL;
             float o_pdf_illum = pathData.pdf_illum;
             float o_pdf_emit = pathData.pdf_emit;
             //-
@@ -683,7 +686,7 @@ CFLOAT biDirIntegrator_t::pathWeight(renderState_t &state, int s, int t, pathDat
 
 //#if !(_DO_LIGHTIMAGE)
     if(!do_lightImage){
-    p[k] = 0.f; // cannot intersect camera yet...
+        p[k] = 0.f; // cannot intersect camera yet...
     }
 //#endif
     // treat specular scatter events.
@@ -756,7 +759,7 @@ CFLOAT biDirIntegrator_t::pathWeight_0t(renderState_t &state, int t, pathData_t 
 
 //#if !(_DO_LIGHTIMAGE)
     if (!do_lightImage){
-    p[k] = 0.f; // cannot intersect camera yet...
+        p[k] = 0.f; // cannot intersect camera yet...
     }
 //#endif
     // treat specular scatter events.
