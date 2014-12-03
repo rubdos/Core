@@ -254,32 +254,27 @@ colorA_t biDirIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) cons
 
         //#if _DO_LIGHTIMAGE
         // povman: add 'do_lightImage' UI option here for evaluate
-        if (do_lightImage)
-        {
-        // TEST! create a light image (t == 1)
-        for(int s=2; s<=nLight; ++s)
-        {
-            // TEST! create a light image (t == 1)
-            for(int s=2; s<=nLight; ++s)
-            {
-                clear_path(pathData.path, s, 1);
-                if(!connectPathE(state, s, pathData)) continue;
-                check_path(pathData.path, s, 1);
-                CFLOAT wt = pathWeight(state, s, 1, pathData);
-                if(wt > 0.f)
-                {
-                    color_t li_col = evalPathE(state, s, pathData);
-                    if(li_col.isBlack()) continue;
-                    PFLOAT ix, idx, iy, idy;
-                    idx = std::modf(pathData.u, &ix);
-                    idy = std::modf(pathData.v, &iy);
-                    lightImage->addDensitySample(li_col, ix, iy, idx, idy);
-
-                }
-            }
-        }
-        //#endif
-
+		if (do_lightImage)
+		{
+			// TEST! create a light image (t == 1)
+			for (int s = 2; s <= nLight; ++s)
+			{
+				clear_path(pathData.path, s, 1);
+				if (!connectPathE(state, s, pathData)) continue;
+				check_path(pathData.path, s, 1);
+				CFLOAT wt = pathWeight(state, s, 1, pathData);
+				if (wt > 0.f)
+				{
+					color_t li_col = evalPathE(state, s, pathData);
+					if (li_col.isBlack()) continue;
+					PFLOAT ix, idx, iy, idy;
+					idx = std::modf(pathData.u, &ix);
+					idy = std::modf(pathData.v, &iy);
+					lightImage->addDensitySample(li_col, ix, iy, idx, idy);
+				}				
+			}
+			//#endif
+		}
         CFLOAT wt;
         for(int t=2; t<=nEye; ++t)
         {
