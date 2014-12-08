@@ -22,6 +22,9 @@
 #define Y_CONSOLE_VERBOSITY_H
 
 #include <iostream>
+#if _MSC_VER >=1800
+	#include <algorithm>
+#endif
 
 __BEGIN_YAFRAY
 
