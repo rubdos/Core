@@ -119,7 +119,7 @@ inline float asmSqrt(float n)
 {
     float r = n;
 // refine flags because x64 don't accept __asm, tested by 'paultron' on win7 x64 using MSVS 2013
-#if defined(_MSC_VER) && defined(_WIN32)
+#if defined(_MSC_VER) && !defined(_WIN64)
     __asm
     {
         fld r
