@@ -24,7 +24,7 @@
 #include "vector3d.h"
 #include "color.h"
 
-#include<yafray_config.h>
+#include <yafray_config.h>
 
 __BEGIN_YAFRAY
 class material_t;

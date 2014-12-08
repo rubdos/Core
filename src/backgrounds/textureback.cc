@@ -69,8 +69,8 @@ class constBackground_t: public background_t
 };
 
 
-textureBackground_t::textureBackground_t(const texture_t *texture, PROJECTION proj, float bpower, float rot):
-	tex(texture), project(proj), power(bpower)
+textureBackground_t::textureBackground_t(const texture_t *texture, PROJECTION proj, float bpower, float rot)
+	: tex(texture), project(proj), power(bpower)
 {
 	rotation = 2.0f * rot / 360.f;
 	sin_r = fSin(M_PI*rotation);

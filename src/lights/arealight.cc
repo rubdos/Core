@@ -73,21 +73,25 @@ bool areaLight_t::illumSample(const surfacePoint_t &sp, lSample_t &s, ray_t &wi)
 	//normalize vec and compute inverse square distance
 	PFLOAT dist_sqr = ldir.lengthSqr();
 	PFLOAT dist = fSqrt(dist_sqr);
-	if(dist <= 0.0) return false;
-	ldir *= 1.f/dist;
+	// TODO: povman. ------------------------------------------------------------------------
+	// in some cases, an error occurs when the object 'area' has negative scale values
+	// this issue is fix on blender exporter. maybe is need fixed here for all other exporter
+	//---------------------------------------------------------------------------------------
+	if (dist <= 0.0) return false;
+	ldir *= 1.f / dist;
 	PFLOAT cos_angle = ldir*fnormal;
 	//no light if point is behind area light (single sided!)
-	if(cos_angle <= 0) return false;
+	if (cos_angle <= 0) return false;
 
 	// fill direction
 	wi.tmax = dist;
 	wi.dir = ldir;
-	
+
 	s.col = color;
 	// pdf = distance^2 / area * cos(norm, ldir);
 	s.pdf = dist_sqr*M_PI / (area * cos_angle);
 	s.flags = LIGHT_NONE; // no delta functions...
-	if(s.sp)
+	if (s.sp)
 	{
 		s.sp->P = p;
 		s.sp->N = s.sp->Ng = normal;

@@ -41,8 +41,8 @@ protected:
     color_t gzenith,  ghoriz, szenith, shoriz;
 };
 
-gradientBackground_t::gradientBackground_t(color_t gzcol, color_t ghcol, color_t szcol, color_t shcol):
-gzenith(gzcol), ghoriz(ghcol), szenith(szcol), shoriz(shcol)
+gradientBackground_t::gradientBackground_t(color_t gzcol, color_t ghcol, color_t szcol, color_t shcol)
+	: gzenith(gzcol), ghoriz(ghcol), szenith(szcol), shoriz(shcol)
 {
     // Empty
 }
@@ -119,7 +119,7 @@ extern "C"
 
     YAFRAYPLUGIN_EXPORT void registerPlugin(renderEnvironment_t &render)
     {
-        render.registerFactory("gradientback",gradientBackground_t::factory);
+        render.registerFactory("gradientback", gradientBackground_t::factory);
     }
 
 }

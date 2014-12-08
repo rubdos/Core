@@ -52,8 +52,8 @@ inline float sinSample(float s)
 	return fSin(s * M_PI);
 }
 
-bgLight_t::bgLight_t(int sampl, bool shootC, bool shootD, bool absIntersect):
-light_t(LIGHT_NONE), samples(sampl), shootCaustic(shootC), shootDiffuse(shootD), absInter(absIntersect)
+bgLight_t::bgLight_t(int sampl, bool shootC, bool shootD, bool absIntersect)
+	: light_t(LIGHT_NONE), samples(sampl), shootCaustic(shootC), shootDiffuse(shootD), absInter(absIntersect)
 {
 	background = NULL;
 }
@@ -73,43 +73,43 @@ void bgLight_t::init(scene_t &scene)
 	float fx = 0.f, fy = 0.f;
 	float sintheta = 0.f;
 	int nu = 0, nv = MAX_VSAMPLES;
-	
+
 	ray_t ray;
 	ray.from = point3d_t(0.f);
-	
+
 	inv = 1.f / (float)nv;
-	
+
 	uDist = new pdf1D_t*[nv];
-	
+
 	for (int y = 0; y < nv; y++)
 	{
 		fy = ((float)y + 0.5f) * inv;
-		
+
 		sintheta = sinSample(fy);
-		
+
 		nu = MIN_SAMPLES + (int)(sintheta * (MAX_USAMPLES - MIN_SAMPLES));
 		inu = 1.f / (float)nu;
-		
-		for(int x = 0; x < nu; x++)
+
+		for (int x = 0; x < nu; x++)
 		{
 			fx = ((float)x + 0.5f) * inu;
-			
+
 			invSpheremap(fx, fy, ray.dir);
-			
+
 			fu[x] = background->eval(ray).energy() * sintheta;
 		}
-		
+
 		uDist[y] = new pdf1D_t(fu, nu);
-		
+
 		fv[y] = uDist[y]->integral;
 	}
-	
+
 	vDist = new pdf1D_t(fv, nv);
-	
+
 	delete[] fv;
 	delete[] fu;
 
-	bound_t w=scene.getSceneBound();
+	bound_t w = scene.getSceneBound();
 	worldCenter = 0.5 * (w.a + w.g);
 	worldRadius = 0.5 * (w.g - w.a).length();
 	aPdf = worldRadius * worldRadius;
@@ -121,18 +121,18 @@ inline float bgLight_t::CalcFromSample(float s1, float s2, float &u, float &v, b
 {
 	int iv;
 	float pdf1 = 0.f, pdf2 = 0.f;
-	
+
 	v = vDist->Sample(s2, &pdf2);
-	
+
 	iv = clampSample(addOff(v), vDist->count);
-	
+
 	u = uDist[iv]->Sample(s1, &pdf1);
-	
+
 	u *= uDist[iv]->invCount;
 	v *= vDist->invCount;
-	
-	if(inv)return calcInvPdf(pdf1, pdf2, v);
-	
+
+	if (inv) return calcInvPdf(pdf1, pdf2, v);
+
 	return calcPdf(pdf1, pdf2, v);
 }
 
@@ -140,17 +140,17 @@ inline float bgLight_t::CalcFromDir(const vector3d_t &dir, float &u, float &v, b
 {
 	int iv, iu;
 	float pdf1 = 0.f, pdf2 = 0.f;
-	
+
 	spheremap(dir, u, v); // Returns u,v pair in [0,1] range
 
 	iv = clampSample(addOff(v * vDist->count), vDist->count);
 	iu = clampSample(addOff(u * uDist[iv]->count), uDist[iv]->count);
-	
+
 	pdf1 = uDist[iv]->func[iu] * uDist[iv]->invIntegral;
 	pdf2 = vDist->func[iv] * vDist->invIntegral;
 
-	if(inv)return calcInvPdf(pdf1, pdf2, v);
-	
+	if (inv)return calcInvPdf(pdf1, pdf2, v);
+
 	return calcPdf(pdf1, pdf2, v);
 
 }

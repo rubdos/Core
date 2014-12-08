@@ -70,8 +70,7 @@ inline int Y_Float2Int(double val) {
 
 int Kd_inodes=0, Kd_leaves=0, _emptyKd_leaves=0, Kd_prims=0, _clip=0, _bad_clip=0, _null_clip=0, _early_out=0;
 
-triKdTree_t::triKdTree_t(const triangle_t **v, int np, int depth, int leafSize,
-			float cost_ratio, float emptyBonus)
+triKdTree_t::triKdTree_t(const triangle_t **v, int np, int depth, int leafSize,	float cost_ratio, float emptyBonus)
 	: costRatio(cost_ratio), eBonus(emptyBonus), maxDepth(depth)
 {
 	Y_INFO << "Kd-Tree: Starting build (" << np << " prims, cr:" << costRatio << " eb:" << eBonus << ")" << yendl;
@@ -91,27 +90,33 @@ triKdTree_t::triKdTree_t(const triangle_t **v, int np, int depth, int leafSize,
 		if(mls <= 0) mls = 1;
 		maxLeafSize = (unsigned int) mls;
 	}
-	else maxLeafSize = (unsigned int) leafSize;
-	if(maxDepth>KD_MAX_STACK) maxDepth = KD_MAX_STACK; //to prevent our stack to overflow
-	//experiment: add penalty to cost ratio to reduce memory usage on huge scenes
+	else {
+		maxLeafSize = (unsigned int)leafSize;
+	}
+	// to prevent our stack to overflow
+	if(maxDepth > KD_MAX_STACK) maxDepth = KD_MAX_STACK;
+
+	// experiment: add penalty to cost ratio to reduce memory usage on huge scenes
 	if( logLeaves > 16.0 ) costRatio += 0.25*( logLeaves - 16.0 );
-	allBounds = new bound_t[totalPrims + TRI_CLIP_THRESH+1];
+
+	allBounds = new bound_t[totalPrims + TRI_CLIP_THRESH + 1];
 	Y_INFO << "Kd-Tree: Getting triangle bounds..." << yendl;
-	for(u_int32 i=0; i<totalPrims; i++)
+	for (u_int32 i = 0; i < totalPrims; i++)
 	{
 		allBounds[i] = v[i]->getBound();
 		/* calc tree bound. Remember to upgrade bound_t class... */
-		if(i) treeBound = bound_t(treeBound, allBounds[i]);
+		if (i) treeBound = bound_t(treeBound, allBounds[i]);
 		else treeBound = allBounds[i];
 	}
 	//slightly(!) increase tree bound to prevent errors with prims
 	//lying in a bound plane (still slight bug with trees where one dim. is 0)
-	for(int i=0;i<3;i++)
+	for (int i = 0; i < 3; i++)
 	{
 		double foo = (treeBound.g[i] - treeBound.a[i])*0.001;
 		treeBound.a[i] -= foo, treeBound.g[i] += foo;
 	}
 	Y_INFO << "Kd-Tree: Done." << yendl;
+
 	// get working memory for tree construction
 	boundEdge *edges[3];
 	u_int32 rMemSize = 3*totalPrims; // (maxDepth+1)*totalPrims;
@@ -139,15 +144,24 @@ triKdTree_t::triKdTree_t(const triangle_t **v, int np, int depth, int leafSize,
 	for (int i = 0; i < 3; ++i) delete[] edges[i];
 	delete[] clip;
 	y_free(cdata);
-	//print some stats:
+
+	//-------------------
+	// print some stats:
+	//-------------------
 	c_end = clock() - c_start;
 	Y_INFO << "Kd-Tree: Stats ("<< float(c_end) / (float)CLOCKS_PER_SEC <<"s)" << yendl;
+
 	Y_INFO << "Kd-Tree: used/allocated nodes: " << nextFreeNode << "/" << allocatedNodesCount
 		<< " (" << 100.f * float(nextFreeNode)/allocatedNodesCount << "%)" << yendl;
+
 	Y_INFO << "Kd-Tree: Primitives in tree: " << totalPrims << yendl;
+
 	Y_INFO << "Kd-Tree: Interior nodes: " << Kd_inodes << " / " << "leaf nodes: " << Kd_leaves
 		<< " (empty: " << _emptyKd_leaves << " = " << 100.f * float(_emptyKd_leaves)/Kd_leaves << "%)" << yendl;
-	Y_INFO << "Kd-Tree: Leaf prims: " << Kd_prims << " (" << float(Kd_prims) / totalPrims << " x prims in tree, leaf size: " << maxLeafSize << ")" << yendl;
+
+	Y_INFO << "Kd-Tree: Leaf prims: " << Kd_prims << " (" << float(Kd_prims) / totalPrims 
+		<< " x prims in tree, leaf size: " << maxLeafSize << ")" << yendl;
+
 	Y_INFO << "Kd-Tree: => " << float(Kd_prims)/ (Kd_leaves-_emptyKd_leaves) << " prims per non-empty leaf" << yendl;
 	Y_INFO << "Kd-Tree: Leaves due to depth limit/bad splits: " << depthLimitReached << "/" << NumBadSplits << yendl;
 	Y_INFO << "Kd-Tree: clipped triangles: " << _clip << " (" <<_bad_clip << " bad clips, " << _null_clip << " null clips)" << yendl;

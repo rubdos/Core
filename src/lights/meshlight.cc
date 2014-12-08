@@ -92,7 +92,9 @@ void meshLight_t::sampleSurface(point3d_t &p, vector3d_t &n, float s1, float s2)
 		delta -= areaDist->cdf[primNum];
 		ss1 = (s1 - areaDist->cdf[primNum]) / delta;
 	}
-	else ss1 = s1 / delta;
+	else {
+		ss1 = s1 / delta;
+	}
 	tris[primNum]->sample(ss1, s2, p, n);
 //	++stats[primNum];
 }
@@ -115,8 +117,12 @@ bool meshLight_t::illumSample(const surfacePoint_t &sp, lSample_t &s, ray_t &wi)
 	//no light if point is behind area light (single sided!)
 	if(cos_angle <= 0)
 	{
-		if(doubleSided) cos_angle = -cos_angle;
-		else return false;
+		if (doubleSided) {
+			cos_angle = -cos_angle;
+		}
+		else {
+			return false;
+		}
 	}
 	
 	// fill direction
@@ -147,10 +153,16 @@ color_t meshLight_t::emitPhoton(float s1, float s2, float s3, float s4, ray_t &r
 	if(doubleSided)
 	{
 		ipdf *= 2.f;
-		if(s1>0.5f)	ray.dir = SampleCosHemisphere(-normal, du, dv, (s1-0.5f)*2.f, s2);
-		else 		ray.dir = SampleCosHemisphere(normal, du, dv, s1*2.f, s2);
+		if (s1 > 0.5f) {
+			ray.dir = SampleCosHemisphere(-normal, du, dv, (s1 - 0.5f)*2.f, s2);
+		}
+		else {
+			ray.dir = SampleCosHemisphere(normal, du, dv, s1*2.f, s2);
+		}
 	}
-	else ray.dir = SampleCosHemisphere(normal, du, dv, s1, s2);
+	else {
+		ray.dir = SampleCosHemisphere(normal, du, dv, s1, s2);
+	}
 	return color;
 }
 
@@ -161,11 +173,15 @@ color_t meshLight_t::emitSample(vector3d_t &wo, lSample_t &s) const
 	s.sp->N = s.sp->Ng;
 	vector3d_t du, dv;
 	createCS(s.sp->Ng, du, dv);
-	
-	if(doubleSided)
+
+	if (doubleSided)
 	{
-		if(s.s1>0.5f)	wo = SampleCosHemisphere(-s.sp->Ng, du, dv, (s.s1-0.5f)*2.f, s.s2);
-		else 		wo = SampleCosHemisphere(s.sp->Ng, du, dv, s.s1*2.f, s.s2);
+		if (s.s1 > 0.5f) {
+			wo = SampleCosHemisphere(-s.sp->Ng, du, dv, (s.s1 - 0.5f)*2.f, s.s2);
+		}
+		else {
+			wo = SampleCosHemisphere(s.sp->Ng, du, dv, s.s1*2.f, s.s2);
+		}
 		s.dirPdf = 0.5f * std::fabs(s.sp->Ng * wo);
 	}
 	else
@@ -192,8 +208,12 @@ bool meshLight_t::intersect(const ray_t &ray, PFLOAT &t, color_t &col, float &ip
 	PFLOAT cos_angle = ray.dir*(-n);
 	if(cos_angle <= 0)
 	{
-		if(doubleSided) cos_angle = std::fabs(cos_angle);
-		else return false;
+		if (doubleSided) {
+			cos_angle = std::fabs(cos_angle);
+		}
+		else {
+			return false;
+		}
 	}
 	PFLOAT idist_sqr = 1.f / (t*t);
 	ipdf = idist_sqr * area * cos_angle * (1.f/M_PI);
@@ -216,7 +236,6 @@ void meshLight_t::emitPdf(const surfacePoint_t &sp, const vector3d_t &wo, float 
 	cos_wo = wo*sp.N;
 	dirPdf = cos_wo > 0.f ? (doubleSided ? cos_wo * 0.5f : cos_wo ) : ( doubleSided ?  -cos_wo * 0.5f : 0.f);
 }
-
 
 light_t* meshLight_t::factory(paraMap_t &params,renderEnvironment_t &render)
 {

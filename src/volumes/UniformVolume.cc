@@ -32,28 +32,31 @@ class renderState_t;
 class pSample_t;
 
 class UniformVolume : public VolumeRegion {
-	public:
+public:
 
-		UniformVolume(color_t sa, color_t ss, color_t le, float gg, point3d_t pmin, point3d_t pmax, int attgridScale) :
-			VolumeRegion(sa, ss, le, gg, pmin, pmax, attgridScale) {
-			Y_INFO << "UniformVolume: Vol.[" << s_a << ", " << s_s << ", " << l_e << ", " << pmin << ", " << pmax << ", " << attgridScale << "]" << yendl;
-		}
+	UniformVolume(color_t sa, color_t ss, color_t le, float gg, point3d_t pmin, point3d_t pmax, int attgridScale): VolumeRegion(sa, ss, le, gg, pmin, pmax, attgridScale) 
+	{
+		Y_INFO << "UniformVolume: Vol.[" << s_a << ", " << s_s << ", " << l_e << ", " << pmin << ", " << pmax << ", " << attgridScale << "]" << yendl;
+	}
 
-		virtual color_t sigma_a(const point3d_t &p, const vector3d_t &v);
-		virtual color_t sigma_s(const point3d_t &p, const vector3d_t &v);
-		virtual color_t emission(const point3d_t &p, const vector3d_t &v);
-		virtual color_t tau(const ray_t &ray, float step, float offset);
+	virtual color_t sigma_a(const point3d_t &p, const vector3d_t &v);
+	virtual color_t sigma_s(const point3d_t &p, const vector3d_t &v);
+	virtual color_t emission(const point3d_t &p, const vector3d_t &v);
+	virtual color_t tau(const ray_t &ray, float step, float offset);
 
-		static VolumeRegion* factory(paraMap_t &params, renderEnvironment_t &render);
+	static VolumeRegion* factory(paraMap_t &params, renderEnvironment_t &render);
 };
 
 color_t UniformVolume::sigma_a(const point3d_t &p, const vector3d_t &v) {
-	if (!haveS_a) return color_t(0.f);
+	if (!haveS_a){
+		return color_t(0.f);
+	}
 	if (bBox.includes(p)) {
 		return s_a;
 	}
-	else
+	else {
 		return color_t(0.f);
+	}
 
 }
 

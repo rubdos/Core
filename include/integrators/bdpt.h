@@ -1,19 +1,20 @@
 /****************************************************************************
 *
-*		This library is free software; you can redistribute it and/or
-*		modify it under the terms of the GNU Lesser General Public
-*		License as published by the Free Software Foundation; either
-*		version 2.1 of the License, or (at your option) any later version.
+*	This library is free software; you can redistribute it and/or
+*	modify it under the terms of the GNU Lesser General Public
+*	License as published by the Free Software Foundation; either
+*	version 2.1 of the License, or (at your option) any later version.
 *
-*		This library is distributed in the hope that it will be useful,
-*		but WITHOUT ANY WARRANTY; without even the implied warranty of
-*		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-*		Lesser General Public License for more details.
+*	This library is distributed in the hope that it will be useful,
+*	but WITHOUT ANY WARRANTY; without even the implied warranty of
+*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+*	Lesser General Public License for more details.
 *
-*		You should have received a copy of the GNU Lesser General Public
-*		License along with this library; if not, write to the Free Software
-*		Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+*	You should have received a copy of the GNU Lesser General Public
+*	License along with this library; if not, write to the Free Software
+*	Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
+
 #ifndef BDPT_H
 #define BDPT_H
 
@@ -111,6 +112,8 @@ public:
     virtual void cleanup();
     virtual colorA_t integrate(renderState_t &state, diffRay_t &ray) const;
     static integrator_t* factory(paraMap_t &params, renderEnvironment_t &render);
+
+	
 protected:
     int createPath(renderState_t &state, ray_t &start, std::vector<pathVertex_t> &path, int maxLen) const;
     color_t evalPath(renderState_t &state, int s, int t, pathData_t &pd) const;
@@ -131,11 +134,7 @@ protected:
     bool include_bg;    //!< determined on precrocess;
     int sDepth, rDepth, bounces;
 
-    // povman test ---------------
-    int maxPathLength;          //
-    int minPathLength;          //
-    bool do_lightImage;         //
-    //---------------------------- end
+    
 
     std::vector<light_t*> lights;
     //mutable std::vector<pathVertex_t> lightPath, eyePath;
@@ -146,6 +145,11 @@ protected:
     float fNumLights;
     std::map <const light_t*, CFLOAT> invLightPowerD;
     imageFilm_t *lightImage;
+
+private:
+	// povman test ---------------
+	bool do_lightImage;         //
+	//----------------------------
 };
 
 

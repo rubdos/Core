@@ -43,6 +43,11 @@
 	#include <unistd.h>
 #endif
 
+#ifdef USE_EMBREE
+#include <embree2\rtcore.h>
+#include <embree2\rtcore_ray.h>
+#endif
+
 __BEGIN_YAFRAY
 
 scene_t::scene_t():  volIntegrator(0), camera(0), imageFilm(0), tree(0), vtree(0), background(0), surfIntegrator(0),
@@ -61,10 +66,12 @@ scene_t::~scene_t()
 	std::map<objID_t, objData_t>::iterator i;
 	for(i = meshes.begin(); i != meshes.end(); ++i)
 	{
-		if(i->second.type == TRIM)
+		if (i->second.type == TRIM){
 			delete i->second.obj;
-		else
+		}
+		else{
 			delete i->second.mobj;
+		}
 	}
 }
 
@@ -150,23 +157,23 @@ bool scene_t::endCurveMesh(const material_t *mat, float strandStart, float stran
 	vector3d_t N(0),u(0),v(0);
 	int n = points.size();
 	// Vertex extruding
-	for (i=0;i<n;i++)
-    {
+	for (i = 0; i < n; i++)
+	{
 		o = points[i];
 		if (strandShape < 0)
 		{
-			r = strandStart + pow((float)i/(n-1), 1+strandShape) * ( strandEnd - strandStart );
+			r = strandStart + pow((float)i / (n - 1), 1 + strandShape) * (strandEnd - strandStart);
 		}
 		else
 		{
-			r = strandStart + (1 - pow(((float)(n-i-1))/(n-1), 1-strandShape)) * ( strandEnd - strandStart );
+			r = strandStart + (1 - pow(((float)(n - i - 1)) / (n - 1), 1 - strandShape)) * (strandEnd - strandStart);
 		}
 		// Last point keep previous tangent plane
-		if (i<n-1)
+		if (i < n - 1)
 		{
-			N = points[i+1]-points[i];
+			N = points[i + 1] - points[i];
 			N.normalize();
-			createCS(N,u,v);
+			createCS(N, u, v);
 		}
 		// TODO: thikness?
 		a = o - (0.5 * r *v) - 1.5 * r / sqrt(3.f) * u;
@@ -181,18 +188,19 @@ bool scene_t::endCurveMesh(const material_t *mat, float strandStart, float stran
 	int a1,a2,a3,b1,b2,b3;
 	float su,sv;
 	int iu,iv;
-	for (i=0;i<n-1;i++){
+	for (i = 0; i < n - 1; i++)
+	{
 		// 1D particles UV mapping
-		su = (float)i / (n-1);
-		sv = su + 1. / (n-1);
-		iu = addUV(su,su);
-		iv = addUV(sv,sv);
+		su = (float)i / (n - 1);
+		sv = su + 1. / (n - 1);
+		iu = addUV(su, su);
+		iv = addUV(sv, sv);
 		a1 = i;
-		a2 = 2*i+n;
-		a3 = a2 +1;
-		b1 = i+1;
-		b2 = a2 +2;
-		b3 = b2 +1;
+		a2 = 2 * i + n;
+		a3 = a2 + 1;
+		b1 = i + 1;
+		b2 = a2 + 2;
+		b3 = b2 + 1;
 		// Close bottom
 		if (i == 0)
 		{
@@ -523,16 +531,16 @@ int scene_t::addVertex(const point3d_t &p)
 {
 	if(state.stack.front() != OBJECT) return -1;
 	state.curObj->obj->points.push_back(p);
-	if(state.curObj->type == MTRIM)
+	if (state.curObj->type == MTRIM)
 	{
 		std::vector<point3d_t> &points = state.curObj->mobj->points;
 		int n = points.size();
-		if(n%3==0)
+		if (n % 3 == 0)
 		{
 			//convert point 2 to quadratic bezier control point
-			points[n-2] = 2.f*points[n-2] - 0.5f*(points[n-3] + points[n-1]);
+			points[n - 2] = 2.f*points[n - 2] - 0.5f*(points[n - 3] + points[n - 1]);
 		}
-		return (n-1)/3;
+		return (n - 1) / 3;
 	}
 
 	state.curObj->lastVertId = state.curObj->obj->points.size()-1;
@@ -853,24 +861,25 @@ bool scene_t::intersect(const ray_t &ray, surfacePoint_t &sp) const
 {
 	PFLOAT dis, Z;
 	intersectData_t data;
-	if(ray.tmax<0) dis=std::numeric_limits<PFLOAT>::infinity();
-	else dis=ray.tmax;
+	if (ray.tmax < 0) dis = std::numeric_limits<PFLOAT>::infinity();
+	else dis = ray.tmax;
+
 	// intersect with tree:
-	if(mode == 0)
+	if (mode == 0)
 	{
-		if(!tree) return false;
-		triangle_t *hitt=0;
-		if( ! tree->Intersect(ray, dis, &hitt, Z, data) ){ return false; }
-		point3d_t h=ray.from + Z*ray.dir;
+		if (!tree) return false;
+		triangle_t *hitt = 0;
+		if (!tree->Intersect(ray, dis, &hitt, Z, data)){ return false; }
+		point3d_t h = ray.from + Z*ray.dir;
 		hitt->getSurface(sp, h, data);
 		sp.origin = hitt;
 	}
 	else
 	{
-		if(!vtree) return false;
-		primitive_t *hitprim=0;
-		if( ! vtree->Intersect(ray, dis, &hitprim, Z, data) ){ return false; }
-		point3d_t h=ray.from + Z*ray.dir;
+		if (!vtree) return false;
+		primitive_t *hitprim = 0;
+		if (!vtree->Intersect(ray, dis, &hitprim, Z, data)){ return false; }
+		point3d_t h = ray.from + Z*ray.dir;
 		hitprim->getSurface(sp, h, data);
 		sp.origin = hitprim;
 	}

@@ -91,8 +91,9 @@ public:
 	}
 	~ObjectArena() { FreeAll(); }
 	void FreeAll() {
-		for (unsigned int i = 0; i < toDelete.size(); ++i)
+		for (unsigned int i = 0; i < toDelete.size(); ++i){
 			y_free(toDelete[i]);
+		}
 		toDelete.erase(toDelete.begin(), toDelete.end());
 		nAvailable = 0;
 	}
@@ -113,10 +114,12 @@ public:
 	}
 	~MemoryArena() {
 		y_free(currentBlock);
-		for (u_int32 i = 0; i < usedBlocks.size(); ++i)
+		for (u_int32 i = 0; i < usedBlocks.size(); ++i) {
 			y_free(usedBlocks[i]);
-		for (u_int32 i = 0; i < availableBlocks.size(); ++i)
+		}
+		for (u_int32 i = 0; i < availableBlocks.size(); ++i) {
 			y_free(availableBlocks[i]);
+		}
 	}
 	void *Alloc(u_int32 sz) {
 		// Round up _sz_ to minimum machine alignment
@@ -128,8 +131,9 @@ public:
 				currentBlock = availableBlocks.back();
 				availableBlocks.pop_back();
 			}
-			else
-				currentBlock = (char *)y_memalign(64, (std::max(sz, blockSize)) );
+			else {
+				currentBlock = (char *)y_memalign(64, (std::max(sz, blockSize)));
+			}
 			curBlockPos = 0;
 		}
 		void *ret = currentBlock + curBlockPos;

@@ -67,7 +67,7 @@ kdTree_t<T>::kdTree_t(const T **v, int np, int depth, int leafSize,
 			float cost_ratio, float emptyBonus)
 	: costRatio(cost_ratio), eBonus(emptyBonus), maxDepth(depth)
 {
-	std::cout << "starting build of kd-tree ("<<np<<" prims, cr:"<<costRatio<<" eb:"<<eBonus<<")\n";
+	std::cout << "starting build of kd-tree ("<< np <<" prims, cr:"<< costRatio <<" eb:"<< eBonus <<")\n";
 	clock_t c_start, c_end;
 	c_start = clock();
 	Kd_inodes=0, Kd_leaves=0, _emptyKd_leaves=0, Kd_prims=0, depthLimitReached=0, NumBadSplits=0,
@@ -76,7 +76,9 @@ kdTree_t<T>::kdTree_t(const T **v, int np, int depth, int leafSize,
 	nextFreeNode = 0;
 	allocatedNodesCount = 256;
 	nodes = (rkdTreeNode<T>*)y_memalign(64, 256 * sizeof(rkdTreeNode<T>));
-	if(maxDepth <= 0) maxDepth = int( 7.0f + 1.66f * log(float(totalPrims)) );
+	if (maxDepth <= 0) {
+		maxDepth = int(7.0f + 1.66f * log(float(totalPrims)));
+	}
 	double logLeaves = 1.442695f * log(double(totalPrims)); // = base2 log
 	if(leafSize <= 0)
 	{
@@ -85,18 +87,28 @@ kdTree_t<T>::kdTree_t(const T **v, int np, int depth, int leafSize,
 		if(mls <= 0) mls = 1;
 		maxLeafSize = (unsigned int) mls;
 	}
-	else maxLeafSize = (unsigned int) leafSize;
-	if(maxDepth>KD_MAX_STACK) maxDepth = KD_MAX_STACK; //to prevent our stack to overflow
+	else {
+		maxLeafSize = (unsigned int)leafSize;
+	}
+	if (maxDepth > KD_MAX_STACK) {
+		maxDepth = KD_MAX_STACK; //to prevent our stack to overflow
+	}
 	//experiment: add penalty to cost ratio to reduce memory usage on huge scenes
-	if( logLeaves > 16.0 ) costRatio += 0.25*( logLeaves - 16.0 );
+	if (logLeaves > 16.0) {
+		costRatio += 0.25*(logLeaves - 16.0);
+	}
 	allBounds = new bound_t[totalPrims + TRI_CLIP_THRESH+1];
 	std::cout << "getting triangle bounds...";
 	for(u_int32 i=0; i<totalPrims; i++)
 	{
 		allBounds[i] = v[i]->getBound();
 		/* calc tree bound. Remember to upgrade bound_t class... */
-		if(i) treeBound = bound_t(treeBound, allBounds[i]);
-		else treeBound = allBounds[i];
+		if (i) {
+			treeBound = bound_t(treeBound, allBounds[i]);
+		}
+		else {
+			treeBound = allBounds[i];
+		}
 	}
 	//slightly(!) increase tree bound to prevent errors with prims
 	//lying in a bound plane (still slight bug with trees where one dim. is 0)
@@ -112,13 +124,19 @@ kdTree_t<T>::kdTree_t(const T **v, int np, int depth, int leafSize,
 	u_int32 *leftPrims = new u_int32[std::max( (u_int32)2*TRI_CLIP_THRESH, totalPrims )];
 	u_int32 *rightPrims = new u_int32[rMemSize]; //just a rough guess, allocating worst case is insane!
 //	u_int32 *primNums = new u_int32[totalPrims]; //isn't this like...totaly unnecessary? use leftPrims?
-	for (int i = 0; i < 3; ++i) edges[i] = new boundEdge[514/*2*totalPrims*/];
+	for (int i = 0; i < 3; ++i) {
+		edges[i] = new boundEdge[514/*2*totalPrims*/];
+	}
 	clip = new int[maxDepth+2];
 	cdata = (char*)y_memalign(64, (maxDepth+2)*TRI_CLIP_THRESH*CLIP_DATA_SIZE);
 	
 	// prepare data
-	for (u_int32 i = 0; i < totalPrims; i++) leftPrims[i] = i;//primNums[i] = i;
-	for (int i = 0; i < maxDepth+2; i++) clip[i] = -1;
+	for (u_int32 i = 0; i < totalPrims; i++) {
+		leftPrims[i] = i;//primNums[i] = i;
+	}
+	for (int i = 0; i < maxDepth + 2; i++) {
+		clip[i] = -1;
+	}
 	
 	/* build tree */
 	prims = v;
@@ -137,16 +155,22 @@ kdTree_t<T>::kdTree_t(const T **v, int np, int depth, int leafSize,
 	//print some stats:
 	c_end = clock() - c_start;
 	std::cout << "\n=== kd-tree stats ("<< float(c_end) / (float)CLOCKS_PER_SEC <<"s) ===\n";
+
 	std::cout << "used/allocated kd-tree nodes: " << nextFreeNode << "/" << allocatedNodesCount
-		<< " (" << 100.f * float(nextFreeNode)/allocatedNodesCount << "%)\n";
-	std::cout << "primitives in tree: " << totalPrims << std::endl;
-	std::cout << "interior nodes: " << Kd_inodes << " / " << "leaf nodes: " << Kd_leaves
-		<< " (empty: " << _emptyKd_leaves << " = " << 100.f * float(_emptyKd_leaves)/Kd_leaves << "%)\n";
-	std::cout << "leaf prims: " << Kd_prims << " (" << float(Kd_prims)/totalPrims << "x prims in tree, leaf size:"<< maxLeafSize<<")\n";
-	std::cout << "   => " << float(Kd_prims)/ (Kd_leaves-_emptyKd_leaves) << " prims per non-empty leaf\n";
-	std::cout << "leaves due to depth limit/bad splits: " << depthLimitReached << "/" << NumBadSplits << "\n";
-	std::cout << "clipped triangles: " << _clip << " (" <<_bad_clip << " bad clips, "<<_null_clip
-		<<" null clips)\n";
+		<<" ("<< 100.f * float(nextFreeNode)/allocatedNodesCount << "%)\n";
+
+	std::cout <<"primitives in tree: "<< totalPrims << std::endl;
+
+	std::cout <<"interior nodes: "<< Kd_inodes <<" / "<<"leaf nodes: "<< Kd_leaves
+		<<" (empty: "<< _emptyKd_leaves <<" = "<< 100.f * float(_emptyKd_leaves)/Kd_leaves <<"%)\n";
+
+	std::cout <<"leaf prims: "<< Kd_prims <<" ("<< float(Kd_prims)/totalPrims <<"x prims in tree, leaf size:"<< maxLeafSize <<")\n";
+
+	std::cout <<"   => "<< float(Kd_prims)/ (Kd_leaves-_emptyKd_leaves) <<" prims per non-empty leaf\n";
+
+	std::cout <<"leaves due to depth limit/bad splits: "<< depthLimitReached <<"/"<< NumBadSplits << "\n";
+
+	std::cout << "clipped triangles: " << _clip << " (" <<_bad_clip << " bad clips, "<<_null_clip <<" null clips)\n";
 	//std::cout << "early outs: " << _early_out << "\n\n";
 }
 
@@ -711,10 +735,12 @@ bool kdTree_t<T>::Intersect(const ray_t &ray, PFLOAT dist, T **tr, PFLOAT &Z, in
 	stack[enPt].t = a;
 	
 	//distinguish between internal and external origin
-	if(a >= 0.0) // ray with external origin
+	if (a >= 0.0){ // ray with external origin
 		stack[enPt].pb = ray.from + ray.dir * a;
-	else // ray with internal origin
+	}
+	else {// ray with internal origin
 		stack[enPt].pb = ray.from;
+	}
 	
 	// setup initial entry and exit poimt in stack
 	int exPt = 1; // pointer to stack
@@ -732,7 +758,8 @@ bool kdTree_t<T>::Intersect(const ray_t &ray, PFLOAT dist, T **tr, PFLOAT &Z, in
 			int axis = currNode->SplitAxis();
 			PFLOAT splitVal = currNode->SplitPos();
 			
-			if(stack[enPt].pb[axis] <= splitVal){
+			if(stack[enPt].pb[axis] <= splitVal)
+			{
 				if(stack[exPt].pb[axis] <= splitVal)
 				{
 					currNode++;
@@ -797,7 +824,8 @@ bool kdTree_t<T>::Intersect(const ray_t &ray, PFLOAT dist, T **tr, PFLOAT &Z, in
 		else
 		{
 			T **prims = currNode->primitives;
-			for (u_int32 i = 0; i < nPrimitives; ++i) {
+			for (u_int32 i = 0; i < nPrimitives; ++i)
+			{
 				T *mp = prims[i];
 				if (mp->intersect(ray, &t_hit, tempData))
 				{

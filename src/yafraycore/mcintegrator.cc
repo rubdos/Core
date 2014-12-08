@@ -1127,7 +1127,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                     }
                     // use this value or set the max of scattering bounces before break 'while' loop..
                     // TODO: review 'what make ' after last bounce,...
-                    int scatNum = 0;
+                    //int scatNum = 0;
                     while (!(refracOut = scene->intersect(ray, *hit2))) // mientras sea refraction interior..
                     {
                         // compute scatter point
@@ -1162,20 +1162,19 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
 
                             scatteCount++; // unused..
                             // povman: test for break while using 'maxBounces' value
-                            scatNum++;
-                            if (scatNum >= maxBounces)
-                            {
-                            	break;
-                            	Y_INFO <<"Break scattering bounces.."<< yendl;
-                            }
+                            //scatNum++;
+                            //if (scatNum >= maxBounces)
+                            //{
+							//	Y_INFO << "Breaking scattering bounces.." << yendl;
+                            //	break;
+                            //}
                         }
                     }
                     //- compute Outside refraction
                     if (refracOut)
                     {
                     	// povman test; its working..? yes.. always!
-                    	debug++;
-                    	if (debug == 1) Y_INFO << "DEBUG MODE: Inside refract outside." << yendl;
+                
                         //std::cout <<"ray = "<< curr <<"  ray.dir = "<< ray.dir <<"  from="<< ray.from <<"  scatteDist="<< ray.tmax << std::endl;
                         // compute new direction and
                         std::swap(hit, hit2);
@@ -1288,7 +1287,7 @@ void mcIntegrator_t::destorySSSMaps()
 color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3d_t &wo,
 		float IOR, float g, const color_t &sigmaS, const color_t &sigmaA, float mciScale )
 {
-    //pov: remember even, here is inside a loop
+    //pov: remember, here is inside a loop
 
     int m_n = 2;
     /* init dipole..*/

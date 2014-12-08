@@ -1,3 +1,19 @@
+/******************************************************************************
+*	This library is free software; you can redistribute it and / or
+*	modify it under the terms of the GNU Lesser General Public
+*	License as published by the Free Software Foundation; either
+*	version 2.1 of the License, or(at your option) any later version.
+*
+*	This library is distributed in the hope that it will be useful,
+*	but WITHOUT ANY WARRANTY; without even the implied warranty of
+*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the GNU
+*	Lesser General Public License for more details.
+*
+*	You should have received a copy of the GNU Lesser General Public
+*	License along with this library; if not, write to the Free Software
+*	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111 - 1307 USA
+*/ 
+
 #ifndef Y_VOLUMETRIC_H
 #define Y_VOLUMETRIC_H
 
@@ -16,14 +32,14 @@ class light_t;
 
 class volumeHandler_t
 {
-	public:
-		virtual bool transmittance(const renderState_t &state, const ray_t &ray, color_t &col) const=0;
-		virtual bool scatter(const renderState_t &state, const ray_t &ray, ray_t &sRay, pSample_t &s) const=0;
-		virtual ~volumeHandler_t(){}
+public:
+	virtual bool transmittance(const renderState_t &state, const ray_t &ray, color_t &col) const = 0;
+	virtual bool scatter(const renderState_t &state, const ray_t &ray, ray_t &sRay, pSample_t &s) const = 0;
+	virtual ~volumeHandler_t(){}
 };
 
 class YAFRAYCORE_EXPORT VolumeRegion {
-	public:
+public:
 	VolumeRegion() {}
 	VolumeRegion(color_t sa, color_t ss, color_t le, float gg, point3d_t pmin, point3d_t pmax, int attgridScale) {
 		bBox = bound_t(pmin, pmax);
@@ -68,7 +84,7 @@ class YAFRAYCORE_EXPORT VolumeRegion {
 	std::map<light_t *, float*> attenuationGridMap;
 	int attGridX, attGridY, attGridZ; // FIXME: un-hardcode
 
-	protected:
+protected:
 	bound_t bBox;
 	color_t s_a, s_s, l_e;
 	bool haveS_a, haveS_s, haveL_e;
@@ -77,7 +93,7 @@ class YAFRAYCORE_EXPORT VolumeRegion {
 };
 
 class YAFRAYCORE_EXPORT DensityVolume : public VolumeRegion {
-	public:
+public:
 	DensityVolume() {}
 	DensityVolume(color_t sa, color_t ss, color_t le, float gg, point3d_t pmin, point3d_t pmax, int attgridScale) :
 		VolumeRegion(sa, ss, le, gg, pmin, pmax, attgridScale) {}
@@ -89,13 +105,15 @@ class YAFRAYCORE_EXPORT DensityVolume : public VolumeRegion {
 	virtual color_t tau(const ray_t &ray, float stepSize, float offset);
 
 	color_t sigma_a(const point3d_t &p, const vector3d_t &v) {
-		if (!haveS_a) return color_t(0.f);
+		if (!haveS_a) {
+			return color_t(0.f);
+		}
 		if (bBox.includes(p)) {
 			return s_a * Density(p);
 		}
-		else
+		else {
 			return color_t(0.f);
-
+		}
 	}
 
 	color_t sigma_s(const point3d_t &p, const vector3d_t &v) {
@@ -103,8 +121,9 @@ class YAFRAYCORE_EXPORT DensityVolume : public VolumeRegion {
 		if (bBox.includes(p)) {
 			return s_s * Density(p);
 		}
-		else
+		else {
 			return color_t(0.f);
+		}
 	}
 
 	color_t emission(const point3d_t &p, const vector3d_t &v) {
@@ -112,8 +131,9 @@ class YAFRAYCORE_EXPORT DensityVolume : public VolumeRegion {
 		if (bBox.includes(p)) {
 			return l_e * Density(p);
 		}
-		else
+		else {
 			return color_t(0.f);
+		}
 	}
 
 };

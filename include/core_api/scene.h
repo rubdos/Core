@@ -154,6 +154,7 @@ class YAFRAYCORE_EXPORT scene_t
 		bool endTriMesh();
 		bool startCurveMesh(objID_t id, int vertices);
 		bool endCurveMesh(const material_t *mat, float strandStart, float strandEnd, float strandShape);
+		//bool endCurveMesh(const material_t *mat, float strandStart, float strandEnd, float strandShape);
 		int  addVertex(const point3d_t &p);
 		int  addVertex(const point3d_t &p, const point3d_t &orco);
 		void addNormal(const normal_t &n);

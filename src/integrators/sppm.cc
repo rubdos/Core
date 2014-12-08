@@ -1,3 +1,20 @@
+/****************************************************************************
+*
+*	This library is free software; you can redistribute it and/or
+*	modify it under the terms of the GNU Lesser General Public
+*	License as published by the Free Software Foundation; either
+*	version 2.1 of the License, or (at your option) any later version.
+*
+*	This library is distributed in the hope that it will be useful,
+*	but WITHOUT ANY WARRANTY; without even the implied warranty of
+*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+*	Lesser General Public License for more details.
+*
+*	You should have received a copy of the GNU Lesser General Public
+*	License along with this library; if not, write to the Free Software
+*	Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+*/
+
 #include <integrators/sppm.h>
 #include <yafraycore/scr_halton.h>
 #include <sstream>
@@ -133,8 +150,8 @@ bool SPPM::renderTile(renderArea_t &a, int n_samples, int offset, bool adaptive,
 
 				if(sampleLns)
 				{
-					lens_u = scrHalton(3, rstate.pixelSample+rstate.samplingOffs);
-					lens_v = scrHalton(4, rstate.pixelSample+rstate.samplingOffs);
+					lens_u = scrHalton(3, rstate.pixelSample + rstate.samplingOffs);
+					lens_v = scrHalton(4, rstate.pixelSample + rstate.samplingOffs);
 				}
 				c_ray = camera->shootRay(j+dx, i+dy, lens_u, lens_v, wt); // wt need to be considered
 				if(wt==0.0)
@@ -222,15 +239,20 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 
 	Y_INFO << integratorName << ": Starting Photon tracing pass..." << yendl;
 
-	if(trShad)
+	if (trShad)
 	{
 		set << "ShadowDepth [" << sDepth << "]";
 	}
-	if(!set.str().empty()) set << "+";
+	if (!set.str().empty()) set << "+";
 	set << "RayDepth [" << rDepth << "]";
 
-	if(bHashgrid) photonGrid.clear();
-	else {diffuseMap.clear(); causticMap.clear();}
+	if (bHashgrid) {
+		photonGrid.clear();
+	}
+	else { 
+		diffuseMap.clear(); 
+		causticMap.clear(); 
+	}
 
 	background = scene->getBackground();
 	lights = scene->lights;
@@ -248,7 +270,7 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 
 	tmplights.clear();
 
-	for(int i=0; i<(int)lights.size(); ++i)
+	for (int i = 0; i < (int)lights.size(); ++i)
 	{
 		numDLights++;
 		tmplights.push_back(lights[i]);
@@ -257,102 +279,111 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 	fNumLights = (float)numDLights;
 	energies = new float[numDLights];
 
-	for (int i=0; i<numDLights; ++i) energies[i] = tmplights[i]->totalEnergy().energy();
+	for (int i = 0; i < numDLights; ++i) energies[i] = tmplights[i]->totalEnergy().energy();
 
 	lightPowerD = new pdf1D_t(energies, numDLights);
 
 	Y_INFO << integratorName << ": Light(s) photon color testing for photon map:" << yendl;
 
-	for(int i=0;i<numDLights;++i)
+	for (int i = 0; i < numDLights; ++i)
 	{
 		pcol = tmplights[i]->emitPhoton(.5, .5, .5, .5, ray, lightPdf);
 		lightNumPdf = lightPowerD->func[i] * lightPowerD->invIntegral;
 		pcol *= fNumLights * lightPdf / lightNumPdf; //remember that lightPdf is the inverse of the pdf, hence *=...
-		Y_INFO << integratorName << ": Light [" << i+1 << "] Photon col:" << pcol << " | lnpdf: " << lightNumPdf << yendl;
+		Y_INFO << integratorName << ": Light [" << i + 1 << "] Photon col:" << pcol << " | lnpdf: " << lightNumPdf << yendl;
 	}
 
 	delete[] energies;
 
 	//shoot photons
-	bool done=false;
-	unsigned int curr=0;
+	bool done = false;
+	unsigned int curr = 0;
 
 	surfacePoint_t sp;
-	random_t prng(offset*(4517)+123);
+	random_t prng(offset*(4517) + 123);
 	renderState_t state(&prng);
-	unsigned char userdata[USER_DATA_SIZE+7];
-	state.userdata = (void *)( &userdata[7] - ( ((size_t)&userdata[7])&7 ) ); // pad userdata to 8 bytes
+	unsigned char userdata[USER_DATA_SIZE + 7];
+	state.userdata = (void *)(&userdata[7] - (((size_t)&userdata[7]) & 7)); // pad userdata to 8 bytes
 	state.cam = scene->getCamera();
 	progressBar_t *pb;
 	int pbStep;
-	if(intpb) pb = intpb;
+	if (intpb) pb = intpb;
 	else pb = new ConsoleProgressBar_t(80);
 
-	if(bHashgrid) Y_INFO << integratorName << ": Building photon hashgrid..." << yendl;
-	else Y_INFO << integratorName << ": Building photon map..." << yendl;
+	if (bHashgrid) {
+		Y_INFO << integratorName << ": Building photon hashgrid..." << yendl;
+	}
+	else {
+		Y_INFO << integratorName << ": Building photon map..." << yendl;
+	}
 
 	pb->init(128);
-	pbStep = std::max(1U, nPhotons/128);
+	pbStep = std::max(1U, nPhotons / 128);
 	//pb->setTag("Building photon map...");
 
 	//Pregather  photons
 	float invDiffPhotons = 1.f / (float)nPhotons;
 
 	unsigned int ndPhotonStored = 0;
-//	unsigned int ncPhotonStored = 0;
+	//	unsigned int ncPhotonStored = 0;
 
-	while(!done)
+	while (!done)
 	{
-		if(scene->getSignals() & Y_SIG_ABORT) {  pb->done(); if(!intpb) delete pb; return; }
+		if (scene->getSignals() & Y_SIG_ABORT) { 
+			pb->done(); 
+			if (!intpb) delete pb; return; 
+		}
 		state.chromatic = true;
 		state.wavelength = scrHalton(5, curr);
 
-	   // Tried LD, get bad and strange results for some stategy.
-       s1 = hal1.getNext();
-	   s2 = hal2.getNext();
-       s3 = hal3.getNext();
-       s4 = hal4.getNext();
+		// Tried LD, get bad and strange results for some stategy.
+		s1 = hal1.getNext();
+		s2 = hal2.getNext();
+		s3 = hal3.getNext();
+		s4 = hal4.getNext();
 
 		sL = float(curr) * invDiffPhotons; // Does sL also need more random for each pass?
 		int lightNum = lightPowerD->DSample(sL, &lightNumPdf);
-		if(lightNum >= numDLights){
-            Y_ERROR << integratorName << ": lightPDF sample error! "<<sL<<"/"<<lightNum<<"... stopping now.\n";
-            delete lightPowerD;
-            return;
-        }
+		if (lightNum >= numDLights){
+			Y_ERROR << integratorName << ": lightPDF sample error! " << sL << "/" << lightNum << "... stopping now.\n";
+			delete lightPowerD;
+			return;
+		}
 
 		pcol = tmplights[lightNum]->emitPhoton(s1, s2, s3, s4, ray, lightPdf);
 		ray.tmin = MIN_RAYDIST;
 		ray.tmax = -1.0;
-		pcol *= fNumLights*lightPdf/lightNumPdf; //remember that lightPdf is the inverse of th pdf, hence *=...
+		pcol *= fNumLights*lightPdf / lightNumPdf; //remember that lightPdf is the inverse of th pdf, hence *=...
 
-		if(pcol.isBlack())
+		if (pcol.isBlack())
 		{
 			++curr;
 			done = (curr >= nPhotons);
 			continue;
 		}
 
-		int nBounces=0;
+		int nBounces = 0;
 		bool causticPhoton = false;
 		bool directPhoton = true;
 		const material_t *material = NULL;
 		BSDF_t bsdfs;
 
-		while( scene->intersect(ray, sp) ) //scatter photons.
+		while (scene->intersect(ray, sp)) //scatter photons.
 		{
-			if(isnan(pcol.R) || isnan(pcol.G) || isnan(pcol.B))
-			{ Y_WARNING << integratorName << ": NaN  on photon color for light" << lightNum + 1 << ".\n"; continue; }
+			if (isnan(pcol.R) || isnan(pcol.G) || isnan(pcol.B))
+			{
+				Y_WARNING << integratorName << ": NaN  on photon color for light" << lightNum + 1 << ".\n"; continue;
+			}
 
 			color_t transm(1.f);
 			color_t vcol(0.f);
 			const volumeHandler_t* vol;
 
-			if(material)
+			if (material)
 			{
-				if((bsdfs&BSDF_VOLUMETRIC) && (vol=material->getVolumeHandler(sp.Ng * -ray.dir < 0)))
+				if ((bsdfs&BSDF_VOLUMETRIC) && (vol = material->getVolumeHandler(sp.Ng * -ray.dir < 0)))
 				{
-					if(vol->transmittance(state, ray, vcol)) transm = vcol;
+					if (vol->transmittance(state, ray, vcol)) transm = vcol;
 				}
 			}
 
@@ -361,11 +392,11 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 			material->initBSDF(state, sp, bsdfs);
 
 			//deposit photon on diffuse surface, now we only have one map for all, elimate directPhoton for we estimate it directly
-			if(!directPhoton && !causticPhoton && (bsdfs & (BSDF_DIFFUSE)))
+			if (!directPhoton && !causticPhoton && (bsdfs & (BSDF_DIFFUSE)))
 			{
 				photon_t np(wi, sp.P, pcol);// pcol used here
 
-				if(bHashgrid) photonGrid.pushPhoton(np);
+				if (bHashgrid) photonGrid.pushPhoton(np);
 				else
 				{
 					diffuseMap.pushPhoton(np);
@@ -374,11 +405,11 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 				ndPhotonStored++;
 			}
 			// add caustic photon
-			if(!directPhoton && causticPhoton && (bsdfs & (BSDF_DIFFUSE | BSDF_GLOSSY)))
+			if (!directPhoton && causticPhoton && (bsdfs & (BSDF_DIFFUSE | BSDF_GLOSSY)))
 			{
 				photon_t np(wi, sp.P, pcol);// pcol used here
 
-				if(bHashgrid) photonGrid.pushPhoton(np);
+				if (bHashgrid) photonGrid.pushPhoton(np);
 				else
 				{
 					causticMap.pushPhoton(np);
@@ -388,7 +419,7 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 			}
 
 			// need to break in the middle otherwise we scatter the photon and then discard it => redundant
-			if(nBounces == maxBounces) break;
+			if (nBounces == maxBounces) break;
 
 			// scatter photon
 			s5 = ourRandom(); // now should use this to see correctness
@@ -398,12 +429,12 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 			pSample_t sample(s5, s6, s7, BSDF_ALL, pcol, transm);
 
 			bool scattered = material->scatterPhoton(state, sp, wi, wo, sample);
-			if(!scattered) break; //photon was absorped.  actually based on russian roulette
+			if (!scattered) break; //photon was absorped.  actually based on russian roulette
 
 			pcol = sample.color;
 
 			causticPhoton = ((sample.sampledFlags & (BSDF_GLOSSY | BSDF_SPECULAR | BSDF_DISPERSIVE)) && directPhoton) ||
-							((sample.sampledFlags & (BSDF_GLOSSY | BSDF_SPECULAR | BSDF_FILTER | BSDF_DISPERSIVE)) && causticPhoton);
+				((sample.sampledFlags & (BSDF_GLOSSY | BSDF_SPECULAR | BSDF_FILTER | BSDF_DISPERSIVE)) && causticPhoton);
 			directPhoton = (sample.sampledFlags & BSDF_FILTER) && directPhoton;
 
 
@@ -415,20 +446,20 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 
 		}
 		++curr;
-		if(curr % pbStep == 0) pb->update();
+		if (curr % pbStep == 0) pb->update();
 		done = (curr >= nPhotons);
 	}
 	pb->done();
 	//pb->setTag("Photon map built.");
-	Y_INFO << integratorName << ":Photon map built." << yendl;
+	Y_INFO << integratorName << ": Photon map built." << yendl;
 	Y_INFO << integratorName << ": Shot " << curr << " photons from " << numDLights << " light(s)" << yendl;
 	delete lightPowerD;
 
-	totalnPhotons +=  nPhotons;	// accumulate the total photon number, not using nPath for the case of hashgrid.
+	totalnPhotons += nPhotons;	// accumulate the total photon number, not using nPath for the case of hashgrid.
 
-	Y_INFO << integratorName << ": Stored photons: "<< diffuseMap.nPhotons() + causticMap.nPhotons() << yendl;
+	Y_INFO << integratorName << ": Stored photons: " << diffuseMap.nPhotons() + causticMap.nPhotons() << yendl;
 
-	if(bHashgrid)
+	if (bHashgrid)
 	{
 		Y_INFO << integratorName << ": Building photons hashgrid:" << yendl;
 		photonGrid.updateGrid();
@@ -436,19 +467,19 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 	}
 	else
 	{
-		if(diffuseMap.nPhotons() > 0)
+		if (diffuseMap.nPhotons() > 0)
 		{
 			Y_INFO << integratorName << ": Building diffuse photons kd-tree:" << yendl;
 			diffuseMap.updateTree();
 			Y_INFO << integratorName << ": Done." << yendl;
 		}
-		if(causticMap.nPhotons() > 0)
+		if (causticMap.nPhotons() > 0)
 		{
 			Y_INFO << integratorName << ": Building caustic photons kd-tree:" << yendl;
 			causticMap.updateTree();
 			Y_INFO << integratorName << ": Done." << yendl;
 		}
-		if(diffuseMap.nPhotons() < 50)
+		if (diffuseMap.nPhotons() < 50)
 		{
 			Y_ERROR << integratorName << ": Too few photons, stopping now." << yendl;
 			return;
@@ -457,15 +488,16 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 
 	tmplights.clear();
 
-	if(!intpb) delete pb;
+	if (!intpb) delete pb;
 
 	gTimer.stop("prePass");
 
-	if(bHashgrid)
+	if (bHashgrid) {
 		Y_INFO << integratorName << ": PhotonGrid building time: " << gTimer.getTime("prePass") << yendl;
-	else
+	}
+	else {
 		Y_INFO << integratorName << ": PhotonMap building time: " << gTimer.getTime("prePass") << yendl;
-
+	}
 	return;
 }
 
@@ -524,25 +556,26 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 
 		//if PM_IRE is on. we should estimate the initial radius using the photonMaps.
         //(PM_IRE is only for the first pass, so not consume much time)
-		if(PM_IRE && !hp.radiusSetted) // "waste" two gather here as it has two maps now. This make the logic simple.
+		if (PM_IRE && !hp.radiusSetted) // "waste" two gather here as it has two maps now. This make the logic simple.
 		{
 			PFLOAT radius_1 = dsRadius * dsRadius;
 			PFLOAT radius_2 = radius_1;
 			int nGathered_1 = 0, nGathered_2 = 0;
 
-            if(diffuseMap.nPhotons() > 0){
+			if (diffuseMap.nPhotons() > 0) {
 				nGathered_1 = diffuseMap.gather(sp.P, gathered, nSearch, radius_1);
-            }
-            if(causticMap.nPhotons() > 0){
+			}
+			if (causticMap.nPhotons() > 0) {
 				nGathered_2 = causticMap.gather(sp.P, gathered, nSearch, radius_2);
-            }
-			if(nGathered_1 > 0 || nGathered_2 >0) // it none photon gathered, we just skip.
+			}
+			if (nGathered_1 > 0 || nGathered_2 > 0) // it none photon gathered, we just skip.
 			{
-                if(radius_1 < radius_2){ // we choose the smaller one to be the initial radius.
+				if (radius_1 < radius_2) { // we choose the smaller one to be the initial radius.
 					hp.radius2 = radius_1;
-                } else {
+				}
+				else {
 					hp.radius2 = radius_2;
-                }
+				}
 				hp.radiusSetted = true;
 			}
 		}
@@ -550,8 +583,10 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 		int nGathered=0;
 		PFLOAT radius2 = hp.radius2;
 
-		if(bHashgrid)
+		if (bHashgrid)
+		{
 			nGathered = photonGrid.gather(sp.P, gathered, nMaxGather, radius2); // disable now
+		}
 		else
 		{
 			if(diffuseMap.nPhotons() > 0) // this is needed to avoid a runtime error.
@@ -882,6 +917,8 @@ integrator_t* SPPM::factory(paraMap_t &params, renderEnvironment_t &render)
 	float dsRad = 1.0f;
 	bool bg_transp = true;
 	bool bg_transp_refract = true;
+	// test
+	bool hashGrid = false;
 
 	params.getParam("transpShad", transpShad);
 	params.getParam("shadowDepth", shadowDepth);
@@ -897,6 +934,8 @@ integrator_t* SPPM::factory(paraMap_t &params, renderEnvironment_t &render)
 
 	params.getParam("bg_transp", bg_transp);
 	params.getParam("bg_transp_refract", bg_transp_refract);
+	//
+	params.getParam("bHashgrid", hashGrid);
 
 	SPPM* ite = new SPPM(numPhotons, _passNum, transpShad, shadowDepth);
 	ite->rDepth = raydepth;
@@ -909,6 +948,8 @@ integrator_t* SPPM::factory(paraMap_t &params, renderEnvironment_t &render)
 	// Background settings
 	ite->transpBackground = bg_transp;
 	ite->transpRefractedBackground = bg_transp_refract;
+	// test
+	ite->bHashgrid = hashGrid;
 
 	return ite;
 }

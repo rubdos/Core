@@ -55,11 +55,6 @@ translucentMat_t::translucentMat_t( color_t diffuseC, color_t specC, color_t glo
     }
     bsdfFlags = (cFlags[C_TRANSLUCENT] | cFlags[C_GLOSSY] | cFlags[C_DIFFUSE]);
 }
-
-translucentMat_t::~translucentMat_t()
-{
-    // empty
-}
 //-
 void translucentMat_t::initBSDF(const renderState_t &state, surfacePoint_t &sp, unsigned int &bsdfTypes)const
 {
@@ -282,7 +277,7 @@ color_t translucentMat_t::emit(const renderState_t &state, const surfacePoint_t 
 }
 
 float translucentMat_t::pdf(const renderState_t &state, const surfacePoint_t &sp,
-		const vector3d_t &wo, const vector3d_t &wi, BSDF_t bsdfs)const
+							const vector3d_t &wo, const vector3d_t &wi, BSDF_t bsdfs)const
 {
     TranslucentData_t *dat = (TranslucentData_t *)state.userdata;
     if( ((sp.Ng * wo) * (sp.Ng * wi)) < 0.f ) return 0.f;

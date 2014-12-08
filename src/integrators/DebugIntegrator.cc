@@ -127,9 +127,11 @@ integrator_t* DebugIntegrator::factory(paraMap_t &params, renderEnvironment_t &r
 {
 	int dt = 1;
 	bool pn = false;
+
 	params.getParam("debugType", dt);
 	params.getParam("showPN", pn);
 	std::cout << "debugType " << dt << std::endl;
+
 	DebugIntegrator *inte = new DebugIntegrator((SurfaceProperties)dt);
 	inte->showPN = pn;
 

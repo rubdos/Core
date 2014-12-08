@@ -47,12 +47,15 @@ inline void tubemap(const point3d_t &p, PFLOAT &u, PFLOAT &v)
 	u = 0;
 	v = 1 - (p.z + 1)*0.5;
 	PFLOAT d = p.x*p.x + p.y*p.y;
-	if (d>0) {
-		d = 1/fSqrt(d);
+	if (d > 0) {
+		d = 1 / fSqrt(d);
 		u = 0.5*(1 - (atan2(p.x*d, p.y*d) *M_1_PI));
 	}
 }
 
+//--------------------------------------------------------------
+// ref: http://www.ozone3d.net/tutorials/glsl_texturing_p04.php
+//--------------------------------------------------------------
 // maps a direction to a 2d 0..1 interval
 inline void spheremap(const point3d_t &p, PFLOAT &u, PFLOAT &v)
 {
@@ -63,10 +66,14 @@ inline void spheremap(const point3d_t &p, PFLOAT &u, PFLOAT &v)
 	u = 0.f;
 	v = 0.f;
 
-	if(sqrtRPhi > 0.f)
+	if (sqrtRPhi > 0.f)
 	{
-		if(p.y < 0.f) phiRatio = (M_2PI - fAcos(p.x / fSqrt(sqrtRPhi))) * M_1_2PI;
-		else		  phiRatio = fAcos(p.x / fSqrt(sqrtRPhi)) * M_1_2PI;
+		if (p.y < 0.f) {
+			phiRatio = (M_2PI - fAcos(p.x / fSqrt(sqrtRPhi))) * M_1_2PI;
+		}
+		else {
+			phiRatio = fAcos(p.x / fSqrt(sqrtRPhi)) * M_1_2PI;
+		}
 		u = 1.f - phiRatio;
 	}
 

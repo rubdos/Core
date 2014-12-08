@@ -1,5 +1,4 @@
 /*************************************************************************
- *	This is part of TheBounty package
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -39,7 +38,8 @@ class GridVolume : public DensityVolume
 {
 public:
 
-	GridVolume(color_t sa, color_t ss, color_t le, float gg, point3d_t pmin, point3d_t pmax, std::string gridfile)
+	GridVolume(color_t sa, color_t ss, color_t le, float gg, point3d_t pmin, point3d_t pmax, int attgridScale, std::string gridfile)
+		: DensityVolume(sa, ss, le, gg, pmin, pmax, attgridScale)
 	{
 		bBox = bound_t(pmin, pmax);
 		s_a = sa;
@@ -80,7 +80,7 @@ public:
 		}
 		int sizePerVoxel = fileSize / (dim[0] * dim[1] * dim[2]);
 
-		Y_INFO << "GridVolume: "<< dim[0] <<" "<< dim[1] <<" "<< dim[2] <<" "<< fileSize <<" "<< sizePerVoxel << yendl;
+		Y_INFO << "GridVolume: "<< dim[0] <<" "<< dim[1] <<" "<< dim[2] <<" "<< fileSize <<" voxelsize: "<< sizePerVoxel << yendl;
 
 		sizeX = dim[0];
 		sizeY = dim[1];
@@ -89,7 +89,6 @@ public:
 		/* povman: change to sizeof(float*) from sizeof(float) for fix crash on x64 system's.
 		 * atm work fine on Ubuntu 14.04 x64, but is need make more test with others OS
 		 */
-		// TODO: find an better way for this function..
 
 		grid = (float***)malloc(sizeX * sizeof(float*));
 		for (int x = 0; x < sizeX; ++x)
@@ -134,7 +133,6 @@ protected:
 	int sizeX, sizeY, sizeZ;
 };
 
-// test for expand class
 GridVolume::~GridVolume()
 {
 	Y_INFO << "GridVolume: Freeing grid data" << yendl;
@@ -194,6 +192,7 @@ VolumeRegion* GridVolume::factory(paraMap_t &params, renderEnvironment_t &render
 	float g = .0f;
 	float min[] = {0, 0, 0};
 	float max[] = {0, 0, 0};
+	int attSc = 1;
 	std::string densityFile; // = NULL;
 
 	params.getParam("sigma_s", ss);
@@ -206,10 +205,14 @@ VolumeRegion* GridVolume::factory(paraMap_t &params, renderEnvironment_t &render
 	params.getParam("maxX", max[0]);
 	params.getParam("maxY", max[1]);
 	params.getParam("maxZ", max[2]);
+	params.getParam("attgridScale", attSc);
 	params.getParam("density_file", densityFile);
 
-	GridVolume *vol = new GridVolume(color_t(sa), color_t(ss), color_t(le), g,
-	                                 point3d_t(min[0], min[1], min[2]), point3d_t(max[0], max[1], max[2]), densityFile);
+	GridVolume *vol = new GridVolume(
+		color_t(sa), color_t(ss), color_t(le), g,
+		point3d_t(min[0], min[1], min[2]), 
+		point3d_t(max[0], max[1], max[2]), 
+		attSc, densityFile);
 
 	return vol;
 }

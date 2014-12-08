@@ -130,7 +130,7 @@ color_t directionalLight_t::emitSample(vector3d_t &wo, lSample_t &s) const
 	return color;
 }
 
-light_t *directionalLight_t::factory(paraMap_t &params,renderEnvironment_t &render)
+light_t *directionalLight_t::factory(paraMap_t &params, renderEnvironment_t &render)
 {
 	point3d_t from(0.0);
 	point3d_t dir(0.0, 0.0, 1.0);
@@ -138,18 +138,18 @@ light_t *directionalLight_t::factory(paraMap_t &params,renderEnvironment_t &rend
 	CFLOAT power = 1.0;
 	float rad = 1.0;
 	bool inf = true;
-	
-	params.getParam("direction",dir);
-	params.getParam("color",color);
-	params.getParam("power",power);
+
+	params.getParam("direction", dir);
+	params.getParam("color", color);
+	params.getParam("power", power);
 	params.getParam("infinite", inf);
-	if(!inf)
+	if (!inf)
 	{
-		if(!params.getParam("from",from))
+		if (!params.getParam("from", from))
 		{
-			if(params.getParam("position",from)) Y_INFO << "DirectionalLight: Deprecated parameter 'position', use 'from' instead" << yendl;
+			if (params.getParam("position", from)) Y_INFO << "DirectionalLight: Deprecated parameter 'position', use 'from' instead" << yendl;
 		}
-		params.getParam("radius",rad);
+		params.getParam("radius", rad);
 	}
 
 	return new directionalLight_t(from, vector3d_t(dir.x, dir.y, dir.z), color, power, inf, rad);
@@ -160,7 +160,7 @@ extern "C"
 	
 YAFRAYPLUGIN_EXPORT void registerPlugin(renderEnvironment_t &render)
 {
-	render.registerFactory("directional",directionalLight_t::factory);
+	render.registerFactory("directional", directionalLight_t::factory);
 }
 
 }

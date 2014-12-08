@@ -57,7 +57,7 @@ public:
 		}
 		else
 		{
-			double hh, h = mInvBase;
+			double hh, h = mInvBase; // pov: without ffast-math activated, gcc compiler show warning msg
 			while (h >= r)
 			{
 				hh = h;

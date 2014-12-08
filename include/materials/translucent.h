@@ -58,7 +58,7 @@ public:
         float mG,			//! glossy reflect (glossity)
         float exp);			//! fressnel exponent
 
-    virtual ~translucentMat_t();
+	virtual ~translucentMat_t(){};
 
     virtual void initBSDF(const renderState_t &state, surfacePoint_t &sp, unsigned int &bsdfTypes)const;
 
