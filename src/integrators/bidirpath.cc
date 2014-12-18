@@ -64,8 +64,6 @@ biDirIntegrator_t::biDirIntegrator_t(bool transpShad, int shadowDepth): trShad(t
     //end
 
     type = SURFACE;
-    maxPathLength=32;
-    minPathLength=3;
     integratorName = "BidirectionalPathTracer";
     integratorShortName = "BdPT";
     settings = "";
@@ -90,8 +88,8 @@ bool biDirIntegrator_t::preprocess()
         pathData.eyePath.resize(MAX_PATH_LENGTH);
         pathData.lightPath.resize(MAX_PATH_LENGTH);
         pathData.path.resize(MAX_PATH_LENGTH*2 + 1);
-        for(int i=0; i<MAX_PATH_LENGTH; ++i) pathData.lightPath[i].userdata = malloc(USER_DATA_SIZE);
-        for(int i=0; i<MAX_PATH_LENGTH; ++i) pathData.eyePath[i].userdata = malloc(USER_DATA_SIZE);
+        for(int i=0; i < MAX_PATH_LENGTH; ++i) pathData.lightPath[i].userdata = malloc(USER_DATA_SIZE);
+        for(int i=0; i < MAX_PATH_LENGTH; ++i) pathData.eyePath[i].userdata = malloc(USER_DATA_SIZE);
         pathData.nPaths = 0;
     }
     // initialize userdata (todo!)
@@ -487,11 +485,11 @@ inline bool biDirIntegrator_t::connectPaths(renderState_t &state, int s, int t, 
     copyEyeSubpath(pd, s, t);
 
     // calculate qi's...
-    if(s>MIN_PATH_LENGTH) x_l.pdf_f *= std::min( 0.98f, pd.f_y.col2bri()/* *cos_y */ / x_l.pdf_f );
-    if(s+1>MIN_PATH_LENGTH) x_e.pdf_f *= std::min( 0.98f, pd.f_z.col2bri()/* *y.cos_wi */ / x_e.pdf_f );
+    if(s > MIN_PATH_LENGTH) x_l.pdf_f *= std::min( 0.98f, pd.f_y.col2bri()/* *cos_y */ / x_l.pdf_f );
+    if(s+1 > MIN_PATH_LENGTH) x_e.pdf_f *= std::min( 0.98f, pd.f_z.col2bri()/* *y.cos_wi */ / x_e.pdf_f );
     // backward:
-    if(t+1>MIN_PATH_LENGTH) x_l.pdf_b *= std::min( 0.98f, pd.f_y.col2bri()/* *y.cos_wi */ / x_l.pdf_b );
-    if(t>MIN_PATH_LENGTH) x_e.pdf_b *= std::min( 0.98f, pd.f_z.col2bri()/* *cos_z */ / x_e.pdf_b );
+    if(t+1 > MIN_PATH_LENGTH) x_l.pdf_b *= std::min( 0.98f, pd.f_y.col2bri()/* *y.cos_wi */ / x_l.pdf_b );
+    if(t > MIN_PATH_LENGTH) x_e.pdf_b *= std::min( 0.98f, pd.f_z.col2bri()/* *cos_z */ / x_e.pdf_b );
 
     // multiply probabilities with qi's
     int k = s+t-1;
@@ -575,7 +573,7 @@ inline bool biDirIntegrator_t::connectLPath(renderState_t &state, int t, pathDat
     // calculate qi's...
     // backward:
     //if(t+1>MIN_PATH_LENGTH) x_l.pdf_b *= std::min( 0.98f, pd.f_y.col2bri()*y.cos_wi / x_l.pdf_b ); //unused/meaningless(?)
-    if(t>MIN_PATH_LENGTH) x_e.pdf_b *= std::min( 0.98f, pd.f_z.col2bri()/* *cos_z */ / x_e.pdf_b );
+    if(t > MIN_PATH_LENGTH) x_e.pdf_b *= std::min( 0.98f, pd.f_z.col2bri()/* *cos_z */ / x_e.pdf_b );
 
     // multiply probabilities with qi's
     int k = t;
@@ -626,7 +624,7 @@ inline bool biDirIntegrator_t::connectPathE(renderState_t &state, int s, pathDat
     copyLightSubpath(pd, s, 1);
 
     // calculate qi's...
-    if(s>MIN_PATH_LENGTH) x_l.pdf_f *= std::min( 0.98f, pd.f_y.col2bri()/* *cos_y */ / x_l.pdf_f );
+    if(s > MIN_PATH_LENGTH) x_l.pdf_f *= std::min( 0.98f, pd.f_y.col2bri()/* *cos_y */ / x_l.pdf_f );
     //if(s+1>MIN_PATH_LENGTH) x_e.pdf_f *= std::min( 0.98f, pd.f_z.col2bri()*y.cos_wi / x_e.pdf_f );
 
     // multiply probabilities with qi's
@@ -674,11 +672,11 @@ CFLOAT biDirIntegrator_t::pathWeight(renderState_t &state, int s, int t, pathDat
     // p_k+1/p_k is zero currently, hitting the camera lens in general should be very seldom anyway...
     p[k+1] = 0.f;
 
-//#if !(_DO_LIGHTIMAGE)
+	//#if !(_DO_LIGHTIMAGE)
     if(!do_lightImage){
         p[k] = 0.f; // cannot intersect camera yet...
     }
-//#endif
+	//#endif
     // treat specular scatter events.
     // specular x_i makes p_i (join x_i-1 and x_i) and p_i+1 (join x_i and x_i+1) = 0:
     for(int i=0; i<=k; ++i)
@@ -746,11 +744,12 @@ CFLOAT biDirIntegrator_t::pathWeight_0t(renderState_t &state, int t, pathData_t 
     // p_k+1/p_k is zero currently, hitting the camera lens in general should be very seldom anyway...
     p[k+1] = 0.f;
 
-#if !(_DO_LIGHTIMAGE)
-    
-        p[k] = 0.f; // cannot intersect camera yet...
-   
-#endif
+	//#if !(_DO_LIGHTIMAGE)
+	if (!do_lightImage){
+
+		p[k] = 0.f; // cannot intersect camera yet...
+	}
+	//#endif
     // treat specular scatter events.
     for(int i=0; i<=k; ++i)
     {
