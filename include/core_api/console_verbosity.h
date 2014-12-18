@@ -22,6 +22,9 @@
 #define Y_CONSOLE_VERBOSITY_H
 
 #include <iostream>
+#if _MSC_VER >=1800
+	#include <algorithm>
+#endif
 
 // povman: add for build with MSVC 2013
 // In this version, more math defines are moved to algorithm.h

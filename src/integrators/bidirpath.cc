@@ -60,8 +60,6 @@ biDirIntegrator_t::biDirIntegrator_t(bool transpShad, int shadowDepth): trShad(t
     lightPowerD(0), lightImage(0)
 {
     //test
-    maxPathLength = 32;
-    minPathLength = 3;
     do_lightImage = false;
     //end
 
@@ -89,11 +87,11 @@ bool biDirIntegrator_t::preprocess()
     for(int t=0; t<scene->getNumThreads(); ++t)
     {
         pathData_t &pathData = threadData[t];
-        pathData.eyePath.resize(maxPathLength);
-        pathData.lightPath.resize(maxPathLength);
-        pathData.path.resize(maxPathLength*2 + 1);
-        for(int i=0; i<maxPathLength; ++i) pathData.lightPath[i].userdata = malloc(USER_DATA_SIZE);
-        for(int i=0; i<maxPathLength; ++i) pathData.eyePath[i].userdata = malloc(USER_DATA_SIZE);
+        pathData.eyePath.resize(MAX_PATH_LENGTH);
+        pathData.lightPath.resize(MAX_PATH_LENGTH);
+        pathData.path.resize(MAX_PATH_LENGTH*2 + 1);
+        for(int i=0; i<MAX_PATH_LENGTH; ++i) pathData.lightPath[i].userdata = malloc(USER_DATA_SIZE);
+        for(int i=0; i<MAX_PATH_LENGTH; ++i) pathData.eyePath[i].userdata = malloc(USER_DATA_SIZE);
         pathData.nPaths = 0;
     }
     // initialize userdata (todo!)
@@ -160,8 +158,8 @@ void biDirIntegrator_t::cleanup()
     {
         pathData_t &pathData = threadData[i];
         nPaths += pathData.nPaths;
-        for(int i=0; i<maxPathLength; ++i) free(pathData.lightPath[i].userdata);
-        for(int i=0; i<maxPathLength; ++i) free(pathData.eyePath[i].userdata);
+        for(int i=0; i<MAX_PATH_LENGTH; ++i) free(pathData.lightPath[i].userdata);
+        for(int i=0; i<MAX_PATH_LENGTH; ++i) free(pathData.eyePath[i].userdata);
     }
     lightImage->setNumSamples(nPaths); //dirty hack...
 }
@@ -203,7 +201,7 @@ colorA_t biDirIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) cons
         ve.flags = BSDF_DIFFUSE; //place holder! not applicable for e.g. orthogonal camera!
 
         // create eyePath
-        nEye = createPath(state, ray, pathData.eyePath, maxPathLength); // MAX_PATH_LENGTH
+        nEye = createPath(state, ray, pathData.eyePath, MAX_PATH_LENGTH);
 
         // sample light (todo!)
         ray_t lray;
@@ -242,7 +240,7 @@ colorA_t biDirIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) cons
         pathData.singularL = (ls.flags & LIGHT_SINGULAR);
 
         // create lightPath
-        nLight = createPath(state, lray, pathData.lightPath, maxPathLength); // MAX_PATH_LENGTH
+        nLight = createPath(state, lray, pathData.lightPath, MAX_PATH_LENGTH);
         if(nLight>1)
         {
             pathData.pdf_illum = lights[lightNum]->illumPdf(pathData.lightPath[1].sp, vl.sp) * lightNumPdf;
@@ -381,7 +379,7 @@ int biDirIntegrator_t::createPath(renderState_t &state, ray_t &start, std::vecto
         v.pdf_wo = s.pdf;
         v.cos_wo = W * s.pdf;
         // use russian roulette on tentative sample to decide on path termination, unless path is too short
-        if(nVert > minPathLength)
+        if(nVert > MIN_PATH_LENGTH)
         {
             v.qi_wo = std::min( 0.98f, v.f_s.col2bri()*v.cos_wo / v.pdf_wo );
             if(prng() > v.qi_wo) break; // terminate path with russian roulette
@@ -489,26 +487,26 @@ inline bool biDirIntegrator_t::connectPaths(renderState_t &state, int s, int t, 
     copyEyeSubpath(pd, s, t);
 
     // calculate qi's...
-    if(s>minPathLength) x_l.pdf_f *= std::min( 0.98f, pd.f_y.col2bri()/* *cos_y */ / x_l.pdf_f );
-    if(s+1>minPathLength) x_e.pdf_f *= std::min( 0.98f, pd.f_z.col2bri()/* *y.cos_wi */ / x_e.pdf_f );
+    if(s>MIN_PATH_LENGTH) x_l.pdf_f *= std::min( 0.98f, pd.f_y.col2bri()/* *cos_y */ / x_l.pdf_f );
+    if(s+1>MIN_PATH_LENGTH) x_e.pdf_f *= std::min( 0.98f, pd.f_z.col2bri()/* *y.cos_wi */ / x_e.pdf_f );
     // backward:
-    if(t+1>minPathLength) x_l.pdf_b *= std::min( 0.98f, pd.f_y.col2bri()/* *y.cos_wi */ / x_l.pdf_b );
-    if(t>minPathLength) x_e.pdf_b *= std::min( 0.98f, pd.f_z.col2bri()/* *cos_z */ / x_e.pdf_b );
+    if(t+1>MIN_PATH_LENGTH) x_l.pdf_b *= std::min( 0.98f, pd.f_y.col2bri()/* *y.cos_wi */ / x_l.pdf_b );
+    if(t>MIN_PATH_LENGTH) x_e.pdf_b *= std::min( 0.98f, pd.f_z.col2bri()/* *cos_z */ / x_e.pdf_b );
 
     // multiply probabilities with qi's
     int k = s+t-1;
     // forward:
-    for(int i=minPathLength, s1=s-1; i < s1; ++i){
+    for(int i=MIN_PATH_LENGTH, s1=s-1; i < s1; ++i){
         pd.path[i].pdf_f *= pd.lightPath[i].qi_wo;
     }
-    for(int i=std::max(minPathLength,s+1), st=s+t; i < st; ++i){
+    for(int i=std::max(MIN_PATH_LENGTH,s+1), st=s+t; i < st; ++i){
         pd.path[i].pdf_f *= pd.eyePath[k-i].qi_wi;
     }
     //backward:
-    for(int i=minPathLength, t1=t-1; i < t1; ++i){
+    for(int i=MIN_PATH_LENGTH, t1=t-1; i < t1; ++i){
         pd.path[k-i].pdf_b *= pd.eyePath[i].qi_wo;
     }
-    for(int i = std::max(minPathLength, t+1), st = s+t; i < st; ++i){
+    for(int i = std::max(MIN_PATH_LENGTH, t+1), st = s+t; i < st; ++i){
         pd.path[k-i].pdf_b *= pd.lightPath[k-i].qi_wi;
     }
     return true;
@@ -576,18 +574,18 @@ inline bool biDirIntegrator_t::connectLPath(renderState_t &state, int t, pathDat
 
     // calculate qi's...
     // backward:
-    //if(t+1>minPathLength) x_l.pdf_b *= std::min( 0.98f, pd.f_y.col2bri()*y.cos_wi / x_l.pdf_b ); //unused/meaningless(?)
-    if(t>minPathLength) x_e.pdf_b *= std::min( 0.98f, pd.f_z.col2bri()/* *cos_z */ / x_e.pdf_b );
+    //if(t+1>MIN_PATH_LENGTH) x_l.pdf_b *= std::min( 0.98f, pd.f_y.col2bri()*y.cos_wi / x_l.pdf_b ); //unused/meaningless(?)
+    if(t>MIN_PATH_LENGTH) x_e.pdf_b *= std::min( 0.98f, pd.f_z.col2bri()/* *cos_z */ / x_e.pdf_b );
 
     // multiply probabilities with qi's
     int k = t;
     // forward:
-    for(int i=std::max(minPathLength,2), st=t+1; i<st; ++i){
+    for(int i=std::max(MIN_PATH_LENGTH,2), st=t+1; i<st; ++i){
         pd.path[i].pdf_f *= pd.eyePath[st-i-1].qi_wi;
     }
 
     //backward:
-    for(int i=minPathLength, t1=t-1; i<t1; ++i){
+    for(int i=MIN_PATH_LENGTH, t1=t-1; i<t1; ++i){
         pd.path[k-i].pdf_b *= pd.eyePath[i].qi_wo;
     }
     return true;
@@ -628,17 +626,17 @@ inline bool biDirIntegrator_t::connectPathE(renderState_t &state, int s, pathDat
     copyLightSubpath(pd, s, 1);
 
     // calculate qi's...
-    if(s>minPathLength) x_l.pdf_f *= std::min( 0.98f, pd.f_y.col2bri()/* *cos_y */ / x_l.pdf_f );
-    //if(s+1>minPathLength) x_e.pdf_f *= std::min( 0.98f, pd.f_z.col2bri()*y.cos_wi / x_e.pdf_f );
+    if(s>MIN_PATH_LENGTH) x_l.pdf_f *= std::min( 0.98f, pd.f_y.col2bri()/* *cos_y */ / x_l.pdf_f );
+    //if(s+1>MIN_PATH_LENGTH) x_e.pdf_f *= std::min( 0.98f, pd.f_z.col2bri()*y.cos_wi / x_e.pdf_f );
 
     // multiply probabilities with qi's
     int k = s;
     // forward:
-    for(int i=minPathLength, s1=s-1; i<s1; ++i)
+    for(int i=MIN_PATH_LENGTH, s1=s-1; i<s1; ++i)
         pd.path[i].pdf_f *= pd.lightPath[i].qi_wo;
 
     //backward:
-    for(int i=std::max(minPathLength,2), st=s+1; i<st; ++i) //FIXME: why st=s+1 and not just s?
+    for(int i=std::max(MIN_PATH_LENGTH,2), st=s+1; i<st; ++i) //FIXME: why st=s+1 and not just s?
         pd.path[k-i].pdf_b *= pd.lightPath[k-i].qi_wi;
     return true;
 }
@@ -652,12 +650,9 @@ inline bool biDirIntegrator_t::connectPathE(renderState_t &state, int s, pathDat
 CFLOAT biDirIntegrator_t::pathWeight(renderState_t &state, int s, int t, pathData_t &pd) const
 {
     const std::vector<pathEvalVert_t> &path = pd.path;
-    //povman test: work with GCC 4.8.1
-    float pr[2 * maxPathLength + 1];
-    float p[2 * maxPathLength + 1];
-    // for MSVC++ use ..
-    //float pr[2 * MAX_PATH_LENGTH + 1];
-    //float p[2 * MAX_PATH_LENGTH + 1];
+    
+    float pr[2 * MAX_PATH_LENGTH + 1];
+    float p[2 * MAX_PATH_LENGTH + 1];
 
     p[s] = 1.f;
     // "forward" weights (towards eye), ratio pr_i here is p_i+1 / p_i
@@ -735,9 +730,8 @@ CFLOAT biDirIntegrator_t::pathWeight_0t(renderState_t &state, int t, pathData_t 
     check_path(pd.path, 0, t);
 
     // == standard weighting procedure now == //
-    // povman: this part don't work with MSVC++ compilers
-    //float pr, p[2 * MAX_PATH_LENGTH + 1];
-    float pr, p[2 * maxPathLength + 1]; //MAX_PATH_LENGTH + 1];
+    
+    float pr, p[2 * MAX_PATH_LENGTH + 1];
 
     p[0] = 1;
     p[1] = path[0].pdf_A_0 / ( path[1].pdf_b * path[1].G);
@@ -752,11 +746,11 @@ CFLOAT biDirIntegrator_t::pathWeight_0t(renderState_t &state, int t, pathData_t 
     // p_k+1/p_k is zero currently, hitting the camera lens in general should be very seldom anyway...
     p[k+1] = 0.f;
 
-//#if !(_DO_LIGHTIMAGE)
-    if (!do_lightImage){
+#if !(_DO_LIGHTIMAGE)
+    
         p[k] = 0.f; // cannot intersect camera yet...
-    }
-//#endif
+   
+#endif
     // treat specular scatter events.
     for(int i=0; i<=k; ++i)
     {
@@ -881,19 +875,12 @@ color_t biDirIntegrator_t::evalPathE(renderState_t &state, int s, pathData_t &pd
 
 integrator_t* biDirIntegrator_t::factory(paraMap_t &params, renderEnvironment_t &render)
 {
-    int mDepth = 32;
-    int rrDepth = 3;
     bool doLight = false;
 
-
-    params.getParam("maxDepth", mDepth);
-    params.getParam("rrDepth", rrDepth);
     params.getParam("doLight", doLight);
 
     biDirIntegrator_t *inte = new biDirIntegrator_t();
 
-    inte->maxPathLength = mDepth;
-    inte->minPathLength = rrDepth;
     inte->do_lightImage = doLight;
 
     return inte;

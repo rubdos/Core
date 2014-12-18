@@ -132,8 +132,6 @@ protected:
     int sDepth, rDepth, bounces;
 
     // povman test ---------------
-    int maxPathLength;          //
-    int minPathLength;          //
     bool do_lightImage;         //
     //---------------------------- end
 
