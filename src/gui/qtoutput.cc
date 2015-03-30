@@ -24,6 +24,8 @@
 #include <QtCore/QCoreApplication>
 #include <iostream>
 #include <cstdlib>
+// 
+#include <algorithm>
 
 QtOutput::QtOutput(RenderWidget *render): renderBuffer(render)
 {

@@ -27,6 +27,8 @@
 #include "renderwidget.h"
 #include "events.h"
 #include <iostream>
+//
+#include <algorithm>
 
 /*=====================================
 /	RenderWidget implementation
