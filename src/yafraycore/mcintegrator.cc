@@ -936,7 +936,7 @@ bool mcIntegrator_t::createSSSMaps()
 bool mcIntegrator_t::createSSSMapsByPhotonTracing()
 {
 	//for debug messages
-	int debug = 0;
+	//int debug = 0;
 	//
 	// init and compute light pdf etc.
     ray_t ray;
@@ -996,7 +996,8 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
         s3 = scrHalton(3, curr);
         s4 = scrHalton(4, curr);
         //sL = RI_S(curr);
-        sL = float(curr) / float(nPhotons);
+		//sL = float(curr) / float(nPhotons);
+		sL = float(curr / nPhotons);
         //sL = float(inCount) / float(nPhotons); // povman: zero division?
 		int lightNum = lightPowerD->DSample(sL, &lightNumPdf);
         if(lightNum >= numLights)
@@ -1078,7 +1079,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                     if (inCount % pbStep == 0) pb->update();
 
                     const object3d_t* refObj = hit->object;
-                    bool refracOut = false; // pero suponemos que es refractado hacia el interior..
+                    bool refracOut = false;
 
                     // get the refracte try
                     float sc1 = ourRandom();//hal2.getNext();
@@ -1212,9 +1213,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
                 s7 = ourRandom();
             }
             pSample_t sample(s5, s6, s7, BSDF_ALL, pcol, transm);
-            //bool scattered = material->scatterPhoton(state, *hit, wi, wo, sample);
-            //if(!scattered) break; //photon was absorped.
-            // povman: refine code proposal..
+
             if(!material->scatterPhoton(state, *hit, wi, wo, sample)) break;
 
             pcol = sample.color;
