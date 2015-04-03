@@ -307,14 +307,14 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 		state.chromatic = true;
 		state.wavelength = scrHalton(5, curr);
 
-	   // Tried LD, get bad and strange results for some stategy.
-       s1 = hal1.getNext();
-	   s2 = hal2.getNext();
-       s3 = hal3.getNext();
-       s4 = hal4.getNext();
+	    // Tried LD, get bad and strange results for some stategy.
+        s1 = hal1.getNext();
+	    s2 = hal2.getNext();
+        s3 = hal3.getNext();
+        s4 = hal4.getNext();
 
 		sL = float(curr) * invDiffPhotons; // Does sL also need more random for each pass?
-		int lightNum = lightPowerD->DSample(sL, &lightNumPdf);
+		int lightNum = lightPowerD->DSample(sL, &lightNumPdf); Y_TIMER_H
 		if(lightNum >= numDLights){
             Y_ERROR << integratorName << ": lightPDF sample error! "<<sL<<"/"<<lightNum<<"... stopping now.\n";
             delete lightPowerD;
@@ -528,21 +528,19 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 		{
 			PFLOAT radius_1 = dsRadius * dsRadius;
 			PFLOAT radius_2 = radius_1;
-			int nGathered_1 = 0, nGathered_2 = 0;
+			//int nGathered_1 = 0, nGathered_2 = 0;
+			int diffGathered = 0, caustGathered = 0;
 
             if(diffuseMap.nPhotons() > 0){
-				nGathered_1 = diffuseMap.gather(sp.P, gathered, nSearch, radius_1);
+				diffGathered = diffuseMap.gather(sp.P, gathered, nSearch, radius_1);
             }
             if(causticMap.nPhotons() > 0){
-				nGathered_2 = causticMap.gather(sp.P, gathered, nSearch, radius_2);
+				caustGathered = causticMap.gather(sp.P, gathered, nSearch, radius_2);
             }
-			if(nGathered_1 > 0 || nGathered_2 >0) // it none photon gathered, we just skip.
+			if (diffGathered > 0 || caustGathered > 0) // it none photon gathered, we just skip.
 			{
-                if(radius_1 < radius_2){ // we choose the smaller one to be the initial radius.
-					hp.radius2 = radius_1;
-                } else {
-					hp.radius2 = radius_2;
-                }
+                // we choose the smaller one to be the initial radius.
+                hp.radius2 = std::min(radius_1, radius_2);
 				hp.radiusSetted = true;
 			}
 		}
@@ -561,14 +559,20 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 
 			if(nGathered > 0)
 			{
+				/*
 				if(nGathered > _nMax)
 				{
 					_nMax = nGathered;
-					std::cout << "maximum Photons: "<<_nMax<<", radius2: "<<radius2<<"\n";
-					if(_nMax == 10) for(int j=0; j < nGathered; ++j ) std::cout<<"col:"<<gathered[j].photon->color()<<"\n";
-				}
+					Y_INFO << "maximum Photons: "<<_nMax<<", radius2: "<<radius2<< yendl;
+					if(_nMax == 10){
+						for(int j=0; j < nGathered; ++j ) {
+								Y_INFO << "col:" << gathered[j].photon->color() << yendl;
+						}
+					}
+				}*/
 				for(int i=0; i<nGathered; ++i)
 				{
+					/*
 					////test if the photon is in the ellipsoid
 					//vector3d_t scale  = sp.P - gathered[i].photon->pos;
 					//vector3d_t temp;
@@ -579,6 +583,7 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 					//double inv_radi = 1 / sqrt(radius2);
 					//temp.x  *= inv_radi; temp.y *= inv_radi; temp.z *=  1. / (2.f * MIN_RAYDIST);
 					//if(temp.lengthSqr() > 1.)continue;
+					*/
 
 					gInfo.photonCount++;
 					vector3d_t pdir = gathered[i].photon->direction();
@@ -813,16 +818,10 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 		//povman: refine code
         if(transpRefractedBackground && transpBackground)
 		{
-			alpha = material->getAlpha(state, sp, wo);
+			CFLOAT m_alpha = material->getAlpha(state, sp, wo);
+			alpha = m_alpha + (1.f - m_alpha)*alpha;
 		}
         else alpha = 1.0;
-
-        /*if(transpRefractedBackground)
-		{
-			CFLOAT m_alpha = material->getAlpha(state, sp, wo);
-			alpha = m_alpha + (1.f-m_alpha)*alpha;
-		}
-		else alpha = 1.0;*/
 	}
 
 	else //nothing hit, return background
