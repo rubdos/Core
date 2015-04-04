@@ -307,14 +307,14 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 		state.chromatic = true;
 		state.wavelength = scrHalton(5, curr);
 
-	    // Tried LD, get bad and strange results for some stategy.
+        // Tried LD, get bad and strange results for some stategy.
         s1 = hal1.getNext();
-	    s2 = hal2.getNext();
+        s2 = hal2.getNext();
         s3 = hal3.getNext();
         s4 = hal4.getNext();
 
 		sL = float(curr) * invDiffPhotons; // Does sL also need more random for each pass?
-		int lightNum = lightPowerD->DSample(sL, &lightNumPdf); Y_TIMER_H
+		int lightNum = lightPowerD->DSample(sL, &lightNumPdf);
 		if(lightNum >= numDLights){
             Y_ERROR << integratorName << ": lightPDF sample error! "<<sL<<"/"<<lightNum<<"... stopping now.\n";
             delete lightPowerD;
