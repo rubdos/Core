@@ -17,14 +17,11 @@
  *      License along with this library; if not, write to the Free Software
  *      Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
- 
+
 #ifndef Y_CONSOLE_VERBOSITY_H
 #define Y_CONSOLE_VERBOSITY_H
 
 #include <iostream>
-#if _MSC_VER >=1800
-	#include <algorithm>
-#endif
 
 // povman: add for build with MSVC 2013
 // In this version, more math defines are moved to algorithm.h
@@ -50,7 +47,7 @@ class YAFRAYCORE_EXPORT OutputLevel
 public:
 
 	OutputLevel(): mVerbLevel(VL_INFO), mMasterVerbLevel(VL_INFO) {}
-	
+
 	OutputLevel &info()
 	{
 		mVerbLevel = VL_INFO;
