@@ -25,6 +25,7 @@
 #include <yafray_config.h>
 
 #include <utilities/mathOptimizations.h>
+#include <utilities/math_utils.h>
 #include <iostream>
 
 // ensure isnan is available. I *hope* it works with OSX w. gcc 4.x too
@@ -258,11 +259,11 @@ inline vector3d_t& vector3d_t::normalize()
 	return *this;
 }
 
-
 inline float vector3d_t::sinFromVectors(const vector3d_t& v)
 {
     float div = ( length() * v.length() ) * 0.99999f + 0.00001f;
-    return asin( ( (*this ^ v ).length() / div) * 0.99999f );
+    float ret = ( (*this ^ v ).length() / div) * 0.99999f ;
+	return asin(inRange(1.f, -1.f, ret));
 }
 
 inline normal_t& normal_t::normalize()

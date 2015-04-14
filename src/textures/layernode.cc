@@ -62,6 +62,8 @@ void layerNode_t::eval(nodeStack_t &stack, const renderState_t &state, const sur
 	{
 		if(!TEX_RGB)	texcolor = default_col;
 		else			Tin = Ta;
+		// check good range value
+		Tin = inRange(1.f, 0.f, Tin);
 		
 		rcol = texture_rgb_blend(texcolor, rcol, Tin, stencilTin * colfac, mode);
 		rcol.clampRGB0();
