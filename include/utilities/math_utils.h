@@ -65,5 +65,10 @@ inline int Ceil2Int(double val) {
 		return (int)std::ceil(val);
 	#endif
 }
-
+//povman: add in range inline fuction
+inline float inRange(float up, float down, float val){
+	if (val > up) val = up;
+	if (val < down) val = down;
+	return val;
+};
 #endif // Y_MATHUTIL_H
