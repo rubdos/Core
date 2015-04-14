@@ -1812,8 +1812,9 @@ color_t mcIntegrator_t::getTranslucentInScatter(renderState_t& state, ray_t& ste
                 lightRay.from = exitP;
                 lightRay.tmin = YAF_SHADOW_BIAS; // < better add some _smart_ self-bias value...this is bad.
                 if (lightRay.tmax < 0.f) lightRay.tmax = 1e10; // infinitely distant light
-                bool shadowed = scene->isShadowed(state, lightRay);
-                if (!shadowed)
+                //bool shadowed = scene->isShadowed(state, lightRay);
+
+				if (!(scene->isShadowed(state, lightRay)))
                 {
                     color_t lightTr(0.0f);
 
@@ -1885,9 +1886,9 @@ color_t mcIntegrator_t::getTranslucentInScatter(renderState_t& state, ray_t& ste
                     lightRay.tmin = YAF_SHADOW_BIAS; // < better add some _smart_ self-bias value...this is bad.
                     lightRay.tmax -= (exitP - sp.P).length();
                     if (lightRay.tmax < 0.f) lightRay.tmax = 1e10; // infinitely distant light
-                    bool shadowed = scene->isShadowed(state, lightRay);
+                    //bool shadowed = scene->isShadowed(state, lightRay);
 
-                    if(!shadowed)
+					if (!(scene->isShadowed(state, lightRay))) //)shadowed)
                     {
                         ccol += ls.col / ls.pdf;
                         color_t lightstepTau = sigma_t * dist * sssScale;
