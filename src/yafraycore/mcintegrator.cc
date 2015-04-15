@@ -1814,7 +1814,7 @@ color_t mcIntegrator_t::getTranslucentInScatter(renderState_t& state, ray_t& ste
                 if (lightRay.tmax < 0.f) lightRay.tmax = 1e10; // infinitely distant light
                 //bool shadowed = scene->isShadowed(state, lightRay);
 
-				if (!(scene->isShadowed(state, lightRay)))
+                if (!(scene->isShadowed(state, lightRay)))
                 {
                     color_t lightTr(0.0f);
 
@@ -1888,7 +1888,7 @@ color_t mcIntegrator_t::getTranslucentInScatter(renderState_t& state, ray_t& ste
                     if (lightRay.tmax < 0.f) lightRay.tmax = 1e10; // infinitely distant light
                     //bool shadowed = scene->isShadowed(state, lightRay);
 
-					if (!(scene->isShadowed(state, lightRay))) //)shadowed)
+                    if (!(scene->isShadowed(state, lightRay))) //)shadowed)
                     {
                         ccol += ls.col / ls.pdf;
                         color_t lightstepTau = sigma_t * dist * sssScale;
