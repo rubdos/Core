@@ -263,7 +263,7 @@ inline float vector3d_t::sinFromVectors(const vector3d_t& v)
 {
     float div = ( length() * v.length() ) * 0.99999f + 0.00001f;
     float ret = ( (*this ^ v ).length() / div) * 0.99999f ;
-	return asin(inRange(1.f, -1.f, ret));
+    return asin(inRange(1.f, -1.f, ret));
 }
 
 inline normal_t& normal_t::normalize()

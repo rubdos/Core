@@ -22,6 +22,7 @@
 #include <algorithm>
 
 #include <utilities/y_alloc.h>
+#include <utilities/math_utils.h> // povman
 #include <core_api/bound.h>
 #include <core_api/object3d.h>
 #include <yafraycore/meshtypes.h>
