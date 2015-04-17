@@ -229,8 +229,13 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 	if(!set.str().empty()) set << "+";
 	set << "RayDepth [" << rDepth << "]";
 
-	if(bHashgrid) photonGrid.clear();
-	else {diffuseMap.clear(); causticMap.clear();}
+	if (bHashgrid){
+		photonGrid.clear();
+	}
+	else { 
+		diffuseMap.clear(); 
+		causticMap.clear();
+	}
 
 	background = scene->getBackground();
 	lights = scene->lights;
@@ -342,7 +347,10 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 		while( scene->intersect(ray, sp) ) //scatter photons.
 		{
 			if(isnan(pcol.R) || isnan(pcol.G) || isnan(pcol.B))
-			{ Y_WARNING << integratorName << ": NaN  on photon color for light" << lightNum + 1 << ".\n"; continue; }
+			{ 
+				Y_WARNING << integratorName << ": NaN  on photon color for light" << lightNum + 1 << ".\n"; 
+				continue;
+			}
 
 			color_t transm(1.f);
 			color_t vcol(0.f);
@@ -365,9 +373,10 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 			{
 				photon_t np(wi, sp.P, pcol);// pcol used here
 
-				if(bHashgrid) photonGrid.pushPhoton(np);
-				else
-				{
+				if (bHashgrid) {
+					photonGrid.pushPhoton(np);
+				}
+				else {
 					diffuseMap.pushPhoton(np);
 					diffuseMap.setNumPaths(curr);
 				}
@@ -378,9 +387,10 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 			{
 				photon_t np(wi, sp.P, pcol);// pcol used here
 
-				if(bHashgrid) photonGrid.pushPhoton(np);
-				else
-				{
+				if (bHashgrid) {
+					photonGrid.pushPhoton(np);
+				}
+				else {
 					causticMap.pushPhoton(np);
 					causticMap.setNumPaths(curr);
 				}
@@ -397,9 +407,8 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 
 			pSample_t sample(s5, s6, s7, BSDF_ALL, pcol, transm);
 
-			bool scattered = material->scatterPhoton(state, sp, wi, wo, sample);
-			if(!scattered) break; //photon was absorped.  actually based on russian roulette
-
+			if (!material->scatterPhoton(state, sp, wi, wo, sample)) break; //photon was absorped.  actually based on russian roulette
+			
 			pcol = sample.color;
 
 			causticPhoton = ((sample.sampledFlags & (BSDF_GLOSSY | BSDF_SPECULAR | BSDF_DISPERSIVE)) && directPhoton) ||
@@ -461,10 +470,12 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 
 	gTimer.stop("prePass");
 
-	if(bHashgrid)
+	if (bHashgrid) {
 		Y_INFO << integratorName << ": PhotonGrid building time: " << gTimer.getTime("prePass") << yendl;
-	else
+	}
+	else {
 		Y_INFO << integratorName << ": PhotonMap building time: " << gTimer.getTime("prePass") << yendl;
+	}
 
 	return;
 }
@@ -485,16 +496,14 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 	GatherInfo gInfo;
 
 	//CFLOAT alpha;
-    CFLOAT alpha=0.0;
+    CFLOAT alpha=1.0;
 	surfacePoint_t sp;
 
 	void *o_udat = state.userdata;
 	bool oldIncludeLights = state.includeLights;
 
-	if(!transpBackground) alpha=1.0;
-	//if(transpBackground) alpha=0.0;
-	//else alpha=1.0;
-
+	if(transpBackground) alpha=0.0;
+	
 	if(scene->intersect(ray, sp))
 	{
 		unsigned char userdata[USER_DATA_SIZE+7];
@@ -528,7 +537,6 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 		{
 			PFLOAT radius_1 = dsRadius * dsRadius;
 			PFLOAT radius_2 = radius_1;
-			//int nGathered_1 = 0, nGathered_2 = 0;
 			int diffGathered = 0, caustGathered = 0;
 
             if(diffuseMap.nPhotons() > 0){
@@ -559,7 +567,6 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 
 			if(nGathered > 0)
 			{
-				/*
 				if(nGathered > _nMax)
 				{
 					_nMax = nGathered;
@@ -569,7 +576,7 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 								Y_INFO << "col:" << gathered[j].photon->color() << yendl;
 						}
 					}
-				}*/
+				}
 				for(int i=0; i<nGathered; ++i)
 				{
 					/*
