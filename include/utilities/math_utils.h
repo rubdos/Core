@@ -38,7 +38,7 @@ and add #include <math_utils.h> to kdtree headers files
 inline int Y_Round2Int(double val) {
 #if Y_FAST_INT > 0
 	union { double f; int i[2]; } u;
-	u.f = val + 6755399441055744.0; //2^52 * 1.5,  uses limited precision to floor
+	u.f = val + _doublemagic;
 	return u.i[0];
 #else
 	return int(val);
@@ -54,49 +54,50 @@ inline int Y_Float2Int(double val) {
 #endif
 }
 //----------------------------------------------------
- /* add Y_FAST_INT to old code. FAST_INT is already undefined.. */
+
+ /* add Y_FAST_INT flag to old code. FAST_INT is already undefined.. */
 
 inline int Round2Int(double val) {
-	#ifdef Y_FAST_INT
-		val		= val + _doublemagic;
+#if Y_FAST_INT > 0
+	val = val + _doublemagic;
 		return ((long*)&val)[0];
-	#else
+#else
 //	#warning "using slow rounding"
 		return int (val+_doublemagicroundeps);
-	#endif
+#endif
 }
 
 inline int Float2Int(double val) {
-	#ifdef Y_FAST_INT
-		return (val<0) ?  Round2Int(val+_doublemagicroundeps) :
-		   Round2Int(val-_doublemagicroundeps);
-	#else
+#if Y_FAST_INT > 0
+	return (val<0) ?  Round2Int(val+_doublemagicroundeps) : Round2Int(val-_doublemagicroundeps);
+#else
 //	#warning "using slow rounding"
-		return (int)val;
-	#endif
+	return (int)val;
+#endif
 }
 
 inline int Floor2Int(double val) {
-	#ifdef Y_FAST_INT
-		return Round2Int(val - _doublemagicroundeps);
-	#else
+#if Y_FAST_INT > 0
+	return Round2Int(val - _doublemagicroundeps);
+#else
 //	#warning "using slow rounding"
-		return (int)std::floor(val);
-	#endif
+	return (int)std::floor(val);
+#endif
 }
 
 inline int Ceil2Int(double val) {
-	#ifdef Y_FAST_INT
-		return Round2Int(val + _doublemagicroundeps);
-	#else
+#if Y_FAST_INT > 0
+	return Round2Int(val + _doublemagicroundeps);
+#else
 //	#warning "using slow rounding"	
-		return (int)std::ceil(val);
-	#endif
+	return (int)std::ceil(val);
+#endif
 }
 //povman: add in range inline fuction
 inline float inRange(float up, float down, float val){
 	if (val > up) val = up;
 	if (val < down) val = down;
 	return val;
-};
+}
+
 #endif // Y_MATHUTIL_H
