@@ -495,14 +495,13 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 	color_t col(0.0);
 	GatherInfo gInfo;
 
-	//CFLOAT alpha;
-    CFLOAT alpha=1.0;
+	CFLOAT alpha=0.0;
 	surfacePoint_t sp;
 
 	void *o_udat = state.userdata;
 	bool oldIncludeLights = state.includeLights;
 
-	if(transpBackground) alpha=0.0;
+	//if(!transpBackground) alpha=1.0;
 	
 	if(scene->intersect(ray, sp))
 	{
@@ -823,12 +822,12 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 		--state.raylevel;
 
 		//povman: refine code
-        if(transpRefractedBackground && transpBackground)
-		{
+        //if(transpRefractedBackground && transpBackground)
+		//{
 			CFLOAT m_alpha = material->getAlpha(state, sp, wo);
 			alpha = m_alpha + (1.f - m_alpha)*alpha;
-		}
-        else alpha = 1.0;
+		//}
+        //else alpha = 1.0;
 	}
 
 	else //nothing hit, return background
