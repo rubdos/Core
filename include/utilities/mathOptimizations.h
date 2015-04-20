@@ -36,6 +36,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include "math_utils.h"
 
 // Reference defines, this should be defined by the standard cmath header
 
@@ -212,7 +213,6 @@ inline float fLdexp(float x, int a)
 	return ldexp(x, a);
 #endif
 }
-
 inline float fSin(float x)
 {
 #ifdef FAST_TRIG
@@ -229,9 +229,8 @@ inline float fSin(float x)
 	x = ((float)M_4_PI * x) - ((float)M_4_PI2 * x * std::fabs(x));
 	float result = CONST_P * (x * std::fabs(x) - x) + x;
     //Make sure that the function is in the valid range [-1.0,+1.0]
-	if(result <= -1.0) return -1.0f;
-	else if(result >= 1.0) return 1.0f;
-	else return result;
+	result = inRange(1.0, -1.0, result);
+	return result;
 #else
 	return sin(x);
 #endif

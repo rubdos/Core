@@ -65,5 +65,12 @@ inline int Ceil2Int(double val) {
 		return (int)std::ceil(val);
 	#endif
 }
+inline float inRange(float up, float down, float val){
+	// verify only values out of the range (up/down)
+	// for equal values, no action is necessary
+	if (val > up) val = up;
+	if (val < down) val = down;
+	return val;
+}
 
 #endif // Y_MATHUTIL_H
