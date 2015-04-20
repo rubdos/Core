@@ -351,8 +351,11 @@ void imageFilm_t::finishArea(renderArea_t &a)
 			col.clampRGB0();
 
 			if(correctGamma) col.gammaAdjust(gamma);
-			// pov: review this code. Used in lines-> 420, 599, 124. Atm, premultAlpha is always ON?
-			if(premultAlpha) col.alphaPremultiply();
+			// pov: review this code. Used in lines-> 420, 599, 124. 
+			// introduced in this commit:
+			// https://github.com/YafaRay/Core/commit/83ab55d2854934cfe3a1cfcc32e3ffaceea958c6
+			// and now seems unused after 'transparent background' feature..
+			//if(premultAlpha) col.alphaPremultiply();
 
 			if(depthMap)
 			{
