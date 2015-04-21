@@ -112,12 +112,13 @@ bool directLighting_t::preprocess()
 colorA_t directLighting_t::integrate(renderState_t &state, diffRay_t &ray) const
 {
     color_t col(0.0);
-    float alpha = 1.0;
+    CFLOAT alpha;
     surfacePoint_t sp;
     void *o_udat = state.userdata;
     bool oldIncludeLights = state.includeLights;
 
-    if(transpBackground) alpha = 0.0;
+    if(transpBackground) alpha=0.0;
+    else alpha=1.0;
 
     // Shoot rays..
     if(scene->intersect(ray, sp))
@@ -153,26 +154,15 @@ colorA_t directLighting_t::integrate(renderState_t &state, diffRay_t &ray) const
                 //col += estimateSSSSingleScatteringPhotons(state,sp,wo);
             }
         }
-        // povman: in under function call, alpha values is re-asigned
-        // so.. the actual alpha value is ignored?
+        //
         recursiveRaytrace(state, ray, bsdfs, sp, wo, col, alpha);
 
-        if(transpRefractedBackground ) //&& transpBackground)
+        if(transpRefractedBackground)
         {
-            float m_alpha = material->getAlpha(state, sp, wo);
-            alpha = m_alpha + (1.f - m_alpha) * alpha;
-            /*// povman review: this code is useless..
-            // case 1, transpBackground = false, so alpha = 1.0:
-            //      m_alpha + (1.f - m_alpha) * alpha = alpha, m_alpha is always ignored...
-            // case 2, transpBackground = true, so alpha = 0.0:
-            //      m_alpha + (1.f - m_alpha) * alpha = m_alpha, always..
-            // only if transpBackground = true, request alpha value from material is used
-            alpha = material->getAlpha(state, sp, wo);*/
+            CFLOAT m_alpha = material->getAlpha(state, sp, wo);
+            alpha = m_alpha + (1.f-m_alpha)*alpha;
         }
-        else
-        {
-            alpha = 1.0;
-        }
+        else alpha = 1.0;
     }
     else // Nothing hit, return background if any
     {

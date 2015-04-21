@@ -17,7 +17,7 @@
  *      License along with this library; if not, write to the Free Software
  *      Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
- 
+
 #ifndef Y_CONSOLE_VERBOSITY_H
 #define Y_CONSOLE_VERBOSITY_H
 
@@ -47,7 +47,7 @@ class YAFRAYCORE_EXPORT OutputLevel
 public:
 
 	OutputLevel(): mVerbLevel(VL_INFO), mMasterVerbLevel(VL_INFO) {}
-	
+
 	OutputLevel &info()
 	{
 		mVerbLevel = VL_INFO;

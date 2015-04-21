@@ -34,11 +34,7 @@
 #include <utilities/mcqmc.h>
 #include <yafraycore/scr_halton.h>
 #include <yafraycore/hashgrid.h>
-
-// povman: fix for MSVC++ and Mingw32 compilers
-#if defined( _MSC_VER ) || defined(__MINGW32__)
-typedef long long int64_t;
-#endif
+#include <stdint.h>
 
 __BEGIN_YAFRAY
 

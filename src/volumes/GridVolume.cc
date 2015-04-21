@@ -39,7 +39,8 @@ class GridVolume : public DensityVolume
 {
 public:
 
-	GridVolume(color_t sa, color_t ss, color_t le, float gg, point3d_t pmin, point3d_t pmax, std::string gridfile)
+	GridVolume(color_t sa, color_t ss, color_t le, float gg, point3d_t pmin, point3d_t pmax, int attSc, std::string gridfile):
+		DensityVolume(sa, ss, le, gg, pmin, pmax, attSc)
 	{
 		bBox = bound_t(pmin, pmax);
 		s_a = sa;
@@ -55,7 +56,7 @@ public:
 		inputStream.open(gridfile.c_str());
 		if(!inputStream)
 		{
-			Y_ERROR << "GridVolume: Error opening input stream" << yendl;
+			Y_ERROR << "GridVolume: Error opening density file" << yendl;
 		}
 		else
 		{
@@ -80,7 +81,7 @@ public:
 		}
 		int sizePerVoxel = fileSize / (dim[0] * dim[1] * dim[2]);
 
-		Y_INFO << "GridVolume: "<< dim[0] <<" "<< dim[1] <<" "<< dim[2] <<" "<< fileSize <<" "<< sizePerVoxel << yendl;
+		Y_INFO << "GridVolume: "<< dim[0] <<" "<< dim[1] <<" "<< dim[2] <<" File size: "<< fileSize <<" "<< sizePerVoxel << yendl;
 
 		sizeX = dim[0];
 		sizeY = dim[1];
@@ -89,9 +90,8 @@ public:
 		/* povman: change to sizeof(float*) from sizeof(float) for fix crash on x64 system's.
 		 * atm work fine on Ubuntu 14.04 x64, but is need make more test with others OS
 		 */
-		// TODO: find an better way for this function..
-
 		grid = (float***)malloc(sizeX * sizeof(float*));
+
 		for (int x = 0; x < sizeX; ++x)
 		{
 			grid[x] = (float**)malloc(sizeY * sizeof(float*));
@@ -194,6 +194,7 @@ VolumeRegion* GridVolume::factory(paraMap_t &params, renderEnvironment_t &render
 	float g = .0f;
 	float min[] = {0, 0, 0};
 	float max[] = {0, 0, 0};
+	int attSc = 1;
 	std::string densityFile; // = NULL;
 
 	params.getParam("sigma_s", ss);
@@ -206,10 +207,13 @@ VolumeRegion* GridVolume::factory(paraMap_t &params, renderEnvironment_t &render
 	params.getParam("maxX", max[0]);
 	params.getParam("maxY", max[1]);
 	params.getParam("maxZ", max[2]);
+	params.getParam("attgridScale", attSc);
 	params.getParam("density_file", densityFile);
 
 	GridVolume *vol = new GridVolume(color_t(sa), color_t(ss), color_t(le), g,
-	                                 point3d_t(min[0], min[1], min[2]), point3d_t(max[0], max[1], max[2]), densityFile);
+									point3d_t(min[0], min[1], min[2]),
+									point3d_t(max[0], max[1], max[2]),
+									attSc, densityFile);
 
 	return vol;
 }

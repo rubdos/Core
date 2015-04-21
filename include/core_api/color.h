@@ -26,6 +26,7 @@
 
 #include <iostream>
 #include <utilities/mathOptimizations.h>
+#include <math.h>
 
 //using std::isinf;
 //using std::isnan;
