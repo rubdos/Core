@@ -28,32 +28,6 @@ __BEGIN_YAFRAY
 // #define Y_MIN3(a,b,c) ( ((a)>(b)) ? ( ((b)>(c))?(c):(b)):( ((a)>(c))?(c):(a)) )
 // #define Y_MAX3(a,b,c) ( ((a)<(b)) ? ( ((b)>(c))?(b):(c)):( ((a)>(c))?(a):(c)) )
 
-#if (defined(_M_IX86) || defined(i386) || defined(_X86_))
-	#define Y_FAST_INT 1
-#else
-	#define Y_FAST_INT 0
-#endif
-
-#define _doublemagicroundeps	      (0.5 - 1.4e-11)
-
-inline int Y_Round2Int(double val) {
-#if Y_FAST_INT > 0
-	union { double f; int i[2]; } u;
-	u.f	= val + 6755399441055744.0; //2^52 * 1.5,  uses limited precision to floor
-	return u.i[0];
-#else
-	return int(val);
-#endif
-}
-
-inline int Y_Float2Int(double val) {
-#if Y_FAST_INT > 0
-	return (val<0) ?  Y_Round2Int( val+_doublemagicroundeps ) :
-		   Y_Round2Int(val-_doublemagicroundeps);
-#else
-	return (int)val;
-#endif
-}
 
 //still in old file...
 //int Kd_inodes=0, Kd_leaves=0, _emptyKd_leaves=0, Kd_prims=0, _clip=0, _bad_clip=0, _null_clip=0, _early_out=0;
