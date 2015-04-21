@@ -18,53 +18,77 @@
 #define Y_MATHUTIL_H
 
 #include <cmath>
+// pov: moved here from kdtree
+#if (defined(_M_IX86) || defined(i386) || defined(_X86_))
+#define Y_FAST_INT 1
+#else
+#define Y_FAST_INT 0
+#endif
 
-//#if ( defined(__i386__) || defined(_M_IX86) || defined(_X86_) )
-//#define FAST_INT 1
-#define _doublemagicroundeps	      (.5-1.4e-11)
-	//almost .5f = .5f - 1e^(number of exp bit)
-#define _doublemagic			double (6755399441055744.0)
-	//2^52 * 1.5,  uses limited precision to floor
-//#endif
+//almost .5f = .5f - 1e^(number of exp bit)
+#define _doublemagicroundeps	(.5-1.4e-11)
 
+//2^52 * 1.5,  uses limited precision to floor
+#define _doublemagic	double (6755399441055744.0)
+
+inline int Y_Round2Int(double val) {
+#if Y_FAST_INT > 0
+	union { double f; int i[2]; } u;
+	u.f = val + 6755399441055744.0; //2^52 * 1.5,  uses limited precision to floor
+	return u.i[0];
+#else
+	return int(val);
+#endif
+}
+
+inline int Y_Float2Int(double val) {
+#if Y_FAST_INT > 0
+	return (val<0) ? Y_Round2Int(val + _doublemagicroundeps) :
+		Y_Round2Int(val - _doublemagicroundeps);
+#else
+	return (int)val;
+#endif
+}
+
+//
 
 inline int Round2Int(double val) {
-	#ifdef FAST_INT
-		val		= val + _doublemagic;
-		return ((long*)&val)[0];
-	#else
+#if Y_FAST_INT > 0
+	val		= val + _doublemagic;
+	return ((long*)&val)[0];
+#else
 //	#warning "using slow rounding"
-		return int (val+_doublemagicroundeps);
-	#endif
+	return int (val+_doublemagicroundeps);
+#endif
 }
 
 inline int Float2Int(double val) {
-	#ifdef FAST_INT
-		return (val<0) ?  Round2Int(val+_doublemagicroundeps) :
-		   Round2Int(val-_doublemagicroundeps);
-	#else
+#if Y_FAST_INT > 0
+	return (val<0) ?  Round2Int(val+_doublemagicroundeps) : Round2Int(val-_doublemagicroundeps);
+#else
 //	#warning "using slow rounding"
-		return (int)val;
-	#endif
+	return (int)val;
+#endif
 }
 
 inline int Floor2Int(double val) {
-	#ifdef FAST_INT
-		return Round2Int(val - _doublemagicroundeps);
-	#else
+#if Y_FAST_INT > 0
+	return Round2Int(val - _doublemagicroundeps);
+#else
 //	#warning "using slow rounding"
-		return (int)std::floor(val);
-	#endif
+	return (int)std::floor(val);
+#endif
 }
 
 inline int Ceil2Int(double val) {
-	#ifdef FAST_INT
-		return Round2Int(val + _doublemagicroundeps);
-	#else
+#if Y_FAST_INT > 0
+	return Round2Int(val + _doublemagicroundeps);
+#else
 //	#warning "using slow rounding"	
-		return (int)std::ceil(val);
-	#endif
+	return (int)std::ceil(val);
+#endif
 }
+
 inline float inRange(float up, float down, float val){
 	// verify only values out of the range (up/down)
 	// for equal values, no action is necessary
