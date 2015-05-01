@@ -1,0 +1,19 @@
+language: cpp
+compiler:
+    - gcc
+#    - clang
+notifications:
+    irc:
+        channels:
+            - "chat.freenode.net#thebounty"
+        template:
+            - "%{repository}/%{branch} (%{commit} - %{author}): %{build_url}: %{message}"
+
+os:
+    - linux
+before_install:
+    - sudo apt-get install swig
+script:
+    - mv CMakeConfig/UserConfig.template CMakeConfig/UserConfig.txt
+    - cmake .
+    - make
