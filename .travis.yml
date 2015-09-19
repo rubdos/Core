@@ -12,7 +12,9 @@ notifications:
 os:
     - linux
 before_install:
-    - sudo apt-get install swig
+    - sudo add-apt-repository ppa:fkrull/deadsnakes -y
+    - sudo apt-get update
+    - sudo apt-get install swig python3.4-dev
 script:
     - mv CMakeConfig/UserConfig.template CMakeConfig/UserConfig.txt
     - cmake .
