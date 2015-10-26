@@ -355,7 +355,7 @@ void imageFilm_t::finishArea(renderArea_t &a)
 			// introduced in this commit:
 			// https://github.com/YafaRay/Core/commit/83ab55d2854934cfe3a1cfcc32e3ffaceea958c6
 			// and now seems unused after 'transparent background' feature..
-			//if(premultAlpha) col.alphaPremultiply();
+			if(premultAlpha) col.alphaPremultiply();
 
 			if(depthMap)
 			{
