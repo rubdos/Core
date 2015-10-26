@@ -1225,7 +1225,7 @@ bool mcIntegrator_t::createSSSMapsByPhotonTracing()
         } // end while
 
         ++curr;
-        //if(curr % pbStep == 0) pb->update();
+        if(curr % pbStep == 0) pb->update();
         done = (curr >= nPhotons) ? true : false;
         //if (inCount % pbStep == 0) pb->update();
         //pov done = (inCount >= nPhotons) ? true : false;
@@ -1252,6 +1252,7 @@ void mcIntegrator_t::destorySSSMaps()
     }
     SSSMaps.clear();
 }
+
 
 color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3d_t &wo,
 		float IOR, float g, const color_t &sigmaS, const color_t &sigmaA, float mciScale )
