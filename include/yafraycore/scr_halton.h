@@ -65,7 +65,7 @@ inline double scrHalton(int dim, unsigned int n)
 	{
 		value = (double)ourRandom();
 	}
-	return std::max(0.0, std::min(1.0, value));
+	return std::max(1.0e-36, std::min(1.0, value));
 }
 
 __END_YAFRAY
