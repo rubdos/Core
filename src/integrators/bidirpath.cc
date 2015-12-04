@@ -94,6 +94,8 @@ bool biDirIntegrator_t::preprocess()
     }
     // initialize userdata (todo!)
     int numLights = lights.size();
+    // povman test..
+    if (numLights < 1) return false;
     fNumLights = 1.f / (float) numLights;
     float *energies = new float[numLights];
     for(int i=0; i<numLights; ++i) energies[i] = lights[i]->totalEnergy().energy();
@@ -173,7 +175,7 @@ colorA_t biDirIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) cons
 
     if(scene->intersect(testray, sp))
     {
-        static int dbg=0;
+        //static int dbg=0;
         state.includeLights = true;
         pathData_t &pathData = threadData[state.threadID];
         ++pathData.nPaths;
@@ -201,7 +203,7 @@ colorA_t biDirIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) cons
         // create eyePath
         nEye = createPath(state, ray, pathData.eyePath, MAX_PATH_LENGTH);
 
-        // sample light (todo!)
+        // sample light (TODO!)
         ray_t lray;
         lray.tmin = MIN_RAYDIST;
         lray.tmax = -1.f;
@@ -216,8 +218,8 @@ colorA_t biDirIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) cons
         // test!
         ls.areaPdf *= lightNumPdf;
 
-        if(dbg<10) std::cout << "lightNumPdf=" << lightNumPdf << std::endl;
-        ++dbg;
+        //if(dbg<10) std::cout << "lightNumPdf=" << lightNumPdf << std::endl;
+        //++dbg;
 
         // setup vl
         // veach set this to L_e^(1)(y0->y1), a BSDF like value; not available yet,
@@ -778,7 +780,7 @@ color_t biDirIntegrator_t::evalPath(renderState_t &state, int s, int t, pathData
     const pathVertex_t &z = pd.eyePath[t-1];
 
     color_t c_st = pd.f_y * pd.path[s].G * pd.f_z;
-    //unweighted contronution C*:
+    //Unweighed construction C*:
     color_t C_uw = y.alpha * c_st * z.alpha;
     ray_t conRay(y.sp.P, pd.w_l_e, 0.0005, pd.d_yz);
     if(scene->isShadowed(state, conRay)) return color_t(0.f);
