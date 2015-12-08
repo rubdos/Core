@@ -49,26 +49,36 @@ void check_path(std::vector<pathEvalVert_t> &p, int s, int t)
 }
 
 
-biDirIntegrator_t::biDirIntegrator_t(bool transpShad, int shadowDepth): trShad(transpShad), sDepth(shadowDepth),
-    lightPowerD(0), lightImage(0)
+biDirIntegrator_t::biDirIntegrator_t(bool transpShad, int shadowDepth)
+    //: trShad(transpShad), sDepth(shadowDepth), lightPowerD(0), lightImage(0)
 {
     type = SURFACE;
+    lightPowerD = NULL;
+    lightImage = NULL;
+    trShad = transpShad;
+    sDepth = shadowDepth;
+    rDepth = 3;
+    do_lightImage = true;
+
     integratorName = "BidirectionalPathTracer";
     integratorShortName = "BdPT";
-    settings = "";
 }
 
-biDirIntegrator_t::~biDirIntegrator_t()
-{
-    //done in cleanup() now...
-    //for(unsigned int i=0; i<pathData.lightPath.size(); ++i) free(pathData.lightPath[i].userdata);
-    //for(unsigned int i=0; i<pathData.eyePath.size(); ++i) free(pathData.eyePath[i].userdata);
-}
 
 bool biDirIntegrator_t::preprocess()
 {
     background = scene->getBackground();
     lights = scene->lights;
+    // povman
+    std::stringstream set;
+    settings = "";
+
+    if (trShad)
+    {
+        set << "ShadowDepth: [" << sDepth << "]";
+    }
+    if (!set.str().empty()) set << " + ";
+    set << "RayDepth: [" << rDepth << "]";
 
     threadData.resize(scene->getNumThreads());
     for(int t=0; t<scene->getNumThreads(); ++t)
@@ -77,65 +87,51 @@ bool biDirIntegrator_t::preprocess()
         pathData.eyePath.resize(MAX_PATH_LENGTH);
         pathData.lightPath.resize(MAX_PATH_LENGTH);
         pathData.path.resize(MAX_PATH_LENGTH*2 + 1);
-        for(int i=0; i<MAX_PATH_LENGTH; ++i) pathData.lightPath[i].userdata = malloc(USER_DATA_SIZE);
-        for(int i=0; i<MAX_PATH_LENGTH; ++i) pathData.eyePath[i].userdata = malloc(USER_DATA_SIZE);
+        for (int j = 0; j < MAX_PATH_LENGTH; ++j)
+        {
+            pathData.lightPath[j].userdata = malloc(USER_DATA_SIZE);
+        }
+        for (int k = 0; k < MAX_PATH_LENGTH; ++k)
+        {
+            pathData.eyePath[k].userdata = malloc(USER_DATA_SIZE);
+        }
         pathData.nPaths = 0;
     }
     // initialize userdata (todo!)
     int numLights = lights.size();
     fNumLights = 1.f / (float) numLights;
     float *energies = new float[numLights];
-    for(int i=0; i<numLights; ++i) energies[i] = lights[i]->totalEnergy().energy();
+    for (int i = 0; i < numLights; ++i)
+    {
+        energies[i] = lights[i]->totalEnergy().energy();
+    }
     lightPowerD = new pdf1D_t(energies, numLights);
 
-    for(int i=0; i<numLights; ++i) invLightPowerD[lights[i]] = lightPowerD->func[i] * lightPowerD->invIntegral;
+    for (int i = 0; i < numLights; ++i)
+    {
+        invLightPowerD[lights[i]] = lightPowerD->func[i] * lightPowerD->invIntegral;
+    }
 
-    for(int i=0; i<numLights; ++i) std::cout << energies[i] << " (" << lightPowerD->func[i] << ") ";
-    std::cout << "\n== preprocess(): lights: " << numLights << " invIntegral:" << lightPowerD->invIntegral << std::endl;
+    for (int i = 0; i < numLights; ++i)
+    {
+        Y_INFO <<"preprocess(): energies: " << energies[i] << " light power: " << lightPowerD->func[i] << yendl;
+    }
+    Y_INFO << " preprocess(): lights: " << numLights << " invIntegral:" << lightPowerD->invIntegral << yendl;
 
     delete[] energies;
 
     cam = scene->getCamera();
     //nPaths = 0;
-    lightImage = scene->getImageFilm();// new imageFilm_t(cam->resX(), cam->resY(), 0, 0, *lightOut, 1.5f);
+    lightImage = scene->getImageFilm();
     lightImage->setDensityEstimation(true);
     //lightImage->setInteractive(false);
     //lightImage->init();
 
-    // test...
-
-    /* PFLOAT wt, u, v;
-    float pdf;
-    ray_t wo = cam->shootRay(10.25, 10.25, 0, 0, wt);
-    bool proj = cam->project(wo, 0, 0, u, v, pdf);
-    std::cout << "camera u=" << u << " v=" << v << " pdf=" << pdf << " (returned " << proj << ")" << std::endl;
-    float integral = 0.f;
-    for(int i=0; i<10000; ++i)
-    {
-        wo.dir = SampleSphere((float)i/10000.f, RI_vdC(i));
-        if( cam->project(wo, 0, 0, u, v, pdf) ) integral += pdf;
-    }
-    std::cout << "Camera pdf integral: " << integral/10000.f << std::endl;
-
-
-    //test...
-    lSample_t ls;
-    float Apdf, dirPdf, cos_wo;
-    surfacePoint_t sp;
-    ls.s1=.5f, ls.s2=.5f, ls.s3=.5f, ls.s4=.5f;
-    ls.sp = &sp;
-    color_t pcol = lights[0]->emitSample(wo.dir, ls);
-    integral = 0.f;
-    for(int i=0; i<10000; ++i)
-    {
-        wo.dir = SampleSphere((float)i/10000.f, RI_vdC(i));
-        lights[0]->emitPdf(sp, wo.dir, Apdf, dirPdf, cos_wo);
-        integral += dirPdf;
-    }
-    std::cout << "Light pdf integral: " << integral/10000.f << std::endl; */
+    settings = set.str();
 
     return true;
 }
+
 
 void biDirIntegrator_t::cleanup()
 {
@@ -162,7 +158,7 @@ colorA_t biDirIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) cons
 
     if(scene->intersect(testray, sp))
     {
-        static int dbg=0;
+        //static int dbg=0;
         state.includeLights = true;
         pathData_t &pathData = threadData[state.threadID];
         ++pathData.nPaths;
@@ -187,7 +183,9 @@ colorA_t biDirIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) cons
         ve.pdf_wi = 1.f;
         ve.flags = BSDF_DIFFUSE; //place holder! not applicable for e.g. orthogonal camera!
 
+        //-------------------
         // create eyePath
+        //-------------------
         nEye = createPath(state, ray, pathData.eyePath, MAX_PATH_LENGTH);
 
         // sample light (todo!)
@@ -197,6 +195,9 @@ colorA_t biDirIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) cons
         float lightNumPdf;
         int lightNum = lightPowerD->DSample(prng(), &lightNumPdf);
         lightNumPdf *= fNumLights;
+        //---------------
+        // light sample
+        //---------------
         lSample_t ls;
         ls.s1=prng(), ls.s2=prng(), ls.s3=prng(), ls.s4=prng();
         ls.sp = &vl.sp;
@@ -204,9 +205,6 @@ colorA_t biDirIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) cons
         lray.from = vl.sp.P;
         // test!
         ls.areaPdf *= lightNumPdf;
-
-        if(dbg<10) std::cout << "lightNumPdf=" << lightNumPdf << std::endl;
-        ++dbg;
 
         // setup vl
         vl.f_s = color_t(1.f); // veach set this to L_e^(1)(y0->y1), a BSDF like value; not available yet, cancels out anyway when using direct lighting
@@ -220,9 +218,11 @@ colorA_t biDirIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) cons
         vl.flags = ls.flags; //store light flags in BSDF flags...same purpose though, check if delta function are involved
         pathData.singularL = (ls.flags & LIGHT_SINGULAR);
 
+        //-------------------
         // create lightPath
+        //-------------------
         nLight = createPath(state, lray, pathData.lightPath, MAX_PATH_LENGTH);
-        if(nLight>1)
+        if(nLight > 1)
         {
             pathData.pdf_illum = lights[lightNum]->illumPdf(pathData.lightPath[1].sp, vl.sp) * lightNumPdf;
             pathData.pdf_emit = ls.areaPdf * pathData.lightPath[1].ds / vl.cos_wo;
@@ -230,26 +230,26 @@ colorA_t biDirIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) cons
 
         // do bidir evalulation
 
-#if _DO_LIGHTIMAGE
-        // TEST! create a light image (t == 1)
-        for(int s=2; s<=nLight; ++s)
+        if (do_lightImage) // _DO_LIGHTIMAGE
         {
-            clear_path(pathData.path, s, 1);
-            if(!connectPathE(state, s, pathData)) continue;
-            check_path(pathData.path, s, 1);
-            CFLOAT wt = pathWeight(state, s, 1, pathData);
-            if(wt > 0.f)
+            // TEST! create a light image (t == 1)
+            for (int s = 2; s <= nLight; ++s)
             {
-                color_t li_col = evalPathE(state, s, pathData);
-                if(li_col.isBlack()) continue;
-                PFLOAT ix, idx, iy, idy;
-                idx = std::modf(pathData.u, &ix);
-                idy = std::modf(pathData.v, &iy);
-                lightImage->addDensitySample(li_col, ix, iy, idx, idy);
-
+                clear_path(pathData.path, s, 1);
+                if (!connectPathE(state, s, pathData)) continue;
+                check_path(pathData.path, s, 1);
+                CFLOAT wt = pathWeight(state, s, 1, pathData);
+                if (wt > 0.f)
+                {
+                    color_t li_col = evalPathE(state, s, pathData);
+                    if (li_col.isBlack()) continue;
+                    PFLOAT ix, idx, iy, idy;
+                    idx = std::modf(pathData.u, &ix);
+                    idy = std::modf(pathData.v, &iy);
+                    lightImage->addDensitySample(li_col, ix, iy, idx, idy);
+                }
             }
         }
-#endif
 
         CFLOAT wt;
         for(int t=2; t<=nEye; ++t)
@@ -372,9 +372,8 @@ int biDirIntegrator_t::createPath(renderState_t &state, ray_t &start, std::vecto
             v.qi_wi = std::min( 0.98f, v.f_s.col2bri()*v.cos_wi / v.pdf_wi );
         }
         if(v.qi_wi < 0)
-        {
-            std::cout << "v["<<nVert<<"].qi_wi="<<v.qi_wi<<" ("<<v.f_s.col2bri()<<" "<<v.cos_wi<<" "<<v.pdf_wi<<")\n"
-                      <<"\t"<<v.pdf_wo<<"  flags:"<<s.sampledFlags<<std::endl;
+        {// povman: allow disable out message using verbosity level
+            Y_INFO << "v["<< nVert <<"].qi_wi="<< v.qi_wi <<" ("<< v.f_s.col2bri() <<" "<< v.cos_wi <<" "<< v.pdf_wi <<") "<< v.pdf_wo <<"  flags:"<< s.sampledFlags << yendl;
         }
 
         v.flags = s.sampledFlags;
@@ -435,7 +434,7 @@ inline bool biDirIntegrator_t::connectPaths(renderState_t &state, int s, int t, 
     state.userdata = y.userdata;
     x_l.pdf_f = y.sp.material->pdf(state, y.sp, y.wi, vec, BSDF_ALL); // light vert to eye vert
     x_l.pdf_b = y.sp.material->pdf(state, y.sp, vec, y.wi, BSDF_ALL); // light vert to prev. light vert
-    if(x_l.pdf_f < 1e-6f) return false;
+    if(x_l.pdf_f < 1e-6f) return false; // 0.000001
     x_l.pdf_f /= cos_y;
     x_l.pdf_b /= y.cos_wi;
     pd.f_y = y.sp.material->eval(state, y.sp, y.wi, vec, BSDF_ALL);
@@ -444,7 +443,7 @@ inline bool biDirIntegrator_t::connectPaths(renderState_t &state, int s, int t, 
     state.userdata = z.userdata;
     x_e.pdf_b = z.sp.material->pdf(state, z.sp, z.wi, -vec, BSDF_ALL); // eye vert to light vert
     x_e.pdf_f = z.sp.material->pdf(state, z.sp, -vec, z.wi, BSDF_ALL); // eye vert to prev eye vert
-    if(x_e.pdf_b < 1e-6f) return false;
+    if(x_e.pdf_b < 1e-6f) return false; // 0.000001
     x_e.pdf_b /= cos_z;
     x_e.pdf_f /= z.cos_wi;
     pd.f_z = z.sp.material->eval(state, z.sp, z.wi, -vec, BSDF_ALL);
@@ -496,7 +495,7 @@ inline bool biDirIntegrator_t::connectLPath(renderState_t &state, int t, pathDat
     // create light sample with direct lighting strategy:
     const pathVertex_t &z = pd.eyePath[t-1];
     lRay.from = z.sp.P;
-    lRay.tmin = 0.0005;
+    lRay.tmin = MIN_RAYDIST; //povman test using minraydist: org. 0.0005;
     int nLightsI = lights.size();
     if(nLightsI == 0) return false;
     float lightNumPdf, cos_wo;
@@ -635,7 +634,7 @@ inline bool biDirIntegrator_t::connectPathE(renderState_t &state, int s, pathDat
     calculate the path weight with some combination strategy
  ============================================================ */
 
-// compute path densities and weight path
+// compute path densities and weight path /* called from lines 240, 283, 300 */
 CFLOAT biDirIntegrator_t::pathWeight(renderState_t &state, int s, int t, pathData_t &pd) const
 {
     const std::vector<pathEvalVert_t> &path = pd.path;
@@ -660,9 +659,9 @@ CFLOAT biDirIntegrator_t::pathWeight(renderState_t &state, int s, int t, pathDat
     // p_k+1/p_k is zero currently, hitting the camera lens in general should be very seldom anyway...
     p[k+1] = 0.f;
 
-#if !(_DO_LIGHTIMAGE)
-    p[k] = 0.f; // cannot intersect camera yet...
-#endif
+    if (!do_lightImage){ //_DO_LIGHTIMAGE)
+        p[k] = 0.f; // cannot intersect camera yet...
+    }
     // treat specular scatter events.
     // specular x_i makes p_i (join x_i-1 and x_i) and p_i+1 (join x_i and x_i+1) = 0:
     for(int i=0; i<=k; ++i)
@@ -734,9 +733,9 @@ CFLOAT biDirIntegrator_t::pathWeight_0t(renderState_t &state, int t, pathData_t 
     // p_k+1/p_k is zero currently, hitting the camera lens in general should be very seldom anyway...
     p[k+1] = 0.f;
 
-#if !(_DO_LIGHTIMAGE)
-    p[k] = 0.f; // cannot intersect camera yet...
-#endif
+    if (!do_lightImage){ //#if !(_DO_LIGHTIMAGE)
+        p[k] = 0.f; // cannot intersect camera yet...
+    } //#endif
     // treat specular scatter events.
     for(int i=0; i<=k; ++i)
     {
@@ -752,12 +751,10 @@ CFLOAT biDirIntegrator_t::pathWeight_0t(renderState_t &state, int t, pathData_t 
     return weight;
 }
 
-/* ============================================================
-    eval the (unweighted) path created by connecting
-    sub-paths at s,t
- ============================================================ */
-
-
+// =====================================================================
+//    eval the (unweighted) path created by connecting sub-paths at s,t
+// =====================================================================
+/* called from line 303 */
 color_t biDirIntegrator_t::evalPath(renderState_t &state, int s, int t, pathData_t &pd) const
 {
     const pathVertex_t &y = pd.lightPath[s-1];
@@ -771,7 +768,7 @@ color_t biDirIntegrator_t::evalPath(renderState_t &state, int s, int t, pathData
     return C_uw;
 }
 
-//===  eval paths with s==1 (direct lighting strategy)  ===//
+//===  eval paths with s==1 (direct lighting strategy)  ===// called from line 286 
 color_t biDirIntegrator_t::evalLPath(renderState_t &state, int t, pathData_t &pd, ray_t &lRay, const color_t &lcol) const
 {
     if(scene->isShadowed(state, lRay))
@@ -787,6 +784,7 @@ color_t biDirIntegrator_t::evalLPath(renderState_t &state, int t, pathData_t &pd
 
 //=== eval path with t==1 (light path directly connected to eve vertex)
 //almost same as evalPath, just that there is no material on one end but a camera sensor function (soon...)
+/* called from line 243*/
 color_t biDirIntegrator_t::evalPathE(renderState_t &state, int s, pathData_t &pd) const
 {
     const pathVertex_t &y = pd.lightPath[s-1];
@@ -860,8 +858,21 @@ color_t biDirIntegrator_t::evalPathE(renderState_t &state, int s, pathData_t &pd
 
 integrator_t* biDirIntegrator_t::factory(paraMap_t &params, renderEnvironment_t &render)
 {
+    bool transpShad = false;
+    int shadowDepth = 5;
+    int raydepth = 5;
+    bool doLight = true;
+
+    params.getParam("raydepth", raydepth);
+    params.getParam("transpShad", transpShad);
+    params.getParam("shadowDepth", shadowDepth);
+    params.getParam("do_LightImage", doLight);
+
     biDirIntegrator_t *inte;
-    inte = new biDirIntegrator_t();
+    inte = new biDirIntegrator_t(transpShad, shadowDepth);
+    inte->rDepth = raydepth;
+    inte->do_lightImage = doLight;
+
     return inte;
 }
 
