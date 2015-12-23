@@ -1387,7 +1387,7 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
     drm = colorSqrt(mr*mr + z_v*z_v);
 
     //test: uncomment
-	rd *= alpha_;
+	//rd *= alpha_;
 
     /* Diffuse reflectance function, Equation[4]*/
     color_t real = z_r * (sig_tr + 1 / dr)* colorExp(-1.f * sig_tr * dr)/(dr * dr);
@@ -1399,7 +1399,7 @@ color_t RdQdRm(const photon_t& inPhoton, const surfacePoint_t &sp, const vector3
      * M_1_PI_8 is the result of 0.125 * (1 / PI)
      */
 	// test..
-	bool quad = false;
+	bool quad = (g > 0.0);
 	if (quad) {
 		qd = z_r * (1 + sig_tr * dr) * colorExp(-1 * sig_tr * dr)* M_1_PI_8 / (dr * dr * dr) +
 			z_v * (1 + sig_tr * dv) * colorExp(-1 * sig_tr * dv)* M_1_PI_8 / (dv * dv * dv) +

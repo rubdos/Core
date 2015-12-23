@@ -27,6 +27,7 @@
 #include <integrators/integr_utils.h>
 #include <utilities/mcqmc.h>
 #include <sstream>
+#include <algorithm>
 
 
 __BEGIN_YAFRAY
@@ -43,7 +44,7 @@ __BEGIN_YAFRAY
 #define MIN_PATH_LENGTH 3
 
 #define _BIDIR_DEBUG 0
-#define _DO_LIGHTIMAGE 1
+//#define _DO_LIGHTIMAGE 1
 
 /*! class that holds some vertex y_i/z_i (depending on wether it is a light or camera path)
 */
@@ -103,7 +104,7 @@ public:
     int nPaths;     //!< number of paths that have been sampled (for current thread and image)
 };
 
-class YAFRAYPLUGIN_EXPORT biDirIntegrator_t: public tiledIntegrator_t
+class YAFRAYPLUGIN_EXPORT biDirIntegrator_t : public tiledIntegrator_t
 {
 public:
     biDirIntegrator_t(bool transpShad=false, int shadowDepth=4);

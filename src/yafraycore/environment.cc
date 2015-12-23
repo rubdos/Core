@@ -136,7 +136,8 @@ void renderEnvironment_t::loadPlugins(const std::string &path)
 /** povman: new code for getPluginPath */
 bool renderEnvironment_t::getPluginPath(std::string &path)
 {
-    path = std::string(Y_PLUGINPATH);
+	//TODO: add function for use environment variable like BOUNTY_ROOT
+	path = std::string(Y_PLUGINPATH);
     return true;
 }
 
