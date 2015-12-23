@@ -22,11 +22,13 @@ option(DEBUG_BUILD "Enable debug build mode" OFF)
 option(EMBED_FONT_QT "Embed font for QT GUI (usefull for some buggy QT installations)" OFF)
 option(FAST_MATH "Enable mathematic approximations to make code faster" ON)
 option(FAST_TRIG "Enable trigonometric approximations to make code faster" ON)
+option(WITH_OpenMP "Enable OpenMP parallel processing optimization" ON)
 
 ###### Packages and Definitions #########
 
 # Load user configurations if available
 include(CMakeConfig/UserConfig.txt OPTIONAL)
+#include(CMakeConfig/openmp.make OPTIONAL)
 
 if(NOT YAF_USER_CONFIG)
 	include(${CMAKE_BINARY_DIR}/UserConfig.txt OPTIONAL)
@@ -153,6 +155,30 @@ if(WITH_XML_LOADER)
 else(WITH_XML_LOADER)
 	message("Building XML loader: no")
 endif(WITH_XML_LOADER)
+
+#---------------------------------------------
+# Add options for OpenMP dependences
+# Work in progress...
+#---------------------------------------------
+if(WITH_OpenMP)
+    message("Use OpenMP parallel processing: yes")
+    add_definitions(-DHAVE_OPENMP) # add nicely flags for use with code
+    if(MINGW)
+        #set(OpenMP_C_FLAGS "-fopenmp")
+        find_package(OpenMP REQUIRED)
+        if(OPENMP_FOUND)
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+            set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+        endif(OPENMP_FOUND)
+    endif(MINGW)
+    # Seems that MSVC have some issues with find_package(OpenMP)
+else(WITH_OpenMP)
+    message("Use OpenMP parallel processing: no")
+endif(WITH_OpenMP)
+#
+# end
+#
 
 if(WITH_YAF_PY_BINDINGS)
 	message("Building Python bindings: yes")
