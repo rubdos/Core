@@ -296,9 +296,9 @@ bool tiledIntegrator_t::renderTile(renderArea_t &a, int n_samples, int offset, b
 				c_ray.time = rstate.time;
 				c_ray.hasDifferentials = true;
 				// col = T * L_o + L_v
-				colorA_t col = integrate(rstate, c_ray); // L_o
-				col *= scene->volIntegrator->transmittance(rstate, c_ray); // T
-				col += scene->volIntegrator->integrate(rstate, c_ray); // L_v
+				colorA_t col = integrate(rstate, c_ray); // L_o				
+				//col *= scene->volIntegrator->transmittance(rstate, c_ray); // T
+				//col += scene->volIntegrator->integrate(rstate, c_ray); // L_v
 				imageFilm->addSample(wt * col, j, i, dx, dy, &a);
 
 				if(do_depth)
