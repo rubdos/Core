@@ -1,3 +1,19 @@
+/****************************************************************************
+*      This library is free software; you can redistribute it and/or
+*      modify it under the terms of the GNU Lesser General Public
+*      License as published by the Free Software Foundation; either
+*      version 2.1 of the License, or (at your option) any later version.
+*
+*      This library is distributed in the hope that it will be useful,
+*      but WITHOUT ANY WARRANTY; without even the implied warranty of
+*      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+*      Lesser General Public License for more details.
+*
+*      You should have received a copy of the GNU Lesser General Public
+*      License along with this library; if not, write to the Free Software
+*      Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+*/
+
 #include <integrators/sppm.h>
 #include <yafraycore/scr_halton.h>
 #include <sstream>
@@ -232,8 +248,8 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
     if (bHashgrid){
         photonGrid.clear();
     }
-    else { 
-        diffuseMap.clear(); 
+    else {
+        diffuseMap.clear();
         causticMap.clear();
     }
 
@@ -320,7 +336,8 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 
         sL = float(curr) * invDiffPhotons; // Does sL also need more random for each pass?
         int lightNum = lightPowerD->DSample(sL, &lightNumPdf);
-        if(lightNum >= numDLights){
+        if(lightNum >= numDLights)
+        {
             Y_ERROR << integratorName << ": lightPDF sample error! "<<sL<<"/"<<lightNum<<"... stopping now.\n";
             delete lightPowerD;
             return;
@@ -347,8 +364,8 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
         while( scene->intersect(ray, sp) ) //scatter photons.
         {
             if(isnan(pcol.R) || isnan(pcol.G) || isnan(pcol.B))
-            { 
-                Y_WARNING << integratorName << ": NaN  on photon color for light" << lightNum + 1 << ".\n"; 
+            {
+                Y_WARNING << integratorName << ": NaN  on photon color for light" << lightNum + 1 << ".\n";
                 continue;
             }
 
@@ -373,10 +390,12 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
             {
                 photon_t np(wi, sp.P, pcol);// pcol used here
 
-                if (bHashgrid) {
+                if (bHashgrid)
+                {
                     photonGrid.pushPhoton(np);
                 }
-                else {
+                else
+                {
                     diffuseMap.pushPhoton(np);
                     diffuseMap.setNumPaths(curr);
                 }
@@ -387,10 +406,12 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
             {
                 photon_t np(wi, sp.P, pcol);// pcol used here
 
-                if (bHashgrid) {
+                if (bHashgrid)
+                {
                     photonGrid.pushPhoton(np);
                 }
-                else {
+                else
+                {
                     causticMap.pushPhoton(np);
                     causticMap.setNumPaths(curr);
                 }
@@ -408,7 +429,7 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
             pSample_t sample(s5, s6, s7, BSDF_ALL, pcol, transm);
 
             if (!material->scatterPhoton(state, sp, wi, wo, sample)) break; //photon was absorped.  actually based on russian roulette
-            
+
             pcol = sample.color;
 
             causticPhoton = ((sample.sampledFlags & (BSDF_GLOSSY | BSDF_SPECULAR | BSDF_DISPERSIVE)) && directPhoton) ||
@@ -429,7 +450,7 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
     }
     pb->done();
     //pb->setTag("Photon map built.");
-    Y_INFO << integratorName << ":Photon map built." << yendl;
+    Y_INFO << integratorName << ": Photon map built." << yendl;
     Y_INFO << integratorName << ": Shot " << curr << " photons from " << numDLights << " light(s)" << yendl;
     delete lightPowerD;
 
@@ -470,10 +491,12 @@ void SPPM::prePass(int samples, int offset, bool adaptive)
 
     gTimer.stop("prePass");
 
-    if (bHashgrid) {
+    if (bHashgrid)
+    {
         Y_INFO << integratorName << ": PhotonGrid building time: " << gTimer.getTime("prePass") << yendl;
     }
-    else {
+    else
+    {
         Y_INFO << integratorName << ": PhotonMap building time: " << gTimer.getTime("prePass") << yendl;
     }
 
@@ -502,7 +525,7 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
     bool oldIncludeLights = state.includeLights;
 
     if(!transpBackground) alpha=1.0;
-    
+
     if(scene->intersect(ray, sp))
     {
         unsigned char userdata[USER_DATA_SIZE+7];
@@ -534,20 +557,20 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
         //(PM_IRE is only for the first pass, so not consume much time)
         if(PM_IRE && !hp.radiusSetted) // "waste" two gather here as it has two maps now. This make the logic simple.
         {
-            PFLOAT radius_1 = dsRadius * dsRadius;
-            PFLOAT radius_2 = radius_1;
+            PFLOAT diffRadius = dsRadius * dsRadius;    // radius_1 = dsRadius * dsRadius;
+            PFLOAT caustRadius = diffRadius;            // radius_2 =  radius_1;
             int diffGathered = 0, caustGathered = 0;
 
             if(diffuseMap.nPhotons() > 0){
-                diffGathered = diffuseMap.gather(sp.P, gathered, nSearch, radius_1);
+                diffGathered = diffuseMap.gather(sp.P, gathered, nSearch, diffRadius); // radius_1);
             }
             if(causticMap.nPhotons() > 0){
-                caustGathered = causticMap.gather(sp.P, gathered, nSearch, radius_2);
+                caustGathered = causticMap.gather(sp.P, gathered, nSearch, caustRadius); // radius_2);
             }
             if (diffGathered > 0 || caustGathered > 0) // it none photon gathered, we just skip.
             {
                 // we choose the smaller one to be the initial radius.
-                hp.radius2 = std::min(radius_1, radius_2);
+                hp.radius2 = std::min(diffRadius, caustRadius); // radius_1, radius_2);
                 hp.radiusSetted = true;
             }
         }
@@ -849,7 +872,7 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
 void SPPM::initializePPM()
 {
     const camera_t* camera = scene->getCamera();
-    unsigned int resolution = camera->resX() * camera->resY();
+    int resolution = camera->resX() * camera->resY();
 
     hitPoints.reserve(resolution);
     bound_t bBox = scene->getSceneBound(); // Now using Scene Bound, this could get a bigger initial radius, and need more tests
@@ -857,7 +880,8 @@ void SPPM::initializePPM()
     // initialize SPPM statistics
     float initialRadius = ((bBox.longX() + bBox.longY() + bBox.longZ()) / 3.f) / ((camera->resX() + camera->resY()) / 2.0f) * 2.f ;
     initialRadius = std::min(initialRadius, 1.f); //Fix the overflow bug
-    for(unsigned int i = 0; i < resolution; i++)
+#pragma omp parallel for
+    for( int i = 0; i < resolution; i++)
     {
         HitPoint hp;
         hp.accPhotonFlux  = colorA_t(0.f);

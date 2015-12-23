@@ -93,7 +93,7 @@ struct YAFRAYCORE_EXPORT renderState_t
 	//point3d_t screenpos;     //!< the image coordinates of the pixel being computed currently
 	const camera_t *cam;
 	bool chromatic;     //!< indicates wether the full spectrum is calculated (true) or only a single wavelength (false).
-	bool includeLights; //!< indicate that emission of materials assiciated to lights shall be included, for correctly visible lights etc.
+	bool includeLights; //!< indicate that emission of materials associated to lights shall be included, for correctly visible lights etc.
 	PFLOAT wavelength;  //!< the (normalized) wavelength being used when chromatic is false.
 	PFLOAT time;        //!< the current (normalized) frame time
 	mutable void *userdata; //!< a fixed amount of memory where materials may keep data to avoid recalculations...really need better memory management :(
