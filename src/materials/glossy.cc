@@ -104,12 +104,9 @@ void glossyMat_t::initOrenNayar(double sigma)
 
 float glossyMat_t::OrenNayar(const vector3d_t &wi, const vector3d_t &wo, const vector3d_t &N) const
 {
-	//float cos_ti = std::max(-1.f,std::min(1.f,N*wi));
-	//float cos_to = std::max(-1.f,std::min(1.f,N*wo));
-    //
-    float cos_ti = std::max(1e-8f, std::min(1.f,N*wi));
-	float cos_to = std::max(1e-8f, std::min(1.f,N*wo));
-	float maxcos_f = 0.f;
+	float cos_ti = std::max(-1.f,std::min(1.f,N*wi));
+	float cos_to = std::max(-1.f,std::min(1.f,N*wo));
+    float maxcos_f = 0.f;
 
 	if(cos_ti < 0.9999f && cos_to < 0.9999f)
 	{
@@ -123,14 +120,12 @@ float glossyMat_t::OrenNayar(const vector3d_t &wi, const vector3d_t &wo, const v
 	if(cos_to >= cos_ti)
 	{
 		sin_alpha = fSqrt(1.f - cos_ti*cos_ti);
-		tan_beta = fSqrt(1.f - cos_to*cos_to) / cos_to;
-		//tan_beta = fSqrt(1.f - cos_to*cos_to) / ((cos_to == 0.f)?1e-8f:cos_to); // white (black on windows) dots fix for oren-nayar, could happen with bad normals
+		tan_beta = fSqrt(1.f - cos_to*cos_to) / ((cos_to == 0.f)?1e-8f:cos_to); // white (black on windows) dots fix for oren-nayar, could happen with bad normals
 	}
 	else
 	{
 		sin_alpha = fSqrt(1.f - cos_to*cos_to);
-		tan_beta = fSqrt(1.f - cos_ti*cos_ti) / cos_ti;
-		//tan_beta = fSqrt(1.f - cos_ti*cos_ti) / ((cos_ti == 0.f)?1e-8f:cos_ti); // white (black on windows) dots fix for oren-nayar, could happen with bad normals
+		tan_beta = fSqrt(1.f - cos_ti*cos_ti) / ((cos_ti == 0.f)?1e-8f:cos_ti); // white (black on windows) dots fix for oren-nayar, could happen with bad normals
 	}
 
 	return orenA + orenB * maxcos_f * sin_alpha * tan_beta;

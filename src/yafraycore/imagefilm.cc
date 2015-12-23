@@ -117,7 +117,7 @@ float Lanczos2(float dx, float dy)
 
 //-
 imageFilm_t::imageFilm_t (int width, int height, int xstart, int ystart, colorOutput_t &out, float filterSize,
-                          filterType filt,renderEnvironment_t *e, bool showSamMask,int tSize,
+                          filterType filt, renderEnvironment_t *e, bool showSamMask, int tSize,
                           imageSpliter_t::tilesOrderType tOrder, bool pmA, bool drawParams):
 flags(0), w(width), h(height), cx0(xstart), cy0(ystart), gamma(1.0), filterw(filterSize*0.5), output(&out),
 clamp(false), split(true), interactive(true), abort(false), correctGamma(false), splitter(0), pbar(0),
@@ -351,7 +351,10 @@ void imageFilm_t::finishArea(renderArea_t &a)
 			col.clampRGB0();
 
 			if(correctGamma) col.gammaAdjust(gamma);
-
+			// pov: review this code. Used in lines-> 420, 599, 124. 
+			// introduced in this commit:
+			// https://github.com/YafaRay/Core/commit/83ab55d2854934cfe3a1cfcc32e3ffaceea958c6
+			// and now seems unused after 'transparent background' feature..
 			if(premultAlpha) col.alphaPremultiply();
 
 			if(depthMap)

@@ -1,1 +1,1 @@
-![logo](images/logo.png)
+![logo](https://github.com/TheBounty/Core/wiki/images/logo.png)

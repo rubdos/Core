@@ -119,7 +119,7 @@ bool parse_xml_file(const char *filename, scene_t *scene, renderEnvironment_t *e
     }
     return true;
 #else
-    Y_WARNING << "XMLParser: yafray was compiled without XML support, cannot parse file." << yendl;
+    Y_WARNING << "XMLParser: TheBounty was compiled without XML support, cannot parse file." << yendl;
     return false;
 #endif
 }

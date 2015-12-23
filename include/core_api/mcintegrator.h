@@ -65,7 +65,6 @@ protected:
 	//
     virtual color_t getTranslucentInScatter(renderState_t& state, ray_t& stepRay, float currentStep) const;
 
-	//uncomment for test in progress
 	//virtual color_t estimateSSSSingleScatteringPhotons(renderState_t &state, surfacePoint_t &sp, const vector3d_t &wo) const;
     // sss end
 
@@ -82,16 +81,16 @@ protected:
 	pdf1D_t *lightPowerD;
 
 	bool useAmbientOcclusion; //! Use ambient occlusion
-	int aoSamples; //! Ambient occlusion samples
-	float aoDist; //! Ambient occlusion distance
-	color_t aoCol; //! Ambient occlusion color
+	int aoSamples;  //! Ambient occlusion samples
+	float aoDist;   //! Ambient occlusion distance
+	color_t aoCol;  //! Ambient occlusion color
 
 
 	background_t *background; //! Background shader
-	int nPaths; //! Number of samples for mc raytracing
+	int nPaths;     //! Number of samples for mc raytracing
 	int maxBounces; //! Max. path depth for mc raytracing
-	std::vector<light_t*> lights; //! An array containing all the scene lights
-	bool transpBackground; //! Render background as transparent
+	std::vector<light_t*> lights;   //! An array containing all the scene lights
+	bool transpBackground;          //! Render background as transparent
 	bool transpRefractedBackground; //! Render refractions of background as transparent
 
     // SSS
@@ -100,9 +99,9 @@ protected:
     // amount of shot photons
 	unsigned int nSSSPhotons;
 
-	int nSSSDepth; // amount of bounces
+	int nSSSDepth; //! amount of scattering bounces
 
-	unsigned int nSingleScatterSamples; // amount of scatter samples.
+	unsigned int nSingleScatterSamples; //! amount of scatter samples.
 
 	bool isDirectLight; // if use with directlight integrator
 
