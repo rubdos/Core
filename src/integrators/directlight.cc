@@ -1,10 +1,10 @@
 /****************************************************************************
 *   directlight.cc: an integrator for direct lighting only
-*	This is part of the yafaray package
-*	Copyright (C) 2006  Mathias Wein (Lynx)
-*	Copyright (C) 2009  Rodrigo Placencia (DarkTide)
+*   This is part of the yafaray package
+*   Copyright (C) 2006  Mathias Wein (Lynx)
+*   Copyright (C) 2009  Rodrigo Placencia (DarkTide)
 *
-*	This library is free software; you can redistribute it and/or
+*   This library is free software; you can redistribute it and/or
 *   modify it under the terms of the GNU Lesser General Public
 *   License as published by the Free Software Foundation; either
 *   version 2.1 of the License, or (at your option) any later version.
@@ -171,7 +171,19 @@ colorA_t directLighting_t::integrate(renderState_t &state, diffRay_t &ray) const
 
     state.userdata = o_udat;
     state.includeLights = oldIncludeLights;
-    return colorA_t(col, alpha);
+
+    //create new colorA_t for store also alpha value
+    colorA_t result;
+    result += col;
+    colorA_t colVolTransmittance = scene->volIntegrator->transmittance(state, ray);
+    colorA_t colVolIntegration = scene->volIntegrator->integrate(state, ray);
+
+    if(transpBackground) alpha = std::max(alpha, 1.f-colVolTransmittance.R);
+
+    result = (result * colVolTransmittance) + colVolIntegration;
+    result.A = alpha;
+    //
+    return result;
 }
 
 integrator_t* directLighting_t::factory(paraMap_t &params, renderEnvironment_t &render)
