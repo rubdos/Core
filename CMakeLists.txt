@@ -204,16 +204,32 @@ if (USER_INSTALL_PREFIX)
 	set(CMAKE_INSTALL_PREFIX ${USER_INSTALL_PREFIX})
 endif (USER_INSTALL_PREFIX)
 
+#------------------------------------------------------------------------------#
+# povman: review 'bin' and 'lib' dir because now, this package is 'packed'
+# inside an unique folder. Inside Blender addons folder or, in standalone
+# istallation form. So, the tree folder are the same on linux than windows
+# e.g: TheBounty/bin/plugins
+# Maybe is need review this setup when include TheBounty on some Linux distro
+#------------------------------------------------------------------------------#
+# binary dir
+if(NOT YAF_BIN_DIR)
+    set(YAF_BIN_DIR bin)
+endif(NOT YAF_BIN_DIR)
+
+# library dir
+# TODO: is necessary tested 'lib' dir under OSX systems. Keep old setup for now.
+if(NOT YAF_LIB_DIR)
+    if(APPLE)
+        set(YAF_LIB_DIR lib)
+    else(APPLE)
+        set(YAF_LIB_DIR ${YAF_BIN_DIR})
+    endif(APPLE)
+endif(NOT YAF_LIB_DIR)
+
+#-----------------------
+# build flags
+#-----------------------
 if(NOT WIN32)
-	# installation directories
-
-	if(NOT YAF_BIN_DIR)
-		set(YAF_BIN_DIR bin)
-	endif(NOT YAF_BIN_DIR)
-
-	if(NOT YAF_LIB_DIR)
-		set(YAF_LIB_DIR lib)
-	endif(NOT YAF_LIB_DIR)
 
 	# build flags
 	set(CMAKE_CXX_FLAGS "-Wall" CACHE STRING "Default compiler flags" FORCE)
@@ -237,13 +253,6 @@ if(NOT WIN32)
 	set(YAF_TARGET_TYPE LIBRARY)
 	
 else(NOT WIN32)
-	# installation directories
-
-	if(NOT YAF_BIN_DIR)
-		set(YAF_BIN_DIR bin)
-	endif(NOT YAF_BIN_DIR)
-
-	set(YAF_LIB_DIR ${YAF_BIN_DIR})
 
 	# build flags
 	if(MINGW)
@@ -296,18 +305,22 @@ if (BUILDRELEASE)
 	add_definitions(-DRELEASE)
 endif (BUILDRELEASE)
 
-# Paths and flags configuration
+#------------------------------
+# Plugins paths configuration
+#------------------------------
+if(NOT YAF_PLUGIN_DIR)
+    # not sure about OSX tree folder. Keep old option
+    if(APPLE)
+        set(YAF_PLUGIN_DIR ${YAF_LIB_DIR}/yafaray)
+    # set same folder for windows and linux
+    else(APPLE)
+	    set(YAF_PLUGIN_DIR ${YAF_LIB_DIR}/plugins)
+    endif(APPLE)
+endif(NOT YAF_PLUGIN_DIR)
 
-if(NOT WIN32)
-	if(NOT YAF_PLUGIN_DIR)
-		set(YAF_PLUGIN_DIR ${YAF_LIB_DIR}/yafaray)
-	endif(NOT YAF_PLUGIN_DIR)
-else(NOT WIN32)
-	if(NOT YAF_PLUGIN_DIR)
-		set(YAF_PLUGIN_DIR ${YAF_LIB_DIR}/plugins)
-	endif(NOT YAF_PLUGIN_DIR)
-endif(NOT WIN32)
-
+#-----------------------------------
+# Buil flags configuration
+#-----------------------------------
 if (USER_RELFLAGS)
 	set(CMAKE_CXX_FLAGS_RELEASE "${YAF_CXX_FLAGS_RELEASE} ${USER_RELFLAGS}" CACHE STRING "Release compiler flags" FORCE)
 else (USER_RELFLAGS)
