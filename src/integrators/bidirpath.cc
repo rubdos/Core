@@ -333,7 +333,7 @@ colorA_t biDirIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) cons
     col = (col * colVolTransmittance) + colVolIntegration;
 
 
-    return colorA_t(col, alpha);
+    return col;
 }
 
 /* ============================================================
