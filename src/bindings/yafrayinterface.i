@@ -547,6 +547,135 @@ private:
 		self->render(output_wrap, pbar_wrap);
 		Py_END_ALLOW_THREADS;
 	}
+    void addTriangles(PyObject *pyArray)
+    {
+        if(!PyList_Check(pyArray)) {
+            PyErr_SetString(PyExc_TypeError,
+                "yafrayInterface_t: "
+                "addTriangles expects a list.");
+            return;
+        }
+        const size_t count = PyList_Size(pyArray);
+        PyObject *obj;
+        for(size_t i = 0; i < count; ++i) {
+            obj = PyList_GetItem(pyArray, i);
+            if(!PyTuple_Check(obj)) {
+                PyErr_SetString(PyExc_TypeError,
+                    "yafrayInterface_t: "
+                    "addVertices expects a list of tuples.");
+                std::cout << "Element " << i << " is not a list" << std::endl;
+                return;
+            }
+            const size_t innersize = PyTuple_Size(obj); 
+            if(innersize == 2) {
+                PyObject *verts = PyTuple_GetItem(obj, 0);
+                PyObject *ymaterial = PyTuple_GetItem(obj, 1);
+                const material_t *mat = reinterpret_cast<material_t *>(ymaterial);
+                self->addTriangle(
+                        PyInt_AsLong(PyList_GetItem(verts, 0)),
+                        PyInt_AsLong(PyList_GetItem(verts, 1)),
+                        PyInt_AsLong(PyList_GetItem(verts, 2)),
+                        mat
+                        );
+                if (PyList_Size(verts) == 4) { // We got a quad instead of a triangle.
+                                               // Triangulate
+                    self->addTriangle(
+                            PyInt_AsLong(PyList_GetItem(verts, 0)),
+                            PyInt_AsLong(PyList_GetItem(verts, 2)),
+                            PyInt_AsLong(PyList_GetItem(verts, 3)),
+                            mat
+                            );
+                }
+            } else if(innersize == 3) {
+                PyObject *verts = PyTuple_GetItem(obj, 0);
+                PyObject *uv = PyTuple_GetItem(obj, 1);
+                PyObject *ymaterial = PyTuple_GetItem(obj, 2);
+                const material_t *mat = reinterpret_cast<material_t *>(ymaterial);
+                self->addTriangle(
+                        PyInt_AsLong(PyList_GetItem(verts, 0)),
+                        PyInt_AsLong(PyList_GetItem(verts, 1)),
+                        PyInt_AsLong(PyList_GetItem(verts, 2)),
+                        PyInt_AsLong(PyTuple_GetItem(uv, 0)),
+                        PyInt_AsLong(PyTuple_GetItem(uv, 1)),
+                        PyInt_AsLong(PyTuple_GetItem(uv, 2)),
+                        mat
+                        );
+                if (PyList_Size(verts) == 4) { // We got a quad instead of a triangle.
+                                               // Triangulate
+                    self->addTriangle(
+                            PyInt_AsLong(PyList_GetItem(verts, 0)),
+                            PyInt_AsLong(PyList_GetItem(verts, 2)),
+                            PyInt_AsLong(PyList_GetItem(verts, 3)),
+                            PyInt_AsLong(PyTuple_GetItem(uv, 0)),
+                            PyInt_AsLong(PyTuple_GetItem(uv, 2)),
+                            PyInt_AsLong(PyTuple_GetItem(uv, 3)),
+                            mat
+                            );
+                }
+            } else {
+                PyErr_SetString(PyExc_TypeError,
+                    "yafrayInterface_t: "
+                    "addTriangles expects inner tuples with sizes 2 or 3.");
+                return;
+            }
+        }
+    }
+    void addVertices(PyObject *pyArray)
+    {
+        // Structure should be:
+        // list of tuples.
+        // The inner tuples should have 3 or 6 items:
+        // three coordinates and optionally three Orco coordinates.
+        if(!PyList_Check(pyArray)) {
+            PyErr_SetString(PyExc_TypeError,
+                "yafrayInterface_t: "
+                "addVertices expects a list.");
+            return;
+        }
+        const size_t count = PyList_Size(pyArray);
+        PyObject *obj;
+        for(size_t i = 0; i < count; ++i) {
+            obj = PyList_GetItem(pyArray, i);
+            if(!PyTuple_Check(obj)) {
+                PyErr_SetString(PyExc_TypeError,
+                    "yafrayInterface_t: "
+                    "addVertices expects a list of tuples.");
+                std::cout << "Element " << i << " is not a tuple" << std::endl;
+                return;
+            }
+            const size_t innersize = PyTuple_Size(obj); 
+            if (innersize < 3) {
+                PyErr_SetString(PyExc_TypeError,
+                    "yafrayInterface_t: "
+                    "addVertices expects inner tuples with sizes 3 or 6.");
+                return;
+            }
+            for(size_t i = 0; i < innersize; ++i) {
+                if(!PyFloat_Check(PyTuple_GetItem(obj, i))) {
+                    PyErr_SetString(PyExc_TypeError,
+                        "yafrayInterface_t: "
+                        "addVertices expects tuples of Floats.");
+                    return;
+                }
+            }
+            if (innersize >= 6) {
+                self->addVertex(
+                        PyFloat_AsDouble(PyTuple_GetItem(obj, 0)),
+                        PyFloat_AsDouble(PyTuple_GetItem(obj, 1)),
+                        PyFloat_AsDouble(PyTuple_GetItem(obj, 2)),
+                        PyFloat_AsDouble(PyTuple_GetItem(obj, 3)),
+                        PyFloat_AsDouble(PyTuple_GetItem(obj, 4)),
+                        PyFloat_AsDouble(PyTuple_GetItem(obj, 5))
+                        );
+            } else {
+                self->addVertex(
+                        PyFloat_AsDouble(PyTuple_GetItem(obj, 0)),
+                        PyFloat_AsDouble(PyTuple_GetItem(obj, 1)),
+                        PyFloat_AsDouble(PyTuple_GetItem(obj, 2))
+                        );
+            }
+        }
+    }
 }
 
 %exception yafaray::yafrayInterface_t::loadPlugins
