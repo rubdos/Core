@@ -28,7 +28,6 @@ option(WITH_OpenMP "Enable OpenMP parallel processing optimization" ON)
 
 # Load user configurations if available
 include(CMakeConfig/UserConfig.txt OPTIONAL)
-#include(CMakeConfig/openmp.make OPTIONAL)
 
 if(NOT YAF_USER_CONFIG)
 	include(${CMAKE_BINARY_DIR}/UserConfig.txt OPTIONAL)
