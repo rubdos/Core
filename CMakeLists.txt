@@ -232,7 +232,7 @@ endif(NOT YAF_LIB_DIR)
 if(NOT WIN32)
 
 	# build flags
-	set(CMAKE_CXX_FLAGS "-Wall" CACHE STRING "Default compiler flags" FORCE)
+    set(CMAKE_CXX_FLAGS "-Wall ${CMAKE_CXX_FLAGS}" CACHE STRING "Default compiler flags" FORCE)
 	
 	if(USER_RELEASE_OPTIMIZATION_FLAGS)
 		set(YAF_CXX_FLAGS_RELEASE ${USER_RELEASE_OPTIMIZATION_FLAGS})
