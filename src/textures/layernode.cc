@@ -85,7 +85,7 @@ void layerNode_t::eval(nodeStack_t &stack, const renderState_t &state, const sur
 			}
 		}
 		
-		rval = texture_value_blend(default_val, rval, Tin, stencilTin * valfac, mode, (do_scalar<0));
+		rval = texture_value_blend(default_val, rval, Tin, stencilTin * valfac, mode, (!do_scalar));// do_scalar < 0)); // povman test for silent build warning
 		if(rval<0.f) rval=0.f;
 	}
 	rcol.A = stencilTin;
