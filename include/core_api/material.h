@@ -40,8 +40,10 @@ class YAFRAYCORE_EXPORT BSDF_t
 };
 */
 
-class surfacePoint_t;
-class renderState_t;
+//class 
+struct surfacePoint_t;
+//class
+struct renderState_t;
 class volumeHandler_t;
 
 enum bsdfFlags_t
