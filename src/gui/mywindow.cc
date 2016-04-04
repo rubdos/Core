@@ -62,15 +62,15 @@
 #include <algorithm>
 
 // Qt Headers
-#include <QtGui/QHBoxLayout>
-#include <QtGui/QScrollArea>
-#include <QtGui/QFileDialog>
+#include <QHBoxLayout>
+#include <QScrollArea>
+#include <QFileDialog>
 #include <QtCore/QDir>
 #include <QtGui/QImageWriter>
-#include <QtGui/QErrorMessage>
-#include <QtGui/QMessageBox>
+#include <QErrorMessage>
+#include <QMessageBox>
 #include <QtGui/QKeyEvent>
-#include <QtGui/QDesktopWidget>
+#include <QDesktopWidget>
 #include <QtGui/QFontDatabase>
 #include <QtCore/QSettings>
 

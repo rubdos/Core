@@ -22,12 +22,12 @@
 #ifndef Y_RENDERWIDGET_H
 #define Y_RENDERWIDGET_H
 
-#include <QtGui/QWidget>
+#include <QWidget>
 #include <QtGui/QImage>
 #include <QtGui/QPixmap>
-#include <QtGui/QLabel>
-#include <QtGui/QScrollArea>
-#include <QtGui/QScrollBar>
+#include <QLabel>
+#include <QScrollArea>
+#include <QScrollBar>
 #include <QtCore/QMutex>
 
 class RenderWidget: public QLabel

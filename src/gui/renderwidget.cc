@@ -20,8 +20,8 @@
  */
 
 #include <QtCore/QDebug>
-#include <QtGui/QApplication>
-#include <QtGui/QPushButton>
+#include <QApplication>
+#include <QPushButton>
 #include <QtGui/QPainter>
 #include <QtGui/QPaintEvent>
 #include "renderwidget.h"

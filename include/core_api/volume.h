@@ -25,7 +25,8 @@
 
 __BEGIN_YAFRAY
 
-class renderState_t;
+//class
+struct renderState_t;
 class pSample_t;
 class light_t;
 

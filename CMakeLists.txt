@@ -1,5 +1,5 @@
 project (thebounty)
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 2.8.11)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMakeModules")
 set(CMAKE_COLOR_MAKEFILE ON)
@@ -141,9 +141,9 @@ else(WITH_TIFF)
 endif(WITH_TIFF)
 
 if(WITH_QT)
-	find_package(Qt4 4.4.0 COMPONENTS QtCore QtGui REQUIRED)
+	#find_package(Qt4 4.4.0 COMPONENTS QtCore QtGui REQUIRED)
 	# Qt enabling header
-	include(${QT_USE_FILE})
+	#include(${QT_USE_FILE})
 	message("Using Qt: yes")
 else(WITH_QT)
 	message("Using Qt: no")

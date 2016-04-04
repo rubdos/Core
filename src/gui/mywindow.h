@@ -23,7 +23,7 @@
 #ifndef MYWINDOW_H
 #define MYWINDOW_H
 
-#include <QtGui/QMainWindow>
+#include <QMainWindow>
 #include <QtCore/QTime>
 #include <string>
 
