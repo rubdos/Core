@@ -79,9 +79,6 @@ void endEl_parammap(xmlParser_t &p, const char *element);
 void startEl_paramlist(xmlParser_t &p, const char *element, const char **attrs);
 void endEl_paramlist(xmlParser_t &p, const char *element);
 void endEl_render(xmlParser_t &p, const char *element);
-//-----------------------------------------------------------------
-// povman: test to add support for read 'curvemesh' from xml files
-//-----------------------------------------------------------------
 void startEl_curve(xmlParser_t &p, const char *element, const char **attrs);
 void endEl_curve(xmlParser_t &p, const char *element);
 

@@ -301,9 +301,7 @@ struct mesh_dat_t
     objID_t ID;
     const material_t *mat;
 };
-//------------------------------
-// povman: add struct for curve
-//------------------------------
+
 struct curve_dat_t
 {
     curve_dat_t(): ID(0), mat(0), strandStart(0), strandEnd(0), strandShape(0) {};
@@ -396,9 +394,6 @@ void startEl_scene(xmlParser_t &parser, const char *element, const char **attrs)
         }
         parser.pushState(startEl_instance,endEl_instance, base_object_id);
     }
-    //----------------------------------------
-    // povman: add support for curve
-    //----------------------------------------
     else if(el == "curve")
     {
         curve_dat_t *cvd = new curve_dat_t();
@@ -422,9 +417,6 @@ void startEl_scene(xmlParser_t &parser, const char *element, const char **attrs)
             Y_ERROR << "XMLParser: Invalid scene state on startCurveMesh()!" << yendl;
         }
     }
-    //------------------
-    // end. Test OK!!
-    //------------------
     else
     {
         Y_WARNING << "XMLParser: Skipping unrecognized scene element" << yendl;
@@ -443,9 +435,6 @@ void endEl_scene(xmlParser_t &parser, const char *element)
     }
 }
 
-//---------------------------------------------
-// povman: test to add support for read curve
-//---------------------------------------------
 void startEl_curve(xmlParser_t &parser, const char *element, const char **attrs)
 {
     std::string el(element);
@@ -494,10 +483,6 @@ void endEl_curve(xmlParser_t &parser, const char *element)
         parser.popState();
     }
 }
-//-----------------
-// end. Test OK!!
-//-----------------
-
 
 // mesh-state, i.e. expect only points (vertices), faces and material settings
 // since we're supposed to be inside a mesh block, exit state on "mesh" element
