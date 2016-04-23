@@ -22,15 +22,25 @@ using namespace::yafaray;
 
 int main(int argc, char *argv[])
 {
-	std::string xmlLoaderVersion = "YafaRay XML loader version 0.2";
+	std::string xmlLoaderVersion = "TheBounty XML loader version 0.2";
 
-	cliParser_t parse(argc, argv, 2, 1, "You need to set at least a yafaray's valid XML file.");
+	cliParser_t parse(argc, argv, 2, 1, "You need to set at least a valid XML scene file.");
 
 	parse.setAppName(xmlLoaderVersion,
-		"[OPTIONS]... <input xml file> [output filename]\n<input xml file> : A valid yafaray XML file\n[output filename] : The filename of the rendered image without extension.\n*Note: If output filename is ommited the name \"yafaray\" will be used instead.");
+		"[OPTIONS]... <input xml file> [output filename]\n"
+		"<input xml file> : A valid yafaray XML file\n"
+		"[output filename] : The filename of the rendered image without extension.\n"
+		"*Note: If output filename is ommited the name \"yafaray\" will be used instead.");
 
-	parse.setOption("pp", "plugin-path", false, "Path to load plugins.");
-	parse.setOption("vl", "verbosity-level", false, "Set verbosity level, options are:\n                                       0 - MUTE (Prints nothing)\n                                       1 - ERROR (Prints only errors)\n                                       2 - WARNING (Prints only errors and warnings)\n                                       3 - INFO (Prints all messages)\n");
+	parse.setOption("pp", "plugin-path", false, 
+					"\n\tPath to load plugins.");
+
+	parse.setOption("vl", "verbosity-level", false, 
+					"\n\tSet verbosity level, options are:\n"
+					"\t0 - MUTE (Prints nothing)\n"
+					"\t1 - ERROR (Prints only errors)\n"
+					"\t2 - WARNING (Prints only errors and warnings)\n"
+					"\t3 - INFO (Prints all messages)\n");
 	parse.parseCommandLine();
 
 #ifdef RELEASE
@@ -65,22 +75,38 @@ int main(int argc, char *argv[])
 	std::string formatString = "";
 	for (size_t i = 0; i < formats.size(); i++)
 	{
-		formatString.append("                                       " + formats[i]);
+		formatString.append("\t\t" + formats[i]);
 		if (i < formats.size() - 1) formatString.append("\n");
 	}
 
-	parse.setOption("v", "version", true, "Displays this program's version.");
-	parse.setOption("h", "help", true, "Displays this help text.");
-	parse.setOption("op", "output-path", false, "Uses the path in <value> as rendered image output path.");
-	parse.setOption("o", "output-file", false, "Uses the path in <value> as rendered image output filename.");
-	parse.setOption("f", "format", false, "Sets the output image format, available formats are:\n\n" + formatString + "\n                                       Default: tga.\n");
-	parse.setOption("t", "threads", false, "Overrides threads setting on the XML file, for auto selection use -1.");
-	parse.setOption("a", "with-alpha", true, "Enables saving the image with alpha channel.");
-	parse.setOption("dp", "draw-params", true, "Enables saving the image with a settings badge.");
-	parse.setOption("ndp", "no-draw-params", true, "Disables saving the image with a settings badge (warning: this overrides --draw-params setting).");
-	parse.setOption("cs", "custom-string", false, "Sets the custom string to be used on the settings badge.");
-	parse.setOption("z", "z-buffer", true, "Enables the rendering of the depth map (Z-Buffer) (this flag overrides XML setting).");
-	parse.setOption("nz", "no-z-buffer", true, "Disables the rendering of the depth map (Z-Buffer) (this flag overrides XML setting).");
+	parse.setOption("v", "version", true,
+					"\n\tDisplays this program's version.");
+	parse.setOption("h", "help", true, 
+					"\n\tDisplays this help text.");
+	parse.setOption("op", "output-path", false, 
+					"\n\tUses the path in <value> as rendered image output path.");
+	parse.setOption("o", "output-file", false, 
+					"\n\tUses the path in <value> as rendered image output filename.");
+	parse.setOption("f", "format", false, 
+					"\n\tSets the output image format, available formats are:\n\n" + formatString + 
+					"\n\t\tDefault: tga.\n");
+	parse.setOption("t", "threads", false, 
+					"\n\tOverrides threads setting on the XML file, for auto selection use -1.");
+	parse.setOption("a", "with-alpha", true, 
+					"\n\tEnables saving the image with alpha channel.");
+	parse.setOption("dp", "draw-params", true, 
+					"\n\tEnables saving the image with a settings badge.");
+	parse.setOption("ndp", "no-draw-params", true, 
+					"\n\tDisables saving the image with a settings badge\n"
+					"\t(warning: this overrides --draw-params setting).");
+	parse.setOption("cs", "custom-string", false, 
+					"\n\tSets the custom string to be used on the settings badge.");
+	parse.setOption("z", "z-buffer", true, 
+					"\n\tEnables the rendering of the depth map (Z-Buffer)\n"
+					"\t(this flag overrides XML setting).");
+	parse.setOption("nz", "no-z-buffer", true, 
+					"\n\tDisables the rendering of the depth map (Z-Buffer)\n"
+					"\t (this flag overrides XML setting).");
 
 	bool parseOk = parse.parseCommandLine();
 
@@ -92,7 +118,7 @@ int main(int argc, char *argv[])
 
 	if (parse.getFlag("v"))
 	{
-		Y_INFO << xmlLoaderVersion << yendl << "Built with YafaRay version " << version << yendl;
+		Y_INFO << xmlLoaderVersion << yendl << "Built with TheBounty version " << version << yendl;
 		return 0;
 	}
 
@@ -210,7 +236,7 @@ int main(int argc, char *argv[])
 	if(ih)
 	{
 		out = new imageOutput_t(ih, outputPath, bx, by);
-		if(!out) return 1;				
+		if(!out) return 1;
 	}
 	else return 1;
 	
