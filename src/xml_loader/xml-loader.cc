@@ -1,3 +1,19 @@
+/****************************************************************************
+*      This library is free software; you can redistribute it and/or
+*      modify it under the terms of the GNU Lesser General Public
+*      License as published by the Free Software Foundation; either
+*      version 3 of the License, or (at your option) any later version.
+*
+*      This library is distributed in the hope that it will be useful,
+*      but WITHOUT ANY WARRANTY; without even the implied warranty of
+*      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+*      Lesser General Public License for more details.
+*
+*      You should have received a copy of the GNU Lesser General Public
+*      License along with this library; if not, write to the Free Software
+*      Foundation,Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+*/
+
 #include <yafray_config.h>
 #include <cstdlib>
 #include <cctype>
@@ -27,20 +43,20 @@ int main(int argc, char *argv[])
 	cliParser_t parse(argc, argv, 2, 1, "You need to set at least a valid XML scene file.");
 
 	parse.setAppName(xmlLoaderVersion,
-		"[OPTIONS]... <input xml file> [output filename]\n"
-		"<input xml file> : A valid yafaray XML file\n"
-		"[output filename] : The filename of the rendered image without extension.\n"
-		"*Note: If output filename is ommited the name \"yafaray\" will be used instead.");
+        "[OPTIONS]... <input xml file> [output filename]\n"
+        "<input xml file> : A valid yafaray XML file\n"
+        "[output filename] : The filename of the rendered image without extension.\n"
+        "*Note: If output filename is ommited the name \"yafaray\" will be used instead.");
 
 	parse.setOption("pp", "plugin-path", false, 
-					"\n\tPath to load plugins.");
+                    "\n\tPath to load plugins.");
 
 	parse.setOption("vl", "verbosity-level", false, 
-					"\n\tSet verbosity level, options are:\n"
-					"\t0 - MUTE (Prints nothing)\n"
-					"\t1 - ERROR (Prints only errors)\n"
-					"\t2 - WARNING (Prints only errors and warnings)\n"
-					"\t3 - INFO (Prints all messages)\n");
+                    "\n\tSet verbosity level, options are:\n"
+                    "\t\t0 - MUTE (Prints nothing)\n"
+                    "\t\t1 - ERROR (Prints only errors)\n"
+                    "\t\t2 - WARNING (Prints only errors and warnings)\n"
+                    "\t\t3 - INFO (Prints all messages)\n");
 	parse.parseCommandLine();
 
 #ifdef RELEASE
@@ -80,33 +96,33 @@ int main(int argc, char *argv[])
 	}
 
 	parse.setOption("v", "version", true,
-					"\n\tDisplays this program's version.");
+                    "\n\tDisplays this program's version.");
 	parse.setOption("h", "help", true, 
-					"\n\tDisplays this help text.");
+                    "\n\tDisplays this help text.");
 	parse.setOption("op", "output-path", false, 
-					"\n\tUses the path in <value> as rendered image output path.");
+                    "\n\tUses the path in <value> as rendered image output path.");
 	parse.setOption("o", "output-file", false, 
-					"\n\tUses the path in <value> as rendered image output filename.");
+                    "\n\tUses the path in <value> as rendered image output filename.");
 	parse.setOption("f", "format", false, 
-					"\n\tSets the output image format, available formats are:\n\n" + formatString + 
-					"\n\t\tDefault: tga.\n");
+                    "\n\tSets the output image format, available formats are:\n\n" + formatString + 
+                    "\n\t\tDefault: tga.\n");
 	parse.setOption("t", "threads", false, 
-					"\n\tOverrides threads setting on the XML file, for auto selection use -1.");
+                    "\n\tOverrides threads setting on the XML file, for auto selection use -1.");
 	parse.setOption("a", "with-alpha", true, 
-					"\n\tEnables saving the image with alpha channel.");
+                    "\n\tEnables saving the image with alpha channel.");
 	parse.setOption("dp", "draw-params", true, 
-					"\n\tEnables saving the image with a settings badge.");
+                    "\n\tEnables saving the image with a settings badge.");
 	parse.setOption("ndp", "no-draw-params", true, 
-					"\n\tDisables saving the image with a settings badge\n"
-					"\t(warning: this overrides --draw-params setting).");
+                    "\n\tDisables saving the image with a settings badge\n"
+                    "\t(warning: this overrides --draw-params setting).");
 	parse.setOption("cs", "custom-string", false, 
-					"\n\tSets the custom string to be used on the settings badge.");
+                    "\n\tSets the custom string to be used on the settings badge.");
 	parse.setOption("z", "z-buffer", true, 
-					"\n\tEnables the rendering of the depth map (Z-Buffer)\n"
-					"\t(this flag overrides XML setting).");
+                    "\n\tEnables the rendering of the depth map (Z-Buffer)\n"
+                    "\t(this flag overrides XML setting).");
 	parse.setOption("nz", "no-z-buffer", true, 
-					"\n\tDisables the rendering of the depth map (Z-Buffer)\n"
-					"\t (this flag overrides XML setting).");
+                    "\n\tDisables the rendering of the depth map (Z-Buffer)\n"
+                    "\t (this flag overrides XML setting).");
 
 	bool parseOk = parse.parseCommandLine();
 
@@ -164,7 +180,7 @@ int main(int argc, char *argv[])
 	std::string outName;
 	if (outputFilename.empty())
 	{
-		outName = "yafray." + format;
+        outName = "bounty." + format;
 	}
 	else
 	{
