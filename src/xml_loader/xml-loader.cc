@@ -46,17 +46,17 @@ int main(int argc, char *argv[])
         "[OPTIONS]... <input xml file> [output filename]\n"
         "<input xml file> : A valid yafaray XML file\n"
         "[output filename] : The filename of the rendered image without extension.\n"
-        "*Note: If output filename is ommited the name \"yafaray\" will be used instead.");
+        "*Note: If output filename is ommited the name \"bounty\" will be used instead.");
 
 	parse.setOption("pp", "plugin-path", false, 
                     "\n\tPath to load plugins.");
 
 	parse.setOption("vl", "verbosity-level", false, 
                     "\n\tSet verbosity level, options are:\n"
-                    "\t\t0 - MUTE (Prints nothing)\n"
-                    "\t\t1 - ERROR (Prints only errors)\n"
+                    "\t\t0 - MUTE    (Prints nothing)\n"
+                    "\t\t1 - ERROR   (Prints only errors)\n"
                     "\t\t2 - WARNING (Prints only errors and warnings)\n"
-                    "\t\t3 - INFO (Prints all messages)\n");
+                    "\t\t3 - INFO    (Prints all messages)\n");
 	parse.parseCommandLine();
 
 #ifdef RELEASE
@@ -109,7 +109,8 @@ int main(int argc, char *argv[])
 	parse.setOption("t", "threads", false, 
                     "\n\tOverrides threads setting on the XML file, for auto selection use -1.");
 	parse.setOption("a", "with-alpha", true, 
-                    "\n\tEnables saving the image with alpha channel.");
+                    "\n\tEnables saving the image with alpha channel."
+                    "\tIf this option are omited, the 'alpha_channel' scene parameter is used.");
 	parse.setOption("dp", "draw-params", true, 
                     "\n\tEnables saving the image with a settings badge.");
 	parse.setOption("ndp", "no-draw-params", true, 
@@ -119,10 +120,10 @@ int main(int argc, char *argv[])
                     "\n\tSets the custom string to be used on the settings badge.");
 	parse.setOption("z", "z-buffer", true, 
                     "\n\tEnables the rendering of the depth map (Z-Buffer)\n"
-                    "\t(this flag overrides XML setting).");
+                    "\t(warning: this flag overrides XML setting).");
 	parse.setOption("nz", "no-z-buffer", true, 
                     "\n\tDisables the rendering of the depth map (Z-Buffer)\n"
-                    "\t (this flag overrides XML setting).");
+                    "\t(warning: this flag overrides XML setting).");
 
 	bool parseOk = parse.parseCommandLine();
 
@@ -220,6 +221,8 @@ int main(int argc, char *argv[])
 	render.getParam("height", height); // height of rendered image
 	render.getParam("xstart", bx); // border render x start
 	render.getParam("ystart", by); // border render y start
+    if (!alpha)
+        render.getParam("alpha_channel", alpha);
 	
 	if(threads >= -1) render["threads"] = threads;
 	
