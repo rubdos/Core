@@ -49,7 +49,8 @@ int main(int argc, char *argv[])
         "*Note: If output filename is ommited the name \"bounty\" will be used instead.");
 
 	parse.setOption("pp", "plugin-path", false, 
-                    "\n\tPath to load plugins.");
+                    "\n\tPath to load plugins."
+                    "\t(warning: this flag overrides default path to plugins.");
 
 	parse.setOption("vl", "verbosity-level", false, 
                     "\n\tSet verbosity level, options are:\n"
