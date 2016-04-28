@@ -133,57 +133,16 @@ void renderEnvironment_t::loadPlugins(const std::string &path)
 		pluginHandlers.push_back(plug);
 	}
 }
-/** povman: new code for getPluginPath */
+
 bool renderEnvironment_t::getPluginPath(std::string &path)
 {
-	//TODO: add function for use environment variable like BOUNTY_ROOT
-	path = std::string(Y_PLUGINPATH);
-    return true;
-}
-
-/* povman: this code is unused because atm this application is not installable.
-bool renderEnvironment_t::getPluginPath(std::string &path)
-{
-#ifdef _WIN32
-	HKEY hkey;
-	DWORD dwType, dwSize;
-
-	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,"Software\\YafaRay Team\\YafaRay",0,KEY_READ,&hkey)==ERROR_SUCCESS)
-	{
-		dwType = REG_EXPAND_SZ;
-	 	dwSize = MAX_PATH;
-		DWORD dwStat;
-
-		char *pInstallDir=(char *)malloc(MAX_PATH);
-
-  		dwStat = RegQueryValueEx(hkey, TEXT("InstallDir"), NULL, NULL, (LPBYTE)pInstallDir, &dwSize);
-
-		if (dwStat == NO_ERROR)
-		{
-			path = std::string(pInstallDir) + "\\plugins";
-			free(pInstallDir);
-			RegCloseKey(hkey);
-			return true;
-		}
-
-		Y_ERROR_ENV << "Couldn't READ \'InstallDir\' value." << yendl;
-		free(pInstallDir);
-		RegCloseKey(hkey);
-	}
-	else Y_ERROR_ENV << "Couldn't find registry key." << yendl;
-
-	Y_ERROR << "Please fix your registry. Maybe you need add/modify" << yendl;
-	Y_ERROR << "HKEY_LOCAL_MACHINE\\Software\\YafaRay Team\\YafaRay\\InstallDir" << yendl;
-	Y_ERROR << "key at registry. You can use \"regedit.exe\" to adjust it at" << yendl;
-	Y_ERROR << "your own risk. If you are unsure, reinstall YafaRay" << yendl;
-
-	return false;
+#if defined(WIN32)
+	path = std::string("plugins");
 #else
-	path = std::string(Y_PLUGINPATH);
-	return true;
+    path = std::string(Y_PLUGINPATH);
 #endif
+    return true; 
 }
-*/
 
 material_t* renderEnvironment_t::getMaterial(const std::string &name)const
 {
