@@ -44,15 +44,15 @@ int main(int argc, char *argv[])
 
 	parse.setAppName(xmlLoaderVersion,
         "[OPTIONS]... <input xml file> [output filename]\n"
-        "<input xml file> : A valid yafaray XML file\n"
+        "<input xml file> : A valid TheBounty XML scene file\n"
         "[output filename] : The filename of the rendered image without extension.\n"
         "*Note: If output filename is ommited the name \"bounty\" will be used instead.");
 
-	parse.setOption("pp", "plugin-path", false, 
+	parse.setOption("pp", "plugin-path", false,
                     "\n\tPath to load plugins."
-                    "\t(warning: this flag overrides default path to plugins.");
+                    "\n\t(warning: this flag overrides default path to plugins.");
 
-	parse.setOption("vl", "verbosity-level", false, 
+	parse.setOption("vl", "verbosity-level", false,
                     "\n\tSet verbosity level, options are:\n"
                     "\t\t0 - MUTE    (Prints nothing)\n"
                     "\t\t1 - ERROR   (Prints only errors)\n"
@@ -98,33 +98,33 @@ int main(int argc, char *argv[])
 
 	parse.setOption("v", "version", true,
                     "\n\tDisplays this program's version.");
-	parse.setOption("h", "help", true, 
+	parse.setOption("h", "help", true,
                     "\n\tDisplays this help text.");
-	parse.setOption("op", "output-path", false, 
+	parse.setOption("op", "output-path", false,
                     "\n\tUses the path in <value> as rendered image output path.");
-	parse.setOption("o", "output-file", false, 
+	parse.setOption("o", "output-file", false,
                     "\n\tUses the path in <value> as rendered image output filename.");
-	parse.setOption("f", "format", false, 
-                    "\n\tSets the output image format, available formats are:\n\n" + formatString + 
+	parse.setOption("f", "format", false,
+                    "\n\tSets the output image format, available formats are:\n\n" + formatString +
                     "\n\t\tDefault: tga.\n");
-	parse.setOption("t", "threads", false, 
+	parse.setOption("t", "threads", false,
                     "\n\tOverrides threads setting on the XML file, for auto selection use -1.");
-	parse.setOption("a", "with-alpha", true, 
+	parse.setOption("a", "with-alpha", true,
                     "\n\tEnables saving the image with alpha channel."
-                    "\tIf this option are omited, the 'alpha_channel' scene parameter is used.");
-	parse.setOption("dp", "draw-params", true, 
+                    "\n\tIf this option are omited, the 'alpha_channel' scene parameter is used.");
+	parse.setOption("dp", "draw-params", true,
                     "\n\tEnables saving the image with a settings badge.");
-	parse.setOption("ndp", "no-draw-params", true, 
-                    "\n\tDisables saving the image with a settings badge\n"
-                    "\t(warning: this overrides --draw-params setting).");
-	parse.setOption("cs", "custom-string", false, 
+	parse.setOption("ndp", "no-draw-params", true,
+                    "\n\tDisables saving the image with a settings badge"
+                    "\n\t(warning: this overrides --draw-params setting).");
+	parse.setOption("cs", "custom-string", false,
                     "\n\tSets the custom string to be used on the settings badge.");
-	parse.setOption("z", "z-buffer", true, 
-                    "\n\tEnables the rendering of the depth map (Z-Buffer)\n"
-                    "\t(warning: this flag overrides XML setting).");
-	parse.setOption("nz", "no-z-buffer", true, 
-                    "\n\tDisables the rendering of the depth map (Z-Buffer)\n"
-                    "\t(warning: this flag overrides XML setting).");
+	parse.setOption("z", "z-buffer", true,
+                    "\n\tEnables the rendering of the depth map (Z-Buffer)"
+                    "\n\t(warning: this flag overrides XML setting).");
+	parse.setOption("nz", "no-z-buffer", true,
+                    "\n\tDisables the rendering of the depth map (Z-Buffer)"
+                    "\n\t(warning: this flag overrides XML setting).");
 
 	bool parseOk = parse.parseCommandLine();
 
@@ -178,21 +178,25 @@ int main(int argc, char *argv[])
 	{
 		return 0;
 	}
+	//
+	std::string xmlFile = files[0];
 
 	std::string outName;
 	if (outputFilename.empty())
 	{
-        outName = "bounty." + format;
+        size_t nam, ext;
+        std::string tmp = xmlFile;
+        nam = tmp.find(".");
+        ext = tmp.rfind(".");
+        outName = tmp.erase(nam + 1, ext) + format;
 	}
 	else
 	{
 		outName = outputFilename + "." + format;
 	}
-	
+
 	if(files.size() > 1) outName = files[1] + "." + format;
-	
-	std::string xmlFile = files[0];
-	
+
 	//env->Debug = debug; //disabled until proper debugging messages are set throughout the core
 
 	// Set the full output path with filename
@@ -208,14 +212,14 @@ int main(int argc, char *argv[])
 	{
 		outputPath += "/" + outName;
 	}
-	
+
 	scene_t *scene = new scene_t();
 	env->setScene(scene);
 	paraMap_t render;
-	
+
 	bool success = parse_xml_file(xmlFile.c_str(), scene, env, render);
 	if(!success) exit(1);
-	
+
 	int width=320, height=240;
 	int bx = 0, by = 0;
 	render.getParam("width", width); // width of rendered image
@@ -224,23 +228,23 @@ int main(int argc, char *argv[])
 	render.getParam("ystart", by); // border render y start
     if (!alpha)
         render.getParam("alpha_channel", alpha);
-	
+
 	if(threads >= -1) render["threads"] = threads;
-	
+
 	if(drawparams)
 	{
 		render["drawParams"] = true;
 		if(!customString.empty()) render["customString"] = customString;
 	}
-	
+
 	if(nodrawparams) render["drawParams"] = false;
-	
+
 	if(zbuf) render["z_channel"] = true;
 	if(nozbuf) render["z_channel"] = false;
-	
+
 	bool use_zbuf = false;
 	render.getParam("z_channel", use_zbuf);
-	
+
 	// create output
 	colorOutput_t *out = NULL;
 
@@ -250,7 +254,7 @@ int main(int argc, char *argv[])
 	ihParams["height"] = height;
 	ihParams["alpha_channel"] = alpha;
 	ihParams["z_channel"] = use_zbuf;
-	
+
 	imageHandler_t *ih = env->createImageHandler("outFile", ihParams);
 
 	if(ih)
@@ -259,9 +263,9 @@ int main(int argc, char *argv[])
 		if(!out) return 1;
 	}
 	else return 1;
-	
+
 	if(! env->setupScene(*scene, render, *out) ) return 1;
-	
+
 	scene->render();
 	env->clearAll();
 
@@ -269,6 +273,6 @@ int main(int argc, char *argv[])
 
 	delete film;
 	delete out;
-	
+
 	return 0;
 }
