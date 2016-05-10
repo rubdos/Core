@@ -21,6 +21,7 @@
 
 #ifdef WIN32
 	#include <windows.h>
+    #include <direct.h>
 #endif
 
 #include <core_api/scene.h>
@@ -38,7 +39,7 @@ using namespace::yafaray;
 
 int main(int argc, char *argv[])
 {
-	std::string xmlLoaderVersion = "TheBounty XML loader version 0.2";
+	std::string xmlLoaderVersion = "TheBounty XML loader version 0.3";
 
 	cliParser_t parse(argc, argv, 2, 1, "You need to set at least a valid XML scene file.");
 
@@ -102,8 +103,6 @@ int main(int argc, char *argv[])
                     "\n\tDisplays this help text.");
 	parse.setOption("op", "output-path", false,
                     "\n\tUses the path in <value> as rendered image output path.");
-	parse.setOption("o", "output-file", false,
-                    "\n\tUses the path in <value> as rendered image output filename.");
 	parse.setOption("f", "format", false,
                     "\n\tSets the output image format, available formats are:\n\n" + formatString +
                     "\n\t\tDefault: tga.\n");
@@ -149,8 +148,6 @@ int main(int argc, char *argv[])
 
 	bool alpha = parse.getFlag("a");
 	std::string format = parse.getOptionString("f");
-	std::string outputPath = parse.getOptionString("op");
-	std::string outputFilename = parse.getOptionString("o");
 	int threads = parse.getOptionInteger("t");
 	bool drawparams = parse.getFlag("dp");
 	bool nodrawparams = parse.getFlag("ndp");
@@ -178,31 +175,49 @@ int main(int argc, char *argv[])
 	{
 		return 0;
 	}
-	//
+	// xml file name is always the first parameter without '-'
 	std::string xmlFile = files[0];
 
-	std::string outName;
-	if (outputFilename.empty())
-	{
-        size_t nam, ext;
-        std::string tmp = xmlFile;
-        nam = tmp.find(".");
-        ext = tmp.rfind(".");
-        outName = tmp.erase(nam + 1, ext) + format;
+    // out image file name is always the second parameter without '-'
+	std::string outName = "bounty.";
+    if (files.size() > 1)
+    {
+        outName = files[1] + "." + format;
+    }
+    else
+    {
+        size_t start_filename, filename, extension;
+        std::string tmp = files[0];
+        // normalize slash to UNIX style '/'
+        for (int i = 0; i < tmp.length(); i++)
+        {
+            if (tmp[i] == '\\' || tmp[i] == '\\\\') tmp.replace(i, 1, "/");
+        }
+        // isolate filename from path
+        if (tmp.at(tmp.length() - 1) != '/')
+        {
+            start_filename = tmp.rfind("/");
+            tmp.erase(0, start_filename + 1);
+        }        
+        filename = tmp.find_last_of(".");
+        extension = tmp.rfind(".");
+        outName = tmp.erase(filename + 1, extension) + format;
 	}
-	else
-	{
-		outName = outputFilename + "." + format;
-	}
-
-	if(files.size() > 1) outName = files[1] + "." + format;
 
 	//env->Debug = debug; //disabled until proper debugging messages are set throughout the core
 
 	// Set the full output path with filename
+    // povman: this parameter need that the path are created 
+    std::string outputPath = parse.getOptionString("op");
+
 	if (outputPath.empty())
 	{
+#ifdef _WIN32
+        _mkdir("render");
+        outputPath = "render/" + outName;
+#else
 		outputPath = outName;
+#endif
 	}
 	else if (outputPath.at(outputPath.length() - 1) == '/')
 	{
@@ -226,8 +241,8 @@ int main(int argc, char *argv[])
 	render.getParam("height", height); // height of rendered image
 	render.getParam("xstart", bx); // border render x start
 	render.getParam("ystart", by); // border render y start
-    if (!alpha)
-        render.getParam("alpha_channel", alpha);
+    
+    if (!alpha) render.getParam("alpha_channel", alpha);
 
 	if(threads >= -1) render["threads"] = threads;
 
