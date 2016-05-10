@@ -517,7 +517,7 @@ void startEl_mesh(xmlParser_t &parser, const char *element, const char **attrs)
             }
             else
             {
-                if(!strcmp(attrs[0], "uv_a"))        uv_a = atoi(attrs[1]);
+                if(!strcmp(attrs[0], "uv_a"))      uv_a = atoi(attrs[1]);
                 else if(!strcmp(attrs[0], "uv_b")) uv_b = atoi(attrs[1]);
                 else if(!strcmp(attrs[0], "uv_c")) uv_c = atoi(attrs[1]);
             }
@@ -538,7 +538,7 @@ void startEl_mesh(xmlParser_t &parser, const char *element, const char **attrs)
         {
             switch(attrs[0][0])
             {
-            case 'u': u = atof(attrs[1]); break;
+            case 'u': u = atof(attrs[1]); break; 
             case 'v': v = atof(attrs[1]); break;
             default: Y_WARNING << "XMLParser: Ignored wrong attribute " << attrs[0] << " in uv" << yendl;
             }

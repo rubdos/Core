@@ -2,7 +2,7 @@
  *
  * 		output.h: Output base class
  *      This is part of the yafray package
- *      Copyright (C) 2002  Alejandro Conty Est�vez
+ *      Copyright (C) 2002  Alejandro Conty Estevez
  *		Modifyed by Rodrigo Placencia Vazquez (2009)
  *
  *      This library is free software; you can redistribute it and/or

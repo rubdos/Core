@@ -139,7 +139,7 @@ bool renderEnvironment_t::getPluginPath(std::string &path)
 #if defined(WIN32)
 	path = std::string("plugins");
 #else
-    path = std::string(Y_PLUGINPATH);
+	path = std::string(Y_PLUGINPATH);
 #endif
     return true; 
 }
