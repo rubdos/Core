@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
         }        
         filename = tmp.find_last_of(".");
         extension = tmp.rfind(".");
-        outName = tmp.erase(filename + 1, extension) + format;
+        outName = tmp.substr(0, filename + 1) + format;
 	}
 
 	//env->Debug = debug; //disabled until proper debugging messages are set throughout the core
