@@ -112,13 +112,12 @@ bool directLighting_t::preprocess()
 colorA_t directLighting_t::integrate(renderState_t &state, diffRay_t &ray) const
 {
     color_t col(0.0);
-    CFLOAT alpha;
+    CFLOAT alpha = 1.0;
     surfacePoint_t sp;
     void *o_udat = state.userdata;
     bool oldIncludeLights = state.includeLights;
 
-    if(transpBackground) alpha=0.0;
-    else alpha=1.0;
+	if (transpBackground) alpha = 0.0;
 
     // Shoot rays..
     if(scene->intersect(ray, sp))
@@ -168,21 +167,17 @@ colorA_t directLighting_t::integrate(renderState_t &state, diffRay_t &ray) const
     {
         if(background) col += (*background)(ray, state, false);
     }
-
+	
     state.userdata = o_udat;
     state.includeLights = oldIncludeLights;
 
     //create new colorA_t for store also alpha value
-    colorA_t result;
-    result += col;
-    colorA_t colVolTransmittance = scene->volIntegrator->transmittance(state, ray);
-    colorA_t colVolIntegration = scene->volIntegrator->integrate(state, ray);
-
-    if(transpBackground) alpha = std::max(alpha, 1.f-colVolTransmittance.R);
-
-    result = (result * colVolTransmittance) + colVolIntegration;
-    result.A = alpha;
-    //
+    colorA_t result = col;
+    colorA_t colVolTransmit = scene->volIntegrator->transmittance(state, ray);
+    result *= colVolTransmit;
+    result += scene->volIntegrator->integrate(state, ray);
+	result.A = std::max(alpha, 1.f-colVolTransmit.A);
+    
     return result;
 }
 

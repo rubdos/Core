@@ -136,13 +136,12 @@ colorA_t pathIntegrator_t::integrate(renderState_t &state, diffRay_t &ray/*, sam
     static int calls=0;
     ++calls;
     color_t col(0.0);
-    CFLOAT alpha;
+    CFLOAT alpha=1.0;
     surfacePoint_t sp;
     void *o_udat = state.userdata;
     float W = 0.f;
 
     if(transpBackground) alpha=0.0;
-    else alpha=1.0;
 
     //shoot ray into scene
     if(scene->intersect(ray, sp))
@@ -323,7 +322,14 @@ colorA_t pathIntegrator_t::integrate(renderState_t &state, diffRay_t &ray/*, sam
     }
 
     state.userdata = o_udat;
-    return colorA_t(col, alpha);
+    // TODO: add boolean option for not execute this code without volintegrator
+    colorA_t result = col;
+    colorA_t colVolTransmit = scene->volIntegrator->transmittance(state, ray);
+    result *= colVolTransmit;
+    result += scene->volIntegrator->integrate(state, ray);
+    result.A = std::max(alpha, 1.f - colVolTransmit.A);
+
+    return result;
 }
 
 integrator_t* pathIntegrator_t::factory(paraMap_t &params, renderEnvironment_t &render)

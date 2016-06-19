@@ -794,14 +794,13 @@ colorA_t photonIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) con
 	static int calls=0;
 	++calls;
 	color_t col(0.0);
-	CFLOAT alpha;
+	CFLOAT alpha = 1.0;
 	surfacePoint_t sp;
 
 	void *o_udat = state.userdata;
 	bool oldIncludeLights = state.includeLights;
 
-	if(transpBackground) alpha=0.0;
-	else alpha=1.0;
+	if (transpBackground) alpha = 0.0;
 
 	if(scene->intersect(ray, sp))
 	{
@@ -908,8 +907,14 @@ colorA_t photonIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) con
 
 	state.userdata = o_udat;
 	state.includeLights = oldIncludeLights;
+    //
+    colorA_t result = col;
+    colorA_t colVolTransmitt = scene->volIntegrator->transmittance(state, ray);
+    result *= colVolTransmitt;
+    result += scene->volIntegrator->integrate(state, ray);
+	result.A = std::max(alpha, 1.f - colVolTransmitt.A);
 
-	return colorA_t(col, alpha);
+    return result;
 }
 
 integrator_t* photonIntegrator_t::factory(paraMap_t &params, renderEnvironment_t &render)

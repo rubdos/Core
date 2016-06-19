@@ -115,32 +115,42 @@ color_t textureBackground_t::eval(const ray_t &ray, bool filtered) const
 	return power * ret;
 }
 
-background_t* textureBackground_t::factory(paraMap_t &params,renderEnvironment_t &render)
+background_t* textureBackground_t::factory(paraMap_t &params, renderEnvironment_t &render)
 {
-	const texture_t *tex=0;
-	const std::string *texname=0;
-	const std::string *mapping=0;
-	PROJECTION pr = spherical;
+    // new concept of IBL textured background based on .ibl files 
+    // you have some slots for textures: 
+    //    - one blurred hdri for illuminate your scene (hdri, exr)
+    //    - one hight definition maps for material reflections (hdri, tiff, exr..)
+    //    - one image map for background ( this image is also possible add in post-production (compositor)
+    const texture_t *ibltex = 0;
+    const std::string *ibltexname = 0;
+    const std::string *iblmapping = 0;
+    PROJECTION iblpr = spherical;
+
+	//const texture_t *tex=0;
+	//const std::string *texname=0;
+	//const std::string *mapping=0;
+	//PROJECTION pr = spherical;
 	float power = 1.0, rot=0.0;
 	bool IBL = false;
 	int IBL_sam = 16;
 	bool caust = true;
 	bool diffuse = true;
 	
-	if( !params.getParam("texture", texname) )
+	if( !params.getParam("ibl_texture", ibltexname) )
 	{
 		Y_ERROR << "TextureBackground: No texture given for texture background!" << yendl;
 		return NULL;
 	}
-	tex = render.getTexture(*texname);
-	if( !tex )
+	ibltex = render.getTexture(*ibltexname);
+	if( !ibltex )
 	{
-		Y_ERROR << "TextureBackground: Texture '" << *texname << "' for textureback not existant!" << yendl;
+		Y_ERROR << "TextureBackground: Texture '" << *ibltexname << "' for textureback not existant!" << yendl;
 		return NULL;
 	}
-	if( params.getParam("mapping", mapping) )
+	if( params.getParam("ibl_mapping", iblmapping) )
 	{
-		if(*mapping == "probe" || *mapping == "angular") pr = angular;
+		if(*iblmapping == "probe" || *iblmapping == "angular") iblpr = angular;
 	}
 	params.getParam("ibl", IBL);
 	params.getParam("ibl_samples", IBL_sam);
@@ -149,7 +159,7 @@ background_t* textureBackground_t::factory(paraMap_t &params,renderEnvironment_t
 	params.getParam("with_caustic", caust);
 	params.getParam("with_diffuse", diffuse);
 	
-	background_t *texBG = new textureBackground_t(tex, pr, power, rot);
+	background_t *texBG = new textureBackground_t(ibltex, iblpr, power, rot);
 	
 	if(IBL)
 	{
@@ -158,7 +168,7 @@ background_t* textureBackground_t::factory(paraMap_t &params,renderEnvironment_t
 		bgp["samples"] = IBL_sam;
 		bgp["shoot_caustics"] = caust;
 		bgp["shoot_diffuse"] = diffuse;
-		bgp["abs_intersect"] = (pr == angular);
+		bgp["abs_intersect"] = (iblpr == angular);
 		
 		light_t *bglight = render.createLight("textureBackground_bgLight", bgp);
 		
@@ -226,13 +236,11 @@ background_t* constBackground_t::factory(paraMap_t &params,renderEnvironment_t &
 }
 
 extern "C"
-{
-	
+{	
 	YAFRAYPLUGIN_EXPORT void registerPlugin(renderEnvironment_t &render)
 	{
 		render.registerFactory("textureback",textureBackground_t::factory);
 		render.registerFactory("constant", constBackground_t::factory);
 	}
-
 }
 __END_YAFRAY
