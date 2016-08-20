@@ -125,7 +125,7 @@ bool SPPM::renderTile(renderArea_t &a, int n_samples, int offset, bool adaptive,
     rstate.cam = camera;
     bool sampleLns = camera->sampleLense();
     int pass_offs=offset, end_x=a.X+a.W, end_y=a.Y+a.H;
-
+    //
     for(int i=a.Y; i<end_y; ++i)
     {
         for(int j=a.X; j<end_x; ++j)
@@ -134,7 +134,7 @@ bool SPPM::renderTile(renderArea_t &a, int n_samples, int offset, bool adaptive,
 
             rstate.pixelNumber = x*i+j;
             rstate.samplingOffs = fnv_32a_buf(i*fnv_32a_buf(j));//fnv_32a_buf(rstate.pixelNumber);
-            float toff = scrHalton(5, pass_offs+rstate.samplingOffs); // **shall be just the pass number...**
+            float toff = scrHalton(5, pass_offs + rstate.samplingOffs); // **shall be just the pass number...**
 
             for(int sample=0; sample<n_samples; ++sample) //set n_samples = 1.
             {
@@ -168,17 +168,15 @@ bool SPPM::renderTile(renderArea_t &a, int n_samples, int offset, bool adaptive,
                 c_ray.time = rstate.time;
                 c_ray.hasDifferentials = true;
                 // col = T * L_o + L_v
-                //diffRay_t c_ray_copy = c_ray; // unused
 
                 //for sppm progressive
                 int index = i*camera->resX() + j;
                 HitPoint &hp = hitPoints[index];
 
                 GatherInfo gInfo = traceGatherRay(rstate, c_ray, hp);
-                gInfo.photonFlux *= scene->volIntegrator->transmittance(rstate, c_ray);
+				//TO DO: review..
+                //gInfo.photonFlux *= scene->volIntegrator->transmittance(rstate, c_ray);
 
-                gInfo.constantRandiance *= scene->volIntegrator->transmittance(rstate, c_ray);
-                gInfo.constantRandiance += scene->volIntegrator->integrate(rstate, c_ray); // Now using it to simulate for volIntegrator not using PPM, need more tests
                 hp.constantRandiance += gInfo.constantRandiance; // accumulate the constant radiance for later usage.
 
                 // progressive refinement
@@ -518,13 +516,13 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
     color_t col(0.0);
     GatherInfo gInfo;
 
-    CFLOAT alpha=0.0;
+    CFLOAT alpha=1.0;
     surfacePoint_t sp;
 
     void *o_udat = state.userdata;
     bool oldIncludeLights = state.includeLights;
 
-    if(!transpBackground) alpha=1.0;
+    if(transpBackground) alpha=0.0;
 
     if(scene->intersect(ray, sp))
     {
@@ -864,7 +862,13 @@ GatherInfo SPPM::traceGatherRay(yafaray::renderState_t &state, yafaray::diffRay_
     state.userdata = o_udat;
     state.includeLights = oldIncludeLights;
 
-    gInfo.constantRandiance.A = alpha; // a small trick for just hold the alpha value.
+	//--------------------------------------------------------------------------
+	colorA_t colVolTransmit = scene->volIntegrator->transmittance(state, ray);
+	gInfo.constantRandiance *= colVolTransmit;
+	gInfo.constantRandiance += scene->volIntegrator->integrate(state, ray);
+	gInfo.constantRandiance.A = std::max(alpha, 1.f - colVolTransmit.A);
+	
+	//--------------------------------------------------------------------------
 
     return gInfo;
 }
@@ -880,7 +884,9 @@ void SPPM::initializePPM()
     // initialize SPPM statistics
     float initialRadius = ((bBox.longX() + bBox.longY() + bBox.longZ()) / 3.f) / ((camera->resX() + camera->resY()) / 2.0f) * 2.f ;
     initialRadius = std::min(initialRadius, 1.f); //Fix the overflow bug
+#ifdef HAVE_OPENMP
 #pragma omp parallel for
+#endif
     for( int i = 0; i < resolution; i++)
     {
         HitPoint hp;

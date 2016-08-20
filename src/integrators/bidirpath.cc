@@ -149,14 +149,23 @@ void biDirIntegrator_t::cleanup()
 /* ============================================================
     integrate
  ============================================================ */
+
 colorA_t biDirIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) const
 {
-    color_t col(0.f);
+    colorA_t col(0.f);
     surfacePoint_t sp;
     ray_t testray = ray;
 
+    // test
+    float alpha=1.0;
+
+    if (transpBackground) alpha = 0.0;
+
     if(scene->intersect(testray, sp))
     {
+        // test
+        vector3d_t wo = -testray.dir;
+        // end
         state.includeLights = true;
         pathData_t &pathData = threadData[state.threadID];
         ++pathData.nPaths;
@@ -317,6 +326,12 @@ colorA_t biDirIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) cons
                 }
             }
         }
+        if (transpBackground && transpRefractedBackground)
+        {
+            float m_alpha = sp.material->getAlpha(state, sp, wo);
+            alpha = m_alpha + (1.f - m_alpha)*alpha;
+        }
+        else alpha = 1.0;
     }
     else
     {
@@ -326,12 +341,10 @@ colorA_t biDirIntegrator_t::integrate(renderState_t &state, diffRay_t &ray) cons
         }
     }
 
-    color_t colVolTransmittance = scene->volIntegrator->transmittance(state, ray);
-    color_t colVolIntegration = scene->volIntegrator->integrate(state, ray);
-
-
-    col = (col * colVolTransmittance) + colVolIntegration;
-
+    colorA_t colVolTransmitt = scene->volIntegrator->transmittance(state, ray);
+    col *= colVolTransmitt;
+    col += scene->volIntegrator->integrate(state, ray);
+    if (transpBackground) col.A = std::max(alpha, 1.f - colVolTransmitt.R);
 
     return col;
 }
@@ -357,13 +370,18 @@ int biDirIntegrator_t::createPath(renderState_t &state, ray_t &start, std::vecto
         const material_t *mat = v.sp.material;
         // compute alpha_i+1 = alpha_i * fs(wi, wo) / P_proj(wo), where P_proj = bsdf_pdf(wo) / cos(wo*N)
         v.alpha = v_prev.alpha * v_prev.f_s * v_prev.cos_wo / (v_prev.pdf_wo * v_prev.qi_wo);
+        //povman test
+        v.alpha.clampRGB01();
+        // end
         v.wi = -ray.dir;
         v.cos_wi = std::fabs(ray.dir * v.sp.N);
         v.ds = (v.sp.P - v_prev.sp.P).lengthSqr();
         v.G = v_prev.cos_wo * v.cos_wi / v.ds;
         ++nVert;
         state.userdata = v.userdata;
-        //if(dbg<10) std::cout << nVert << "  mat: " << (void*) mat << " alpha:" << v.alpha << " p_f_s:" << v_prev.f_s << " qi:"<< v_prev.qi << std::endl;
+        //if (dbg < 10){
+        //    Y_WARNING << nVert << "  mat: " << (void*)mat << " alpha: " << v.alpha << " p_f_s: " << v_prev.f_s << " qi: " << v_prev.qi_wo << yendl;
+        //}
         mat->initBSDF(state, v.sp, mBSDF);
         // create tentative sample for next path segment
         sample_t s(prng(), prng(), BSDF_ALL, true);
@@ -913,7 +931,6 @@ integrator_t* biDirIntegrator_t::factory(paraMap_t &params, renderEnvironment_t 
     params.getParam("transpShad", transpShad);
     params.getParam("shadowDepth", shadowDepth);
     params.getParam("do_LightImage", doLight);
-
 
     biDirIntegrator_t *inte;
     inte = new biDirIntegrator_t();

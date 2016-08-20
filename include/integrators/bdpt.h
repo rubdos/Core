@@ -146,6 +146,9 @@ protected:
     float fNumLights;
     std::map <const light_t*, CFLOAT> invLightPowerD;
     imageFilm_t *lightImage;
+    // test
+    bool transpBackground; //! Render background as transparent
+    bool transpRefractedBackground; //! Render refractions of background as transparent
 };
 
 
