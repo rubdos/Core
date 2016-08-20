@@ -212,12 +212,7 @@ int main(int argc, char *argv[])
 
 	if (outputPath.empty())
 	{
-#ifdef _WIN32
-        _mkdir("render");
-        outputPath = "render/" + outName;
-#else
 		outputPath = outName;
-#endif
 	}
 	else if (outputPath.at(outputPath.length() - 1) == '/')
 	{
