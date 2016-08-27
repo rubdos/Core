@@ -1,6 +1,6 @@
 include_directories(${YAF_INCLUDE_DIRS})
 
-add_executable(yafaray-xml xml-loader.cc)
-target_link_libraries(yafaray-xml yafaraycore)
+add_executable(thebounty-xml xml-loader.cc)
+target_link_libraries(thebounty-xml yafaraycore)
 
-install (TARGETS yafaray-xml RUNTIME DESTINATION ${YAF_BIN_DIR})
+install (TARGETS thebounty-xml RUNTIME DESTINATION ${YAF_BIN_DIR})
