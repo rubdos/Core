@@ -36,7 +36,7 @@ The TheBounty engine is supported in Blender and Wings 3D.
 
 %prep
 ls
-%autosetup -n TheBounty-Core-%{version}
+%autosetup -n %{name}-%{version}
 
 %build
 mkdir build
