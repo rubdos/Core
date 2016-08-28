@@ -10,10 +10,10 @@ ExcludeArch:        s390 s390x
 BuildRequires:      cmake swig
 BuildRequires:      zlib-devel,libpng-devel,OpenEXR-libs,OpenEXR-devel
 BuildRequires:      ilmbase-devel freetype-devel libxml2-devel libjpeg-devel
-BuildRequires:      libtiff-devel python3-devel libstdc++-devel
+BuildRequires:      libtiff-devel python%{python3_pkgversion}-devel libstdc++-devel
 Requires:           zlib,libpng,OpenEXR-libs,OpenEXR
 Requires:           ilmbase freetype libxml2 libjpeg
-Requires:           libtiff python3 libstdc++ system-python-libs
+Requires:           libtiff, python(abi)>=3.4, libstdc++, system-python-libs
 
 %package devel
 Summary: 			TheBounty development files and headers
